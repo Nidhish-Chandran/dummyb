@@ -12,7 +12,7 @@
                 <h3 class="fw-bold text-dark mb-1">
                     <i class="fa-solid fa-bandage text-warning me-2"></i> Snakebite Wound Image Checker
                 </h3>
-                <p class="text-secondary small mb-0">AI-assisted visual screening tool to detect potential dual puncture mark patterns and bite mark erythema.</p>
+                <p class="text-secondary small mb-0">Computer vision-based preliminary screening tool. Upload a clear, well-lit photo of the affected area for analysis.</p>
             </div>
 
             <!-- Mandatory Disclaimer Box -->
@@ -20,10 +20,11 @@
                 <div class="d-flex align-items-start gap-3">
                     <i class="fa-solid fa-triangle-exclamation fs-3 text-warning"></i>
                     <div>
-                        <strong class="text-dark d-block">MANDATORY MEDICAL DISCLAIMER</strong>
+                        <strong class="text-dark d-block">IMPORTANT MEDICAL DISCLAIMER</strong>
                         <span class="small text-dark">
-                            This is an AI-assisted screening tool and is <strong>NOT a medical diagnosis</strong>. 
-                            If a snakebite is suspected, seek emergency medical care immediately regardless of the tool output.
+                            This is a computer vision heuristic screening tool and is <strong>NOT a medical diagnosis</strong>. 
+                            Image analysis can be inaccurate. If a snakebite is suspected, seek emergency medical care immediately 
+                            regardless of the tool output. Only a healthcare professional can diagnose envenomation.
                         </span>
                     </div>
                 </div>
@@ -37,7 +38,14 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Upload Wound / Bite Mark Photo *</label>
                         <input type="file" name="wound_image" class="form-control" accept="image/*" required id="woundInput">
-                        <small class="text-muted">High resolution, clear lighting photo of the suspected bite area recommended.</small>
+                        <div class="form-text">
+                            <ul class="mb-0 mt-1 small">
+                                <li>Use a clear, well-lit image focused on the affected area</li>
+                                <li>Avoid excessive background or unrelated objects</li>
+                                <li>Ensure the wound is clearly visible</li>
+                                <li>Minimum resolution: 100x100 pixels</li>
+                            </ul>
+                        </div>
                     </div>
 
                     <!-- Image Preview -->
@@ -50,65 +58,160 @@
                             <a href="{% url 'emergency:assistance' %}" class="btn btn-outline-secondary btn-sm">
                                 <i class="fa-solid fa-phone me-1"></i> Emergency Helpline
                             </a>
-                            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
-                                </button>
-                            </form>
                         </div>
-                        <button type="submit" class="btn btn-teal">
-                            <i class="fa-solid fa-microscope me-2"></i> Run AI Wound Screening
+                        <button type="submit" class="btn btn-teal" id="analyzeBtn">
+                            <i class="fa-solid fa-microscope me-2"></i> Analyze Image
                         </button>
                     </div>
                 </form>
             </div>
 
+            <!-- Loading State (hidden by default) -->
+            <div id="loadingState" class="card-clean p-4 mb-4 d-none">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-teal mb-3" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="fw-semibold text-dark">Analyzing Image...</h5>
+                    <p class="text-muted small mb-0">Please wait while our computer vision system processes your image</p>
+                </div>
+            </div>
+
             <!-- Screening Result Card -->
             {% if result %}
-                <div class="card-clean p-4 border-2 {% if result.is_snake_bite %}card-danger-clean{% else %}card-success-clean{% endif %}">
-                    <h5 class="fw-bold mb-2">AI-Assisted Screening Output</h5>
-                    
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        {% if result.is_snake_bite %}
-                            <span class="badge bg-danger fs-6 px-3 py-2">
-                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Result: {{ result.result_label }}
-                            </span>
-                            <span class="badge bg-outline-danger border text-danger fs-6 px-2 py-1">
-                                {{ result.status_title }}
-                            </span>
-                        {% else %}
-                            <span class="badge bg-success fs-6 px-3 py-2">
-                                <i class="fa-solid fa-circle-check me-1"></i> Result: {{ result.result_label }}
-                            </span>
-                            <span class="badge bg-outline-success border text-success fs-6 px-2 py-1">
-                                {{ result.status_title }}
-                            </span>
-                        {% endif %}
-                    </div>
-
-                    {% if result.processed_image_path %}
-                        <div class="text-center mb-3 p-2 bg-light rounded border">
-                            <img src="/media/{{ result.processed_image_path }}" alt="Annotated Screening" class="img-fluid rounded" style="max-height: 250px;">
-                            <small class="text-muted d-block mt-1">Diagnostic feature contour overlay</small>
+                {% if result.result_state == 'VALID_SNAKE_BITE' %}
+                    <!-- VALID SNAKE BITE - Red Alert Card -->
+                    <div class="card-clean p-4 border-danger border-2 bg-danger bg-opacity-10">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <i class="fa-solid fa-circle-exclamation text-danger fs-2"></i>
+                            <div>
+                                <h5 class="fw-bold text-danger mb-1">{{ result.status_title }}</h5>
+                                <span class="badge bg-danger fs-6 px-3 py-2">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ result.result_label }}
+                                </span>
+                            </div>
                         </div>
-                    {% endif %}
+                        
+                        {% if result.processed_image_path %}
+                            <div class="text-center mb-3 p-2 bg-white rounded border">
+                                <img src="/media/{{ result.processed_image_path }}" alt="Annotated Analysis" class="img-fluid rounded" style="max-height: 300px;">
+                                <small class="text-muted d-block mt-1">Green boxes: inflammation regions | Blue dots: puncture candidates | Red lines: fang pairs</small>
+                            </div>
+                        {% endif %}
 
-                    <div class="p-3 bg-light rounded border mb-3">
-                        <p class="mb-1 text-dark fw-medium">{{ result.recommendation }}</p>
-                        <small class="text-muted d-block mt-2"><strong>Method:</strong> {{ result.method_label }}</small>
+                        <div class="p-3 bg-white rounded border mb-3">
+                            <p class="mb-2 text-dark fw-medium">{{ result.recommendation }}</p>
+                            <small class="text-muted d-block"><strong>Analysis Method:</strong> {{ result.method_label }}</small>
+                            <small class="text-muted d-block mt-1"><strong>Confidence Score:</strong> {{ result.confidence_score|floatformat:2 }}</small>
+                        </div>
+
+                        <div class="alert alert-danger py-2 mb-3 small">
+                            <strong>Disclaimer:</strong> {{ result.disclaimer }}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom">
+                                <i class="fa-solid fa-hospital me-2"></i> Locate Nearest Hospital
+                            </a>
+                        </div>
                     </div>
 
-                    <div class="alert alert-danger py-2 mb-3 small">
-                        <strong>Disclaimer:</strong> {{ result.disclaimer }}
+                {% elif result.result_state == 'UNCERTAIN' %}
+                    <!-- UNCERTAIN - Yellow Warning Card -->
+                    <div class="card-clean p-4 border-warning border-2 bg-warning bg-opacity-10">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <i class="fa-solid fa-circle-question text-warning fs-2"></i>
+                            <div>
+                                <h5 class="fw-bold text-warning-emphasis mb-1">{{ result.status_title }}</h5>
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                                    <i class="fa-solid fa-question me-1"></i> {{ result.result_label }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 bg-white rounded border mb-3">
+                            <p class="mb-2 text-dark">{{ result.recommendation }}</p>
+                            <hr class="my-2">
+                            <strong class="text-dark d-block mb-2">Tips for Better Results:</strong>
+                            <ul class="small text-muted mb-0">
+                                <li>Ensure good lighting on the affected area</li>
+                                <li>Focus the camera clearly on the wound</li>
+                                <li>Minimize background distractions</li>
+                                <li>Hold the camera steady to avoid blur</li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-warning py-2 mb-3 small">
+                            <strong>Note:</strong> {{ result.disclaimer }}
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('woundInput').click()">
+                                <i class="fa-solid fa-upload me-2"></i> Try Another Image
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2">
-                        <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom">
-                            <i class="fa-solid fa-hospital me-2"></i> Locate Anti-Venom Hospitals (Haversine)
-                        </a>
+                {% elif result.result_state == 'NOT_SNAKE_BITE' %}
+                    <!-- NOT SNAKE BITE - Green Info Card -->
+                    <div class="card-clean p-4 border-success border-2 bg-success bg-opacity-10">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <i class="fa-solid fa-circle-check text-success fs-2"></i>
+                            <div>
+                                <h5 class="fw-bold text-success-emphasis mb-1">{{ result.status_title }}</h5>
+                                <span class="badge bg-success fs-6 px-3 py-2">
+                                    <i class="fa-solid fa-check me-1"></i> {{ result.result_label }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        {% if result.processed_image_path %}
+                            <div class="text-center mb-3 p-2 bg-white rounded border">
+                                <img src="/media/{{ result.processed_image_path }}" alt="Analyzed Image" class="img-fluid rounded" style="max-height: 250px;">
+                                <small class="text-muted d-block mt-1">Processed image overlay</small>
+                            </div>
+                        {% endif %}
+
+                        <div class="p-3 bg-white rounded border mb-3">
+                            <p class="mb-2 text-dark">{{ result.recommendation }}</p>
+                            <small class="text-muted d-block"><strong>Analysis Method:</strong> {{ result.method_label }}</small>
+                        </div>
+
+                        <div class="alert alert-info py-2 mb-3 small">
+                            <strong>Reminder:</strong> {{ result.disclaimer }}
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('woundInput').click()">
+                                <i class="fa-solid fa-upload me-2"></i> Analyze Another Image
+                            </button>
+                        </div>
                     </div>
-                </div>
+
+                {% elif result.result_state == 'INVALID_IMAGE' %}
+                    <!-- INVALID IMAGE - Gray Error Card -->
+                    <div class="card-clean p-4 border-secondary border-2 bg-light">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <i class="fa-solid fa-image text-secondary fs-2"></i>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1">{{ result.status_title }}</h5>
+                                <span class="badge bg-secondary fs-6 px-3 py-2">
+                                    <i class="fa-solid fa-circle-xmark me-1"></i> {{ result.result_label }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 bg-white rounded border mb-3">
+                            <p class="mb-2 text-dark fw-medium">{{ result.recommendation }}</p>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="btn btn-teal" onclick="document.getElementById('woundInput').click()">
+                                <i class="fa-solid fa-upload me-2"></i> Upload Valid Image
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
             {% endif %}
 
         </div>
@@ -122,7 +225,11 @@
         const input = document.getElementById("woundInput");
         const container = document.getElementById("woundPreviewContainer");
         const preview = document.getElementById("woundPreview");
+        const analyzeBtn = document.getElementById("analyzeBtn");
+        const loadingState = document.getElementById("loadingState");
+        const form = input.closest('form');
 
+        // Image preview handler
         if (input) {
             input.addEventListener("change", function() {
                 const file = this.files[0];
@@ -133,6 +240,17 @@
                         container.classList.remove("d-none");
                     }
                     reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Show loading state on form submit
+        if (form && analyzeBtn) {
+            form.addEventListener("submit", function() {
+                if (input.files && input.files[0]) {
+                    analyzeBtn.disabled = true;
+                    analyzeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Processing...';
+                    loadingState.classList.remove("d-none");
                 }
             });
         }
