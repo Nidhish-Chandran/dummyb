@@ -1,52 +1,101 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Login - Venom Watch{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="glass-card p-4 p-md-5">
-                <div class="text-center mb-4">
-                    <div class="badge bg-success bg-opacity-20 text-success p-3 rounded-circle mb-3 fs-3">
-                        <i class="fa-solid fa-user-lock"></i>
+<div class="auth-container">
+    <div class="auth-wrapper">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <i class="fa-solid fa-user-lock"></i>
+            </div>
+            <h1>Welcome Back</h1>
+            <p>Access Venom Watch Surveillance & Alert Portal</p>
+        </div>
+
+        <div class="auth-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                    <h3 class="fw-bold text-white mb-1">Welcome Back</h3>
-                    <p class="text-muted small">Access Venom Watch Surveillance & Alert Portal</p>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'accounts:login' %}" id="loginForm">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Invalid username or password. Please try again.
+                    </div>
+                {% endif %}
+
+                <!-- Username Field -->
+                <div class="form-group">
+                    <label for="username">
+                        Username
+                    </label>
+                    <div class="input-group">
+                        <i class="fa-solid fa-user input-group-icon"></i>
+                        <input type="text" 
+                               name="username" 
+                               id="username" 
+                               class="form-control" 
+                               placeholder="Enter your username"
+                               required 
+                               autofocus>
+                    </div>
                 </div>
 
-                <form method="post" action="{% url 'accounts:login' %}">
-                    {% csrf_token %}
-                    
-                    {% if form.errors %}
-                        <div class="alert alert-danger py-2 small">
-                            Invalid username or password. Please try again.
-                        </div>
-                    {% endif %}
-
-                    <div class="mb-3">
-                        <label class="form-label text-light fw-medium"><i class="fa-solid fa-user me-1"></i> Username</label>
-                        <input type="text" name="username" class="form-control" placeholder="Enter your username" required autofocus>
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="password">
+                        Password
+                    </label>
+                    <div class="input-group">
+                        <i class="fa-solid fa-lock input-group-icon"></i>
+                        <input type="password" 
+                               name="password" 
+                               id="password" 
+                               class="form-control" 
+                               placeholder="Enter your password"
+                               required>
                     </div>
-
-                    <div class="mb-4">
-                        <label class="form-label text-light fw-medium"><i class="fa-solid fa-lock me-1"></i> Password</label>
-                        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-neon w-100 py-2 fs-6 mb-3">
-                        <i class="fa-solid fa-right-to-bracket me-2"></i> Log In
-                    </button>
-                </form>
-
-                <div class="text-center mt-3 pt-3 border-top border-secondary border-opacity-25">
-                    <p class="text-muted mb-0 small">Don't have an account?</p>
-                    <a href="{% url 'accounts:register' %}" class="text-success fw-bold text-decoration-none">
-                        Register a new account <i class="fa-solid fa-arrow-right ms-1"></i>
-                    </a>
                 </div>
+
+                <button type="submit" class="btn-auth" id="submitBtn">
+                    <i class="fa-solid fa-right-to-bracket me-2"></i> Log In
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <div class="auth-footer">
+                <p class="mb-0">Don't have an account?</p>
+                <a href="{% url 'accounts:register' %}">Register a new account <i class="fa-solid fa-arrow-right ms-1"></i></a>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Form submission loading state
+document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && !submitBtn.disabled) {
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+    }
+});
+</script>
 {% endblock %}
