@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="glass-card p-4 p-md-5">
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div class="badge bg-success bg-opacity-20 text-success p-3 rounded-circle fs-2">
+                        <i class="fa-solid fa-id-card"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold text-white mb-0">{{ user.username }}</h3>
+                        <span class="badge badge-non-venomous px-3 py-1 mt-1">
+                            {{ profile.get_role_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="row mb-4 g-3">
+                    <div class="col-sm-6">
+                        <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-25">
+                            <small class="text-muted d-block mb-1"><i class="fa-solid fa-envelope me-1"></i> Email Address</small>
+                            <span class="fw-bold text-white">{{ user.email|default:"Not provided" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-25">
+                            <small class="text-muted d-block mb-1"><i class="fa-solid fa-shield-halved me-1"></i> Account Role</small>
+                            <span class="fw-bold text-success">{{ profile.get_role_display }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-user-gear me-2 text-success"></i> Update Profile Details</h5>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-light">Phone Number</label>
+                        <input type="text" name="phone_number" class="form-control" value="{{ form.phone_number.value|default:'' }}" placeholder="+1234567890">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-light">Organization / Department</label>
+                        <input type="text" name="organization" class="form-control" value="{{ form.organization.value|default:'' }}" placeholder="e.g. Wildlife Protection Dept">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-light">Assigned Region / District</label>
+                        <input type="text" name="assigned_region" class="form-control" value="{{ form.assigned_region.value|default:'' }}" placeholder="e.g. Western Ghats Sector 4">
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="submit" class="btn btn-teal py-2 px-4">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> Save Profile
+                        </button>
+                        <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger py-2 px-3">
+                                <i class="fa-solid fa-right-from-bracket me-1"></i> Logout of Account
+                            </button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

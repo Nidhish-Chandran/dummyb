@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="badge bg-success bg-opacity-20 text-success p-3 rounded-circle mb-3 fs-3">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-1">Create Account</h3>
+                    <p class="text-muted small">Join the Community Snake Surveillance & Alert Network</p>
+                </div>
+
+                <form method="post" action="{% url 'accounts:register' %}">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 small">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label text-light fw-medium">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text text-secondary small">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-neon w-100 py-2 fs-6 mt-3 mb-3">
+                        <i class="fa-solid fa-check-circle me-2"></i> Register Account
+                    </button>
+                </form>
+
+                <div class="text-center mt-3 pt-3 border-top border-secondary border-opacity-25">
+                    <p class="text-muted mb-0 small">Already have an account?</p>
+                    <a href="{% url 'accounts:login' %}" class="text-success fw-bold text-decoration-none">
+                        Sign In here <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Snake Sighting - Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card-clean p-4 p-md-5">
+                <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom">
+                    <div>
+                        <h3 class="fw-bold text-dark mb-1"><i class="fa-solid fa-camera text-teal me-2"></i> Report Snake Sighting</h3>
+                        <p class="text-secondary small mb-0">Upload a snake image for AI-assisted identification and capture location coordinates.</p>
+                    </div>
+                    <a href="{% url 'reports:list' %}" class="btn btn-outline-teal btn-sm">
+                        <i class="fa-solid fa-list me-1"></i> My Sightings
+                    </a>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="row g-4">
+                        <!-- Left Column: Form Details & Image Upload -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-dark fw-medium">Sighting Title / Short Headline *</label>
+                                {{ form.title }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-dark fw-medium">Upload Snake Image *</label>
+                                {{ form.original_image }}
+                                <div class="form-text text-muted">Accepted formats: JPG, PNG, WEBP. OpenCV feature analysis will process the photo.</div>
+                            </div>
+
+                            <!-- Live Image Preview -->
+                            <div id="imagePreviewContainer" class="mb-3 d-none text-center p-2 rounded bg-light border">
+                                <small class="text-muted d-block mb-1">Image Preview</small>
+                                <img id="imagePreview" src="#" alt="Selected Image" class="img-fluid rounded" style="max-height: 200px;">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-dark fw-medium">Location Name / Landmark *</label>
+                                {{ form.location_name }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-dark fw-medium">Observation Notes / Behavior</label>
+                                {{ form.notes }}
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Interactive Leaflet Map Picker & GPS Geolocation -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="form-label text-dark fw-medium mb-0"><i class="fa-solid fa-location-dot text-danger me-1"></i> Capture / Pick Location on Map</label>
+                                <button type="button" id="btnGeolocate" class="btn btn-sm btn-outline-teal">
+                                    <i class="fa-solid fa-location-crosshairs me-1"></i> Detect GPS Location
+                                </button>
+                            </div>
+
+                            <!-- Geolocation Status Alert -->
+                            <div id="geoAlert" class="alert alert-info py-2 px-3 small mb-2 d-none">
+                                <span id="geoAlertText">Detecting device GPS location...</span>
+                            </div>
+                            
+                            <div id="pickerMap" class="map-container mb-3" style="height: 280px;"></div>
+
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label text-muted small mb-1">Latitude</label>
+                                    {{ form.latitude }}
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-muted small mb-1">Longitude</label>
+                                    {{ form.longitude }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top text-end">
+                        <button type="submit" class="btn btn-teal btn-lg py-2 px-5 fs-6">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Submit Sighting Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const defaultLat = parseFloat(document.getElementById("latInput").value) || 9.9312;
+        const defaultLng = parseFloat(document.getElementById("lngInput").value) || 76.2673;
+
+        const map = L.map('pickerMap').setView([defaultLat, defaultLng], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+        function updateMarker(lat, lng) {
+            marker.setLatLng([lat, lng]);
+            document.getElementById("latInput").value = lat.toFixed(6);
+            document.getElementById("lngInput").value = lng.toFixed(6);
+        }
+
+        map.on('click', function(e) {
+            updateMarker(e.latlng.lat, e.latlng.lng);
+        });
+
+        marker.on('dragend', function(e) {
+            const position = marker.getLatLng();
+            updateMarker(position.lat, position.lng);
+        });
+
+        // Geolocation Button & Logic
+        const geoBtn = document.getElementById("btnGeolocate");
+        const geoAlert = document.getElementById("geoAlert");
+        const geoAlertText = document.getElementById("geoAlertText");
+
+        geoBtn.addEventListener("click", function() {
+            if ("geolocation" in navigator) {
+                geoAlert.classList.remove("d-none", "alert-warning", "alert-success");
+                geoAlert.classList.add("alert-info");
+                geoAlertText.innerText = "Attempting device GPS detection...";
+
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    map.setView([lat, lng], 15);
+                    updateMarker(lat, lng);
+                    
+                    geoAlert.classList.remove("alert-info");
+                    geoAlert.classList.add("alert-success");
+                    geoAlertText.innerText = "GPS location captured successfully!";
+                }, function(err) {
+                    geoAlert.classList.remove("alert-info");
+                    geoAlert.classList.add("alert-warning");
+                    geoAlertText.innerText = "Browser GPS location unavailable (" + err.message + "). Please manually pick location on map or type landmark name.";
+                }, { timeout: 8000 });
+            } else {
+                geoAlert.classList.remove("d-none", "alert-info");
+                geoAlert.classList.add("alert-warning");
+                geoAlertText.innerText = "Geolocation not supported by your browser. Please drag the marker on the map manually.";
+            }
+        });
+
+        // Image Preview Script
+        const imageInput = document.getElementById("sightingImageInput");
+        const previewContainer = document.getElementById("imagePreviewContainer");
+        const previewImg = document.getElementById("imagePreview");
+
+        if (imageInput) {
+            imageInput.addEventListener("change", function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.setAttribute("src", e.target.result);
+                        previewContainer.classList.remove("d-none");
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Report #{{ report.id }} Details - Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <a href="{% url 'reports:list' %}" class="text-secondary text-decoration-none small">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Sightings
+            </a>
+            <h3 class="fw-bold text-dark mt-1 mb-0">
+                Sighting Report #{{ report.id }}: {{ report.title }}
+            </h3>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            {% if report.venom_category == 'HIGHLY_VENOMOUS' %}
+                <span class="badge badge-venomous fs-6">Highly Venomous</span>
+            {% elif report.venom_category == 'VENOMOUS' %}
+                <span class="badge badge-mild fs-6">Venomous</span>
+            {% else %}
+                <span class="badge badge-non-venomous fs-6">Non-Venomous</span>
+            {% endif %}
+
+            {% if report.status == 'VERIFIED' %}
+                <span class="badge bg-success fs-6"><i class="fa-solid fa-check me-1"></i> Verified</span>
+            {% elif report.status == 'REJECTED' %}
+                <span class="badge bg-danger fs-6"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
+            {% elif report.status == 'RESOLVED' %}
+                <span class="badge bg-info text-dark fs-6"><i class="fa-solid fa-circle-check me-1"></i> Area Cleared</span>
+            {% else %}
+                <span class="badge bg-warning text-dark fs-6"><i class="fa-solid fa-clock me-1"></i> Pending Verification</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Duplicate & Spam Warning Banner for Authorities -->
+    {% if is_authority %}
+        {% if report.duplicate_flag %}
+            <div class="alert alert-warning border-warning card-clean p-3 mb-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fa-solid fa-copy text-warning me-2 fs-5"></i>
+                    <strong>Potential Duplicate Sighting Flagged:</strong> Geographically and temporally close to an existing report.
+                    {% if report.duplicate_of %}
+                        <a href="{% url 'reports:detail' pk=report.duplicate_of.pk %}" class="fw-bold text-dark">View Original Report #{{ report.duplicate_of.id }} &raquo;</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if report.spam_flag %}
+            <div class="alert alert-danger border-danger card-clean p-3 mb-4">
+                <i class="fa-solid fa-flag text-danger me-2 fs-5"></i>
+                <strong>Suspicious Submission Flagged:</strong> {{ report.spam_reason|default:"Rate limit threshold exceeded." }}
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+
+        <!-- Left Column: Sighting Media & AI Findings -->
+        <div class="col-lg-7">
+            <div class="card-clean p-4 h-100">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-camera text-teal me-2"></i> Sighting Photo & AI Annotation</h5>
+                
+                <div class="text-center mb-4 bg-light p-2 rounded border">
+                    {% if report.processed_image %}
+                        <img src="{{ report.processed_image.url }}" alt="AI Annotation" class="img-fluid rounded" style="max-height: 400px;">
+                        <small class="text-muted d-block mt-2">OpenCV AI annotated image overlay</small>
+                    {% elif report.original_image %}
+                        <img src="{{ report.original_image.url }}" alt="Sighting" class="img-fluid rounded" style="max-height: 400px;">
+                        <small class="text-muted d-block mt-2">Original citizen uploaded photo</small>
+                    {% endif %}
+                </div>
+
+                <div class="p-3 bg-light rounded border mb-3">
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-robot text-teal me-2"></i> AI-Assisted Identification Details</h6>
+                    <div class="row g-2 small">
+                        <div class="col-6"><strong>Predicted Species:</strong> {{ report.species_predicted|default:"Snake" }}</div>
+                        <div class="col-6"><strong>Common Name:</strong> {{ report.common_name|default:"Not specified" }}</div>
+                        <div class="col-6"><strong>Toxicity Hazard:</strong> {{ report.toxicity_level }}</div>
+                        <div class="col-6"><strong>Threat Score:</strong> {{ report.danger_score }}/100</div>
+                        <div class="col-6"><strong>Analysis Confidence:</strong> {{ report.ai_confidence }}%</div>
+                        <div class="col-6"><strong>Model Status:</strong> Feature evaluation in progress</div>
+                    </div>
+                </div>
+
+                {% if report.notes %}
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-dark mb-1">Citizen Observation Notes:</h6>
+                        <p class="text-secondary small bg-light p-3 rounded border mb-0">{{ report.notes }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column: Map, Verification & Responder Controls -->
+        <div class="col-lg-5">
+            
+            <!-- Location & Map Card -->
+            <div class="card-clean p-4 mb-4">
+                <h5 class="fw-bold mb-2"><i class="fa-solid fa-map-location-dot text-danger me-2"></i> Sighting Location</h5>
+                <p class="text-secondary small mb-2"><i class="fa-solid fa-location-dot me-1 text-danger"></i> {{ report.location_name }}</p>
+                <div id="detailMap" class="map-container mb-3" style="height: 220px;"></div>
+                <small class="text-muted d-block">Coordinates: {{ report.latitude|floatformat:5 }}, {{ report.longitude|floatformat:5 }}</small>
+            </div>
+
+            <!-- Authority Verification Control Card -->
+            {% if is_authority %}
+                <div class="card-clean p-4 mb-4 border-2 card-warning-clean">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-user-shield text-warning me-2"></i> Authority Review & Verification</h5>
+                    <form method="post" action="{% url 'reports:verify' pk=report.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Verification Status</label>
+                            <select name="status" class="form-select form-select-sm">
+                                {% for val, label in report.STATUS_CHOICES %}
+                                    <option value="{{ val }}" {% if report.status == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Official Authority Notes</label>
+                            <textarea name="authority_notes" class="form-control form-control-sm" rows="3" placeholder="Add verification details, ranger team remarks...">{{ report.authority_notes|default:'' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-teal btn-sm w-100">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save Verification Status
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Volunteer / Responder Assignment Card -->
+                <div class="card-clean p-4 mb-4">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-truck-medical text-teal me-2"></i> Assign Emergency Responder</h5>
+                    <form method="post" action="{% url 'reports:assign_responder' pk=report.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Select Authorized Responder</label>
+                            <select name="responder_id" class="form-select form-select-sm">
+                                <option value="">-- Unassigned --</option>
+                                {% for u in responders %}
+                                    <option value="{{ u.id }}" {% if report.assigned_responder == u %}selected{% endif %}>
+                                        {{ u.username }} ({% if u.profile %}{{ u.profile.organization|default:u.profile.get_role_display }}{% else %}Responder{% endif %})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-outline-teal btn-sm w-100">
+                            <i class="fa-solid fa-user-plus me-1"></i> Update Responder Assignment
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+
+            <!-- Response Task Status Progress Card -->
+            {% if is_authority or is_assigned_responder %}
+                <div class="card-clean p-4">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-circle-play text-info me-2"></i> Response Task Status</h5>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Assigned Responder: <strong>{{ report.assigned_responder.username|default:"Unassigned" }}</strong></small>
+                        <small class="text-muted d-block mb-2">Current Rescue Status: <strong>{{ report.get_response_status_display }}</strong></small>
+                    </div>
+
+                    <form method="post" action="{% url 'reports:update_response_status' pk=report.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <select name="response_status" class="form-select form-select-sm">
+                                {% for val, label in report.RESPONSE_STATUS_CHOICES %}
+                                    <option value="{{ val }}" {% if report.response_status == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-teal btn-sm w-100">
+                            <i class="fa-solid fa-check-double me-1"></i> Update Response Status
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const lat = {{ report.latitude }};
+        const lng = {{ report.longitude }};
+
+        const map = L.map('detailMap').setView([lat, lng], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const isVenom = {% if report.is_venomous %}true{% else %}false{% endif %};
+
+        L.circleMarker([lat, lng], {
+            color: isVenom ? '#dc2626' : '#16a34a',
+            fillColor: isVenom ? '#dc2626' : '#16a34a',
+            fillOpacity: 0.8,
+            radius: 8
+        }).addTo(map).bindPopup(`
+            <strong>${"{{ report.species_predicted|escapejs }}" || "Snake"}</strong><br>
+            <small>${"{{ report.location_name|escapejs }}"}</small>
+        `).openPopup();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Snakebite Wound Checker - Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- Title Card -->
+            <div class="card-clean p-4 mb-4">
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-bandage text-warning me-2"></i> Snakebite Wound Image Checker
+                </h3>
+                <p class="text-secondary small mb-0">AI-assisted visual screening tool to detect potential dual puncture mark patterns and bite mark erythema.</p>
+            </div>
+
+            <!-- Mandatory Disclaimer Box -->
+            <div class="alert alert-warning border-warning card-clean p-3 mb-4" role="alert">
+                <div class="d-flex align-items-start gap-3">
+                    <i class="fa-solid fa-triangle-exclamation fs-3 text-warning"></i>
+                    <div>
+                        <strong class="text-dark d-block">MANDATORY MEDICAL DISCLAIMER</strong>
+                        <span class="small text-dark">
+                            This is an AI-assisted screening tool and is <strong>NOT a medical diagnosis</strong>. 
+                            If a snakebite is suspected, seek emergency medical care immediately regardless of the tool output.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Form Card -->
+            <div class="card-clean p-4 mb-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Upload Wound / Bite Mark Photo *</label>
+                        <input type="file" name="wound_image" class="form-control" accept="image/*" required id="woundInput">
+                        <small class="text-muted">High resolution, clear lighting photo of the suspected bite area recommended.</small>
+                    </div>
+
+                    <!-- Image Preview -->
+                    <div id="woundPreviewContainer" class="mb-3 d-none text-center p-2 rounded bg-light border">
+                        <img id="woundPreview" src="#" alt="Selected Image" class="img-fluid rounded" style="max-height: 250px;">
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'emergency:assistance' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fa-solid fa-phone me-1"></i> Emergency Helpline
+                            </a>
+                            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                                </button>
+                            </form>
+                        </div>
+                        <button type="submit" class="btn btn-teal">
+                            <i class="fa-solid fa-microscope me-2"></i> Run AI Wound Screening
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Screening Result Card -->
+            {% if result %}
+                <div class="card-clean p-4 border-2 {% if result.is_snake_bite %}card-danger-clean{% else %}card-success-clean{% endif %}">
+                    <h5 class="fw-bold mb-2">AI-Assisted Screening Output</h5>
+                    
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        {% if result.is_snake_bite %}
+                            <span class="badge bg-danger fs-6 px-3 py-2">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Result: {{ result.result_label }}
+                            </span>
+                            <span class="badge bg-outline-danger border text-danger fs-6 px-2 py-1">
+                                {{ result.status_title }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success fs-6 px-3 py-2">
+                                <i class="fa-solid fa-circle-check me-1"></i> Result: {{ result.result_label }}
+                            </span>
+                            <span class="badge bg-outline-success border text-success fs-6 px-2 py-1">
+                                {{ result.status_title }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    {% if result.processed_image_path %}
+                        <div class="text-center mb-3 p-2 bg-light rounded border">
+                            <img src="/media/{{ result.processed_image_path }}" alt="Annotated Screening" class="img-fluid rounded" style="max-height: 250px;">
+                            <small class="text-muted d-block mt-1">Diagnostic feature contour overlay</small>
+                        </div>
+                    {% endif %}
+
+                    <div class="p-3 bg-light rounded border mb-3">
+                        <p class="mb-1 text-dark fw-medium">{{ result.recommendation }}</p>
+                        <small class="text-muted d-block mt-2"><strong>Method:</strong> {{ result.method_label }}</small>
+                    </div>
+
+                    <div class="alert alert-danger py-2 mb-3 small">
+                        <strong>Disclaimer:</strong> {{ result.disclaimer }}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom">
+                            <i class="fa-solid fa-hospital me-2"></i> Locate Anti-Venom Hospitals (Haversine)
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const input = document.getElementById("woundInput");
+        const container = document.getElementById("woundPreviewContainer");
+        const preview = document.getElementById("woundPreview");
+
+        if (input) {
+            input.addEventListener("change", function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.setAttribute("src", e.target.result);
+                        container.classList.remove("d-none");
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

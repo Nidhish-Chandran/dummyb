@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}Authority Surveillance Dashboard & GIS - Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Authority Header Banner -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="fa-solid fa-chart-line text-teal me-2"></i> Wildlife Authority Surveillance & GIS Center
+            </h3>
+            <p class="text-secondary small mb-0">Authorized incident monitoring, DBSCAN spatial density clustering, and emergency dispatch console.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'hotspots:view' %}" class="btn btn-outline-teal btn-sm">
+                <i class="fa-solid fa-radar me-1"></i> Hotspot Radar
+            </a>
+            <a href="{% url 'reports:create' %}" class="btn btn-teal btn-sm">
+                <i class="fa-solid fa-plus me-1"></i> Add Sighting
+            </a>
+            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Emergency Action Bar -->
+    <div class="emergency-banner p-3 mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-danger text-white p-3 rounded-circle fs-4">
+                <i class="fa-solid fa-phone-volume"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-dark mb-0">Snakebite Emergency Support & Anti-Venom Stocks</h5>
+                <p class="text-secondary mb-0 small">Haversine spatial distance sorting for nearest medical facilities and emergency helplines.</p>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom py-2 px-4 text-nowrap">
+                <i class="fa-solid fa-kit-medical me-2"></i> Emergency Hospital Locator
+            </a>
+        </div>
+    </div>
+
+    <!-- Analytics Counters Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-2">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-light text-teal border">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">{{ total_sightings }}</h4>
+                    <small class="text-muted">Total Sightings</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-danger-light text-danger">
+                    <i class="fa-solid fa-fire"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">{{ hotspot_data.high_alert_count }}</h4>
+                    <small class="text-muted">DBSCAN Clusters</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning-light text-warning">
+                    <i class="fa-solid fa-skull-crossbones"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">{{ venomous_count }}</h4>
+                    <small class="text-muted">Venomous</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning-light text-warning">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">{{ pending_count }}</h4>
+                    <small class="text-muted">Pending Review</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-light text-secondary border">
+                    <i class="fa-solid fa-copy"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">{{ duplicate_count }}</h4>
+                    <small class="text-muted">Duplicates</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-light text-primary border">
+                    <i class="fa-solid fa-truck-medical"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">{{ unassigned_count }}</h4>
+                    <small class="text-muted">Unassigned</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Map & Recent Feed Section -->
+    <div class="row g-4 mb-4">
+        <!-- Interactive Surveillance Map (Authority Only) -->
+        <div class="col-lg-8">
+            <div class="card-clean p-3">
+                <div class="d-flex align-items-center justify-content-between mb-3 px-2">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-map-location-dot text-teal me-2"></i> Real-Time GIS Incident Surveillance Map</h5>
+                    <span class="badge bg-light text-dark border"><i class="fa-solid fa-lock me-1 text-teal"></i> Authority Only View</span>
+                </div>
+                <div id="mainDashboardMap" class="map-container" style="height: 480px;"></div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="col-lg-4">
+            <div class="card-clean p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-list-check text-teal me-2"></i> Recent Sightings</h5>
+                    <a href="{% url 'reports:list' %}" class="text-teal small fw-semibold text-decoration-none">View All &raquo;</a>
+                </div>
+
+                <div class="overflow-auto flex-grow-1 pe-1" style="max-height: 420px;">
+                    {% for report in recent_sightings %}
+                        <a href="{% url 'reports:detail' pk=report.pk %}" class="text-decoration-none d-block mb-3">
+                            <div class="p-3 rounded-3 bg-light border hover-shadow">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <h6 class="fw-bold text-dark mb-0">{{ report.title }}</h6>
+                                    {% if report.venom_category == 'HIGHLY_VENOMOUS' %}
+                                        <span class="badge badge-venomous">Highly Venomous</span>
+                                    {% elif report.venom_category == 'VENOMOUS' %}
+                                        <span class="badge badge-mild">Venomous</span>
+                                    {% else %}
+                                        <span class="badge badge-non-venomous">Non-Venomous</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-teal fw-semibold d-block"><i class="fa-solid fa-dna me-1"></i> {{ report.species_predicted|default:"Snake" }}</small>
+                                <small class="text-secondary d-block"><i class="fa-solid fa-location-dot me-1 text-danger"></i> {{ report.location_name }}</small>
+                                <small class="text-muted d-block mt-1"><i class="fa-solid fa-clock me-1"></i> {{ report.created_at|timesince }} ago</small>
+                            </div>
+                        </a>
+                    {% empty %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fa-solid fa-camera fs-2 mb-2 d-block text-secondary"></i>
+                            No sightings logged yet.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const map = L.map('mainDashboardMap').setView([9.9312, 76.2673], 11);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const bounds = [];
+
+        // Load Hotspot API Clusters & Sightings
+        fetch("{% url 'hotspots:api_clusters' %}")
+            .then(res => res.json())
+            .then(data => {
+
+                // DBSCAN Density Circles
+                data.clusters.forEach(cluster => {
+                    const latLng = [cluster.center_lat, cluster.center_lng];
+                    bounds.push(latLng);
+
+                    L.circle(latLng, {
+                        color: '#dc2626',
+                        fillColor: '#dc2626',
+                        fillOpacity: 0.25,
+                        radius: cluster.radius_meters,
+                        weight: 2
+                    }).addTo(map).bindPopup(`
+                        <div>
+                            <strong style="color: #dc2626;">DBSCAN DENSITY CLUSTER</strong><br>
+                            <b>Location:</b> ${cluster.location_name}<br>
+                            <b>Active Sightings:</b> ${cluster.sighting_count}
+                        </div>
+                    `);
+                });
+
+                // Load Individual Sighting Markers (Authority View Only)
+                {% for r in reports %}
+                    (function() {
+                        const rLat = {{ r.latitude }};
+                        const rLng = {{ r.longitude }};
+                        bounds.push([rLat, rLng]);
+
+                        const isVenom = {% if r.is_venomous %}true{% else %}false{% endif %};
+                        
+                        L.circleMarker([rLat, rLng], {
+                            color: isVenom ? '#dc2626' : '#16a34a',
+                            fillColor: isVenom ? '#dc2626' : '#16a34a',
+                            fillOpacity: 0.8,
+                            radius: 7
+                        }).addTo(map).bindPopup(`
+                            <div>
+                                <strong style="color: ${isVenom ? '#dc2626' : '#16a34a'};">${"{{ r.species_predicted|escapejs }}" || "Snake"}</strong><br>
+                                <small>${"{{ r.location_name|escapejs }}"}</small><br>
+                                <a href="{% url 'reports:detail' pk=r.pk %}" style="color: #0d9488; font-weight: bold;">View Details &raquo;</a>
+                            </div>
+                        `);
+                    })();
+                {% endfor %}
+
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            })
+            .catch(err => console.error("Error loading dashboard map data:", err));
+    });
+</script>
+{% endblock %}

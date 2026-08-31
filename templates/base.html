@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Venom Watch - AI Snake Surveillance & Emergency Support{% endblock %}</title>
+    
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom Light-Neutral CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-venom sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% if user.is_authenticated and user.profile.is_authority %}{% url 'dashboard:home' %}{% else %}{% url 'reports:list' %}{% endif %}">
+                <i class="fa-solid fa-staff-snake text-success fs-3"></i>
+                <span class="fw-bold">VENOM<span class="text-teal" style="color: var(--primary-teal);">WATCH</span></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#venomNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="venomNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    {% if user.is_authenticated and user.profile.is_authority %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:home' %}">
+                                <i class="fa-solid fa-chart-line me-1 text-teal"></i> Authority Dashboard & GIS
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'list' %}active{% endif %}" href="{% url 'reports:list' %}">
+                                <i class="fa-solid fa-list-check me-1"></i> All Sightings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.app_name == 'hotspots' %}active{% endif %}" href="{% url 'hotspots:view' %}">
+                                <i class="fa-solid fa-fire text-danger me-1"></i> Hotspot Radar
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'list' %}active{% endif %}" href="{% url 'reports:list' %}">
+                                <i class="fa-solid fa-list-check me-1"></i> My Sightings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'create' %}active{% endif %}" href="{% url 'reports:create' %}">
+                                <i class="fa-solid fa-plus-circle me-1"></i> Report Sighting
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'risk_zones' %}active{% endif %}" href="{% url 'reports:risk_zones' %}">
+                            <i class="fa-solid fa-shield-halved text-success me-1"></i> Community Risk Zones
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'ai' and request.resolver_match.url_name == 'wound_check' %}active{% endif %}" href="{% url 'ai:wound_check' %}">
+                            <i class="fa-solid fa-bandage me-1 text-warning"></i> Snakebite Wound Checker
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold text-danger {% if request.resolver_match.app_name == 'emergency' %}active{% endif %}" href="{% url 'emergency:assistance' %}">
+                            <i class="fa-solid fa-kit-medical me-1"></i> Emergency SOS & First Aid
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{% url 'reports:create' %}" class="btn btn-teal btn-sm d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Report Sighting
+                    </a>
+
+                    {% if user.is_authenticated %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-circle-user me-1 text-teal"></i> {{ user.username }} 
+                                {% if user.profile.role %}
+                                    <span class="badge bg-light text-dark border ms-1">{{ user.profile.get_role_display }}</span>
+                                {% endif %}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fa-solid fa-id-card me-2 text-muted"></i> Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'accounts:logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item text-danger border-0 bg-transparent w-100 text-start d-flex align-items-center">
+                                            <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                        <form method="post" action="{% url 'accounts:logout' %}" class="d-inline ms-1">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Logout of session">
+                                <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-teal btn-sm">Login</a>
+                        <a href="{% url 'accounts:register' %}" class="btn btn-teal btn-sm">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show card-clean border-0" role="alert">
+                    <i class="fa-solid {% if message.tags == 'danger' or message.tags == 'error' %}fa-triangle-exclamation text-danger{% else %}fa-circle-check text-success{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Main Content Block -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-3 mt-4 text-center text-muted fs-6 border-top">
+        <div class="container">
+            <p class="mb-1">
+                <i class="fa-solid fa-staff-snake text-success me-1"></i> 
+                <strong>Venom Watch Surveillance Network</strong> &copy; 2026. Rapid AI Snake Identification & Community Safety.
+            </p>
+            <small class="text-secondary">Designed for instant public safety, wildlife monitoring & medical emergency response support.</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

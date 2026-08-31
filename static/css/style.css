@@ -1,0 +1,232 @@
+/* Venom Watch Light-Neutral Professional Theme */
+
+:root {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #e2e8f0;
+    --border-color-hover: #cbd5e1;
+    --primary-teal: #0d9488;
+    --primary-teal-dark: #0f766e;
+    --primary-teal-light: #ccfbf1;
+    --primary-teal-text: #115e59;
+    --danger-red: #dc2626;
+    --danger-light: #fee2e2;
+    --danger-text: #991b1b;
+    --warning-amber: #d97706;
+    --warning-light: #fef3c7;
+    --warning-text: #92400e;
+    --success-green: #16a34a;
+    --success-light: #dcfce7;
+    --success-text: #15803d;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* White Cards */
+.card-clean {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-clean:hover {
+    border-color: var(--border-color-hover);
+    box-shadow: var(--shadow-md);
+}
+
+.card-danger-clean {
+    border-left: 4px solid var(--danger-red);
+}
+
+.card-warning-clean {
+    border-left: 4px solid var(--warning-amber);
+}
+
+.card-success-clean {
+    border-left: 4px solid var(--success-green);
+}
+
+/* Navbar */
+.navbar-venom {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.35rem;
+    color: var(--text-primary) !important;
+    letter-spacing: -0.3px;
+}
+
+.nav-link {
+    color: var(--text-secondary) !important;
+    font-weight: 500;
+    margin: 0 4px;
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--primary-teal) !important;
+}
+
+/* Buttons */
+.btn-teal {
+    background-color: var(--primary-teal);
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.25rem;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-teal:hover {
+    background-color: var(--primary-teal-dark);
+    color: #ffffff;
+}
+
+.btn-danger-venom {
+    background-color: var(--danger-red);
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.25rem;
+    transition: background-color 0.2s ease;
+}
+
+.btn-danger-venom:hover {
+    background-color: #b91c1c;
+    color: #ffffff;
+}
+
+.btn-outline-teal {
+    border: 1px solid var(--primary-teal);
+    color: var(--primary-teal);
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-teal:hover {
+    background-color: var(--primary-teal);
+    color: #ffffff;
+}
+
+/* Badges */
+.badge-venomous {
+    background-color: var(--danger-light);
+    color: var(--danger-text);
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.badge-non-venomous {
+    background-color: var(--success-light);
+    color: var(--success-text);
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+    border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.badge-mild {
+    background-color: var(--warning-light);
+    color: var(--warning-text);
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+    border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.badge-status {
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 0.35em 0.65em;
+}
+
+/* Form Controls */
+.form-control, .form-select {
+    background-color: #ffffff !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-teal) !important;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15) !important;
+}
+
+/* Leaflet Custom Map Container */
+.map-container {
+    height: 480px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.leaflet-container {
+    background: #f1f5f9 !important;
+}
+
+.leaflet-popup-content-wrapper {
+    background: #ffffff !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+/* Emergency Banner */
+.emergency-banner {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 1px solid #fca5a5;
+    border-radius: 12px;
+}
+
+/* Stat Cards */
+.stat-box {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    background: #ffffff;
+}

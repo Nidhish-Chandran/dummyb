@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Sighting Reports & Incident Tracking - Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header & Action Row -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">
+                {% if is_authority %}
+                    <i class="fa-solid fa-list-check text-teal me-2"></i> All Incident Reports & Surveillance Queue
+                {% elif is_responder %}
+                    <i class="fa-solid fa-truck-medical text-teal me-2"></i> Assigned Emergency Response Tasks
+                {% else %}
+                    <i class="fa-solid fa-clipboard-user text-teal me-2"></i> My Submitted Sighting History
+                {% endif %}
+            </h3>
+            <p class="text-secondary small mb-0">
+                {% if is_authority %}
+                    Comprehensive incident management, verification, duplicate review & responder dispatch queue.
+                {% else %}
+                    Track verification progress, AI species findings & rescue response status of your reports.
+                {% endif %}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'reports:create' %}" class="btn btn-teal text-nowrap btn-sm">
+                <i class="fa-solid fa-plus me-1"></i> Report New Sighting
+            </a>
+            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm text-nowrap">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="card-clean p-3 mb-4">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Search by title, species, landmark..." value="{{ query|default:'' }}">
+            </div>
+            <div class="col-md-3">
+                <select name="venom" class="form-select form-select-sm">
+                    <option value="">All Venom Categories</option>
+                    <option value="HIGHLY_VENOMOUS" {% if filter_venom == 'HIGHLY_VENOMOUS' %}selected{% endif %}>Highly Venomous</option>
+                    <option value="VENOMOUS" {% if filter_venom == 'VENOMOUS' %}selected{% endif %}>Venomous</option>
+                    <option value="NON_VENOMOUS" {% if filter_venom == 'NON_VENOMOUS' %}selected{% endif %}>Non-Venomous</option>
+                </select>
+            </div>
+            {% if is_authority %}
+                <div class="col-md-3">
+                    <select name="duplicate" class="form-select form-select-sm">
+                        <option value="">All Submissions</option>
+                        <option value="1" {% if filter_dup == '1' %}selected{% endif %}>Flagged Duplicates Only</option>
+                    </select>
+                </div>
+            {% endif %}
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-teal btn-sm">
+                    <i class="fa-solid fa-filter me-1"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reports Table / Grid -->
+    <div class="card-clean p-4">
+        {% if reports %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Report ID</th>
+                            <th>Image</th>
+                            <th>Sighting / Location</th>
+                            <th>AI Result</th>
+                            <th>Venom Category</th>
+                            <th>Authority Verification</th>
+                            <th>Rescue Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reports %}
+                            <tr>
+                                <td class="fw-bold">#{{ r.id }}</td>
+                                <td>
+                                    {% if r.processed_image %}
+                                        <img src="{{ r.processed_image.url }}" alt="AI Annotation" class="rounded border" style="width: 54px; height: 54px; object-fit: cover;">
+                                    {% elif r.original_image %}
+                                        <img src="{{ r.original_image.url }}" alt="Sighting" class="rounded border" style="width: 54px; height: 54px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light rounded border d-flex align-items-center justify-content-center text-muted" style="width: 54px; height: 54px;"><i class="fa-solid fa-image"></i></div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong class="d-block text-dark">{{ r.title }}</strong>
+                                    <small class="text-secondary"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ r.location_name }}</small>
+                                    <small class="text-muted d-block">{{ r.created_at|date:"M d, Y - H:i" }}</small>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-teal d-block"><i class="fa-solid fa-dna me-1"></i> {{ r.species_predicted|default:"Snake" }}</span>
+                                    <small class="text-muted">Conf: {{ r.ai_confidence }}%</small>
+                                </td>
+                                <td>
+                                    {% if r.venom_category == 'HIGHLY_VENOMOUS' %}
+                                        <span class="badge badge-venomous">Highly Venomous</span>
+                                    {% elif r.venom_category == 'VENOMOUS' %}
+                                        <span class="badge badge-mild">Venomous</span>
+                                    {% else %}
+                                        <span class="badge badge-non-venomous">Non-Venomous</span>
+                                    {% endif %}
+
+                                    {% if is_authority and r.duplicate_flag %}
+                                        <span class="badge bg-warning text-dark ms-1"><i class="fa-solid fa-copy me-1"></i> Duplicate</span>
+                                    {% endif %}
+
+                                    {% if is_authority and r.spam_flag %}
+                                        <span class="badge bg-danger text-white ms-1"><i class="fa-solid fa-flag me-1"></i> Spam Flag</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if r.status == 'VERIFIED' %}
+                                        <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Verified</span>
+                                    {% elif r.status == 'REJECTED' %}
+                                        <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
+                                    {% elif r.status == 'RESOLVED' %}
+                                        <span class="badge bg-info text-dark"><i class="fa-solid fa-circle-check me-1"></i> Area Cleared</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i> Pending Verification</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if r.response_status == 'RESOLVED' %}
+                                        <span class="badge bg-success">Snake Relocated</span>
+                                    {% elif r.response_status == 'IN_PROGRESS' %}
+                                        <span class="badge bg-primary">Response In Progress</span>
+                                    {% elif r.response_status == 'ASSIGNED' %}
+                                        <span class="badge bg-info text-dark">Responder Assigned</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-secondary border">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'reports:detail' pk=r.pk %}" class="btn btn-outline-teal btn-sm">
+                                        View Details &raquo;
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-folder-open fs-1 text-secondary mb-2 d-block"></i>
+                No sighting reports found matching the criteria.
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
