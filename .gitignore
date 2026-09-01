@@ -1,1 +1,29 @@
-Nothing needs to be added to .gitignore since the changes only include source files (CSS and HTML templates) without any build artifacts, dependencies, or temporary files.
+```
+# Compiled Python files
+*.pyc
+__pycache__/
+
+# Dataset files (if they are large or auto-generated)
+dataset/
+
+# YOLO model files (if they are large or auto-generated)
+*.pt
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+
+# Environment variables
+.env*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+```
