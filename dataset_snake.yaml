@@ -1,0 +1,21 @@
+path: /workspace/dataset
+train: train
+val: valid
+test: valid
+
+names:
+  0: black
+  1: boa
+  2: cat
+  3: cobra
+  4: common
+  5: keelback
+  6: krait
+  7: kukri
+  8: pit
+  9: python
+  10: racer
+  11: rat
+  12: russell
+  13: saw
+  14: wolf
