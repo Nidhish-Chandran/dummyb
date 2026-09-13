@@ -1,166 +1,181 @@
 {% extends 'base.html' %}
 
-{% block title %}Authority Surveillance Dashboard & GIS - Venom Watch{% endblock %}
+{% block title %}Authority Dashboard & GIS — Venom Watch{% endblock %}
 
 {% block content %}
 <div class="container py-4">
 
-    <!-- Authority Header Banner -->
+    <!-- Page Header -->
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
         <div>
-            <h3 class="fw-bold text-dark mb-1">
-                <i class="fa-solid fa-chart-line text-teal me-2"></i> Wildlife Authority Surveillance & GIS Center
-            </h3>
-            <p class="text-secondary small mb-0">Authorized incident monitoring, DBSCAN spatial density clustering, and emergency dispatch console.</p>
+            <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
+                <i class="fa-solid fa-chart-line me-2" style="color: var(--primary);"></i>
+                Wildlife Authority Surveillance & GIS
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Incident monitoring · DBSCAN spatial clustering · Emergency dispatch
+            </p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
             <a href="{% url 'hotspots:view' %}" class="btn btn-outline-teal btn-sm">
-                <i class="fa-solid fa-radar me-1"></i> Hotspot Radar
+                <i class="fa-solid fa-fire me-1"></i> Hotspot Radar
             </a>
             <a href="{% url 'reports:create' %}" class="btn btn-teal btn-sm">
                 <i class="fa-solid fa-plus me-1"></i> Add Sighting
             </a>
-            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger btn-sm">
-                    <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
-                </button>
-            </form>
         </div>
     </div>
 
     <!-- Emergency Action Bar -->
-    <div class="emergency-banner p-3 mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
+    <div class="emergency-banner p-3 mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="bg-danger text-white p-3 rounded-circle fs-4">
-                <i class="fa-solid fa-phone-volume"></i>
-            </div>
+            <i class="fa-solid fa-phone-volume" style="color: var(--danger); font-size: 1.25rem;"></i>
             <div>
-                <h5 class="fw-bold text-dark mb-0">Snakebite Emergency Support & Anti-Venom Stocks</h5>
-                <p class="text-secondary mb-0 small">Haversine spatial distance sorting for nearest medical facilities and emergency helplines.</p>
+                <p class="fw-semibold mb-0" style="font-size: 0.9rem; color: var(--text);">
+                    Snakebite Emergency & Anti-Venom Support
+                </p>
+                <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                    Nearest facilities sorted by Haversine distance
+                </p>
             </div>
         </div>
-        <div>
-            <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom py-2 px-4 text-nowrap">
-                <i class="fa-solid fa-kit-medical me-2"></i> Emergency Hospital Locator
-            </a>
-        </div>
+        <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom btn-sm text-nowrap">
+            <i class="fa-solid fa-kit-medical me-1"></i> Emergency Hospital Locator
+        </a>
     </div>
 
-    <!-- Analytics Counters Row -->
+    <!-- Metrics Row -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-2">
             <div class="stat-box d-flex align-items-center gap-3">
-                <div class="stat-icon bg-light text-teal border">
-                    <i class="fa-solid fa-eye"></i>
+                <div class="stat-icon bg-light border">
+                    <i class="fa-solid fa-eye" style="color: var(--primary);"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold text-dark mb-0">{{ total_sightings }}</h4>
-                    <small class="text-muted">Total Sightings</small>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ total_sightings }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Total Sightings</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-2">
             <div class="stat-box d-flex align-items-center gap-3">
-                <div class="stat-icon bg-danger-light text-danger">
-                    <i class="fa-solid fa-fire"></i>
+                <div class="stat-icon bg-danger-light">
+                    <i class="fa-solid fa-fire" style="color: var(--danger);"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold text-dark mb-0">{{ hotspot_data.high_alert_count }}</h4>
-                    <small class="text-muted">DBSCAN Clusters</small>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ hotspot_data.high_alert_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">DBSCAN Clusters</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-2">
             <div class="stat-box d-flex align-items-center gap-3">
-                <div class="stat-icon bg-warning-light text-warning">
-                    <i class="fa-solid fa-skull-crossbones"></i>
+                <div class="stat-icon bg-warning-light">
+                    <i class="fa-solid fa-skull-crossbones" style="color: var(--warning);"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold text-dark mb-0">{{ venomous_count }}</h4>
-                    <small class="text-muted">Venomous</small>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ venomous_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Venomous</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-2">
             <div class="stat-box d-flex align-items-center gap-3">
-                <div class="stat-icon bg-warning-light text-warning">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
+                <div class="stat-icon bg-warning-light">
+                    <i class="fa-solid fa-clock-rotate-left" style="color: var(--warning);"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold text-dark mb-0">{{ pending_count }}</h4>
-                    <small class="text-muted">Pending Review</small>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ pending_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Pending Review</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-2">
             <div class="stat-box d-flex align-items-center gap-3">
-                <div class="stat-icon bg-light text-secondary border">
-                    <i class="fa-solid fa-copy"></i>
+                <div class="stat-icon bg-light border">
+                    <i class="fa-solid fa-copy" style="color: var(--text-muted);"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold text-dark mb-0">{{ duplicate_count }}</h4>
-                    <small class="text-muted">Duplicates</small>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ duplicate_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Duplicates</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-2">
             <div class="stat-box d-flex align-items-center gap-3">
-                <div class="stat-icon bg-light text-primary border">
-                    <i class="fa-solid fa-truck-medical"></i>
+                <div class="stat-icon bg-light border">
+                    <i class="fa-solid fa-truck-medical" style="color: var(--info);"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold text-dark mb-0">{{ unassigned_count }}</h4>
-                    <small class="text-muted">Unassigned</small>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ unassigned_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Unassigned</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Map & Recent Feed Section -->
-    <div class="row g-4 mb-4">
-        <!-- Interactive Surveillance Map (Authority Only) -->
+    <!-- Map & Recent Feed -->
+    <div class="row g-4">
+        <!-- GIS Surveillance Map -->
         <div class="col-lg-8">
             <div class="card-clean p-3">
-                <div class="d-flex align-items-center justify-content-between mb-3 px-2">
-                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-map-location-dot text-teal me-2"></i> Real-Time GIS Incident Surveillance Map</h5>
-                    <span class="badge bg-light text-dark border"><i class="fa-solid fa-lock me-1 text-teal"></i> Authority Only View</span>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem; color: var(--text);">
+                        <i class="fa-solid fa-map-location-dot me-2" style="color: var(--primary);"></i>
+                        Real-Time GIS Incident Map
+                    </h5>
+                    <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">
+                        <i class="fa-solid fa-lock me-1" style="color: var(--primary);"></i> Authority View
+                    </span>
                 </div>
-                <div id="mainDashboardMap" class="map-container" style="height: 480px;"></div>
+                <div id="mainDashboardMap" class="map-container" style="height: 460px;"></div>
             </div>
         </div>
 
         <!-- Recent Activity Feed -->
         <div class="col-lg-4">
-            <div class="card-clean p-4 h-100 d-flex flex-column">
+            <div class="card-clean p-3 h-100 d-flex flex-column">
                 <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-list-check text-teal me-2"></i> Recent Sightings</h5>
-                    <a href="{% url 'reports:list' %}" class="text-teal small fw-semibold text-decoration-none">View All &raquo;</a>
+                    <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem; color: var(--text);">
+                        <i class="fa-solid fa-list-check me-2" style="color: var(--primary);"></i>
+                        Recent Sightings
+                    </h5>
+                    <a href="{% url 'reports:list' %}" class="text-decoration-none fw-semibold"
+                       style="font-size: 0.8rem; color: var(--primary);">View all &raquo;</a>
                 </div>
 
-                <div class="overflow-auto flex-grow-1 pe-1" style="max-height: 420px;">
+                <div class="overflow-auto flex-grow-1" style="max-height: 420px;">
                     {% for report in recent_sightings %}
-                        <a href="{% url 'reports:detail' pk=report.pk %}" class="text-decoration-none d-block mb-3">
-                            <div class="p-3 rounded-3 bg-light border hover-shadow">
-                                <div class="d-flex justify-content-between align-items-start mb-1">
-                                    <h6 class="fw-bold text-dark mb-0">{{ report.title }}</h6>
+                        <a href="{% url 'reports:detail' pk=report.pk %}" class="text-decoration-none d-block">
+                            <div class="d-flex justify-content-between align-items-start py-2 border-bottom"
+                                 style="transition: background-color 150ms;">
+                                <div style="min-width: 0;">
+                                    <p class="fw-semibold mb-0 text-truncate"
+                                       style="font-size: 0.875rem; color: var(--text);">{{ report.title }}</p>
+                                    <small class="d-block" style="color: var(--primary);">
+                                        {{ report.species_predicted|default:"Snake" }}
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        <i class="fa-solid fa-location-dot me-1" style="color: var(--danger);"></i>
+                                        {{ report.location_name }}
+                                    </small>
+                                    <small class="text-muted">{{ report.created_at|timesince }} ago</small>
+                                </div>
+                                <div class="flex-shrink-0 ms-2">
                                     {% if report.venom_category == 'HIGHLY_VENOMOUS' %}
-                                        <span class="badge badge-venomous">Highly Venomous</span>
+                                        <span class="badge-venomous">Highly Venomous</span>
                                     {% elif report.venom_category == 'VENOMOUS' %}
-                                        <span class="badge badge-mild">Venomous</span>
+                                        <span class="badge-mild">Venomous</span>
                                     {% else %}
-                                        <span class="badge badge-non-venomous">Non-Venomous</span>
+                                        <span class="badge-non-venomous">Non-Venomous</span>
                                     {% endif %}
                                 </div>
-                                <small class="text-teal fw-semibold d-block"><i class="fa-solid fa-dna me-1"></i> {{ report.species_predicted|default:"Snake" }}</small>
-                                <small class="text-secondary d-block"><i class="fa-solid fa-location-dot me-1 text-danger"></i> {{ report.location_name }}</small>
-                                <small class="text-muted d-block mt-1"><i class="fa-solid fa-clock me-1"></i> {{ report.created_at|timesince }} ago</small>
                             </div>
                         </a>
                     {% empty %}
                         <div class="text-center text-muted py-5">
-                            <i class="fa-solid fa-camera fs-2 mb-2 d-block text-secondary"></i>
-                            No sightings logged yet.
+                            <i class="fa-solid fa-camera-slash fa-2x mb-2 d-block text-secondary"></i>
+                            <small>No sightings logged yet.</small>
                         </div>
                     {% endfor %}
                 </div>
@@ -183,12 +198,10 @@
 
         const bounds = [];
 
-        // Load Hotspot API Clusters & Sightings
         fetch("{% url 'hotspots:api_clusters' %}")
             .then(res => res.json())
             .then(data => {
 
-                // DBSCAN Density Circles
                 data.clusters.forEach(cluster => {
                     const latLng = [cluster.center_lat, cluster.center_lng];
                     bounds.push(latLng);
@@ -208,7 +221,6 @@
                     `);
                 });
 
-                // Load Individual Sighting Markers (Authority View Only)
                 {% for r in reports %}
                     (function() {
                         const rLat = {{ r.latitude }};
@@ -216,7 +228,7 @@
                         bounds.push([rLat, rLng]);
 
                         const isVenom = {% if r.is_venomous %}true{% else %}false{% endif %};
-                        
+
                         L.circleMarker([rLat, rLng], {
                             color: isVenom ? '#dc2626' : '#16a34a',
                             fillColor: isVenom ? '#dc2626' : '#16a34a',
@@ -226,7 +238,7 @@
                             <div>
                                 <strong style="color: ${isVenom ? '#dc2626' : '#16a34a'};">${"{{ r.species_predicted|escapejs }}" || "Snake"}</strong><br>
                                 <small>${"{{ r.location_name|escapejs }}"}</small><br>
-                                <a href="{% url 'reports:detail' pk=r.pk %}" style="color: #0d9488; font-weight: bold;">View Details &raquo;</a>
+                                <a href="{% url 'reports:detail' pk=r.pk %}" style="color: #0f766e; font-weight: bold;">View Details &raquo;</a>
                             </div>
                         `);
                     })();

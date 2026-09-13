@@ -1,179 +1,280 @@
 {% extends 'base.html' %}
 
-{% block title %}Report #{{ report.id }} Details - Venom Watch{% endblock %}
+{% block title %}Report #{{ report.id }} — Venom Watch{% endblock %}
 
 {% block content %}
 <div class="container py-4">
 
     <!-- Breadcrumb & Header -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-            <a href="{% url 'reports:list' %}" class="text-secondary text-decoration-none small">
-                <i class="fa-solid fa-arrow-left me-1"></i> Back to Sightings
-            </a>
-            <h3 class="fw-bold text-dark mt-1 mb-0">
-                Sighting Report #{{ report.id }}: {{ report.title }}
-            </h3>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            {% if report.venom_category == 'HIGHLY_VENOMOUS' %}
-                <span class="badge badge-venomous fs-6">Highly Venomous</span>
-            {% elif report.venom_category == 'VENOMOUS' %}
-                <span class="badge badge-mild fs-6">Venomous</span>
-            {% else %}
-                <span class="badge badge-non-venomous fs-6">Non-Venomous</span>
-            {% endif %}
+    <div class="mb-4">
+        <a href="{% url 'reports:list' %}" class="text-decoration-none d-inline-flex align-items-center gap-1"
+           style="font-size: 0.8125rem; color: var(--text-muted);">
+            <i class="fa-solid fa-arrow-left"></i> Back to Sightings
+        </a>
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2">
+            <h2 class="fw-bold mb-0" style="font-size: 1.2rem; color: var(--text);">
+                Report #{{ report.id }}: {{ report.title }}
+            </h2>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                {% if report.venom_category == 'HIGHLY_VENOMOUS' %}
+                    <span class="badge-venomous">Highly Venomous</span>
+                {% elif report.venom_category == 'VENOMOUS' %}
+                    <span class="badge-mild">Venomous</span>
+                {% else %}
+                    <span class="badge-non-venomous">Non-Venomous</span>
+                {% endif %}
 
-            {% if report.status == 'VERIFIED' %}
-                <span class="badge bg-success fs-6"><i class="fa-solid fa-check me-1"></i> Verified</span>
-            {% elif report.status == 'REJECTED' %}
-                <span class="badge bg-danger fs-6"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
-            {% elif report.status == 'RESOLVED' %}
-                <span class="badge bg-info text-dark fs-6"><i class="fa-solid fa-circle-check me-1"></i> Area Cleared</span>
-            {% else %}
-                <span class="badge bg-warning text-dark fs-6"><i class="fa-solid fa-clock me-1"></i> Pending Verification</span>
-            {% endif %}
+                {% if report.status == 'VERIFIED' %}
+                    <span class="badge" style="background: var(--success-light); color: var(--success);">
+                        <i class="fa-solid fa-check me-1"></i> Verified
+                    </span>
+                {% elif report.status == 'REJECTED' %}
+                    <span class="badge" style="background: var(--danger-light); color: var(--danger);">
+                        <i class="fa-solid fa-xmark me-1"></i> Rejected
+                    </span>
+                {% elif report.status == 'RESOLVED' %}
+                    <span class="badge" style="background: var(--info-light); color: var(--info);">
+                        <i class="fa-solid fa-circle-check me-1"></i> Area Cleared
+                    </span>
+                {% else %}
+                    <span class="badge" style="background: var(--warning-light); color: var(--warning);">
+                        <i class="fa-solid fa-clock me-1"></i> Pending Verification
+                    </span>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <!-- Duplicate & Spam Warning Banner for Authorities -->
+    <!-- Authority Alerts -->
     {% if is_authority %}
         {% if report.duplicate_flag %}
-            <div class="alert alert-warning border-warning card-clean p-3 mb-4 d-flex align-items-center justify-content-between">
+            <div class="alert alert-warning d-flex align-items-center justify-content-between mb-4">
                 <div>
-                    <i class="fa-solid fa-copy text-warning me-2 fs-5"></i>
-                    <strong>Potential Duplicate Sighting Flagged:</strong> Geographically and temporally close to an existing report.
+                    <i class="fa-solid fa-copy me-2"></i>
+                    <strong>Potential Duplicate:</strong> Geographically and temporally close to an existing report.
                     {% if report.duplicate_of %}
-                        <a href="{% url 'reports:detail' pk=report.duplicate_of.pk %}" class="fw-bold text-dark">View Original Report #{{ report.duplicate_of.id }} &raquo;</a>
+                        <a href="{% url 'reports:detail' pk=report.duplicate_of.pk %}" class="fw-semibold ms-1"
+                           style="color: var(--warning);">View Original #{{ report.duplicate_of.id }} &raquo;</a>
                     {% endif %}
                 </div>
             </div>
         {% endif %}
 
         {% if report.spam_flag %}
-            <div class="alert alert-danger border-danger card-clean p-3 mb-4">
-                <i class="fa-solid fa-flag text-danger me-2 fs-5"></i>
-                <strong>Suspicious Submission Flagged:</strong> {{ report.spam_reason|default:"Rate limit threshold exceeded." }}
+            <div class="alert alert-danger d-flex align-items-center mb-4">
+                <i class="fa-solid fa-flag me-2"></i>
+                <div>
+                    <strong>Suspicious Submission:</strong>
+                    {{ report.spam_reason|default:"Rate limit threshold exceeded." }}
+                </div>
             </div>
         {% endif %}
     {% endif %}
 
-    <div class="row g-4 mb-4">
+    <div class="row g-4">
 
-        <!-- Left Column: Sighting Media & AI Findings -->
+        <!-- Left: Image & AI Analysis -->
         <div class="col-lg-7">
-            <div class="card-clean p-4 h-100">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-camera text-teal me-2"></i> Sighting Photo & AI Annotation</h5>
-                
-                <div class="text-center mb-4 bg-light p-2 rounded border">
+            <div class="card-clean p-4">
+                <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
+                    <i class="fa-solid fa-camera me-2" style="color: var(--primary);"></i>
+                    Sighting Photo & AI Analysis
+                </h5>
+
+                <!-- Photo -->
+                <div class="text-center mb-4 p-2 rounded border" style="background: var(--surface-hover);">
                     {% if report.processed_image %}
-                        <img src="{{ report.processed_image.url }}" alt="AI Annotation" class="img-fluid rounded" style="max-height: 400px;">
-                        <small class="text-muted d-block mt-2">OpenCV AI annotated image overlay</small>
+                        <img src="{{ report.processed_image.url }}" alt="AI Annotated"
+                             class="img-fluid rounded" style="max-height: 380px;">
+                        <small class="text-muted d-block mt-2" style="font-size: 0.75rem;">
+                            OpenCV AI annotated image overlay
+                        </small>
                     {% elif report.original_image %}
-                        <img src="{{ report.original_image.url }}" alt="Sighting" class="img-fluid rounded" style="max-height: 400px;">
-                        <small class="text-muted d-block mt-2">Original citizen uploaded photo</small>
+                        <img src="{{ report.original_image.url }}" alt="Sighting"
+                             class="img-fluid rounded" style="max-height: 380px;">
+                        <small class="text-muted d-block mt-2" style="font-size: 0.75rem;">
+                            Original uploaded photo
+                        </small>
                     {% endif %}
                 </div>
 
-                <div class="p-3 bg-light rounded border mb-3">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-robot text-teal me-2"></i> AI-Assisted Identification Details</h6>
-                    <div class="row g-2 small">
-                        <div class="col-6"><strong>Predicted Species:</strong> {{ report.species_predicted|default:"Snake" }}</div>
-                        <div class="col-6"><strong>Common Name:</strong> {{ report.common_name|default:"Not specified" }}</div>
-                        <div class="col-6"><strong>Toxicity Hazard:</strong> {{ report.toxicity_level }}</div>
-                        <div class="col-6"><strong>Threat Score:</strong> {{ report.danger_score }}/100</div>
-                        <div class="col-6"><strong>Analysis Confidence:</strong> {{ report.ai_confidence }}%</div>
-                        <div class="col-6"><strong>Model Status:</strong> Feature evaluation in progress</div>
+                <!-- Two-Stage AI Pipeline -->
+                <div class="border rounded overflow-hidden mb-3">
+                    <div style="padding: 0.5rem 0.85rem; background: var(--surface-hover); border-bottom: 1px solid var(--border);">
+                        <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+                            <i class="fa-solid fa-microchip me-1" style="color: var(--primary);"></i> Two-Stage AI Pipeline
+                        </span>
+                    </div>
+
+                    <!-- Stage 1 -->
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <div>
+                            <p class="fw-semibold mb-0" style="font-size: 0.8125rem; color: var(--text);">
+                                Stage 1 — Snake Detection
+                            </p>
+                            <small class="text-muted">
+                                Model: <code style="font-size: 0.75rem;">{{ report.model_1_name }}</code>
+                                &middot; Confidence: <strong>{{ report.snake_confidence|default:report.ai_confidence }}%</strong>
+                            </small>
+                        </div>
+                        <span class="badge {% if report.snake_detected %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if report.snake_detected %}Detected{% else %}Not Detected{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Stage 2 -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div>
+                            <p class="fw-semibold mb-0" style="font-size: 0.8125rem; color: var(--text);">
+                                Stage 2 — Venom Classification
+                            </p>
+                            <small class="text-muted">
+                                Model: <code style="font-size: 0.75rem;">{{ report.model_2_name }}</code>
+                                &middot; Confidence:
+                                <strong>
+                                    {% if report.snake_detected and report.venom_confidence is not None %}
+                                        {{ report.venom_confidence }}%
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </strong>
+                            </small>
+                        </div>
+                        {% if not report.snake_detected %}
+                            <span class="badge bg-secondary">Skipped</span>
+                        {% elif report.venomous %}
+                            <span class="badge" style="background: var(--danger-light); color: var(--danger);">Venomous</span>
+                        {% else %}
+                            <span class="badge" style="background: var(--success-light); color: var(--success);">Non-Venomous</span>
+                        {% endif %}
                     </div>
                 </div>
 
+                <p class="text-muted mb-0" style="font-size: 0.75rem;">
+                    <i class="fa-solid fa-triangle-exclamation me-1" style="color: var(--warning);"></i>
+                    AI prediction only — professional ground verification recommended.
+                </p>
+
                 {% if report.notes %}
-                    <div class="mb-3">
-                        <h6 class="fw-bold text-dark mb-1">Citizen Observation Notes:</h6>
-                        <p class="text-secondary small bg-light p-3 rounded border mb-0">{{ report.notes }}</p>
+                    <div class="mt-3 pt-3 border-top">
+                        <p class="fw-semibold mb-1" style="font-size: 0.8125rem; color: var(--text);">
+                            Citizen Observation Notes
+                        </p>
+                        <p class="text-muted mb-0 p-3 rounded border"
+                           style="font-size: 0.875rem; background: var(--surface-hover);">
+                            {{ report.notes }}
+                        </p>
                     </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Right Column: Map, Verification & Responder Controls -->
+        <!-- Right: Location, Authority Controls, Responder -->
         <div class="col-lg-5">
-            
-            <!-- Location & Map Card -->
+
+            <!-- Location & Map -->
             <div class="card-clean p-4 mb-4">
-                <h5 class="fw-bold mb-2"><i class="fa-solid fa-map-location-dot text-danger me-2"></i> Sighting Location</h5>
-                <p class="text-secondary small mb-2"><i class="fa-solid fa-location-dot me-1 text-danger"></i> {{ report.location_name }}</p>
-                <div id="detailMap" class="map-container mb-3" style="height: 220px;"></div>
-                <small class="text-muted d-block">Coordinates: {{ report.latitude|floatformat:5 }}, {{ report.longitude|floatformat:5 }}</small>
+                <h5 class="fw-semibold mb-2" style="font-size: 0.9375rem; color: var(--text);">
+                    <i class="fa-solid fa-map-location-dot me-2" style="color: var(--danger);"></i>
+                    Sighting Location
+                </h5>
+                <p class="text-muted mb-3" style="font-size: 0.875rem;">
+                    <i class="fa-solid fa-location-dot me-1" style="color: var(--danger);"></i>
+                    {{ report.location_name }}
+                </p>
+                <div id="detailMap" class="map-container mb-3" style="height: 200px;"></div>
+                <small class="text-muted" style="font-size: 0.75rem;">
+                    Coordinates: {{ report.latitude|floatformat:5 }}, {{ report.longitude|floatformat:5 }}
+                </small>
             </div>
 
-            <!-- Authority Verification Control Card -->
+            <!-- Authority Verification -->
             {% if is_authority %}
-                <div class="card-clean p-4 mb-4 border-2 card-warning-clean">
-                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-user-shield text-warning me-2"></i> Authority Review & Verification</h5>
+                <div class="card-clean p-4 mb-4 card-warning-clean">
+                    <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
+                        <i class="fa-solid fa-user-shield me-2" style="color: var(--warning);"></i>
+                        Authority Review & Verification
+                    </h5>
                     <form method="post" action="{% url 'reports:verify' pk=report.pk %}">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Verification Status</label>
+                            <label class="form-label">Verification Status</label>
                             <select name="status" class="form-select form-select-sm">
                                 {% for val, label in report.STATUS_CHOICES %}
-                                    <option value="{{ val }}" {% if report.status == val %}selected{% endif %}>{{ label }}</option>
+                                    <option value="{{ val }}" {% if report.status == val %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Official Authority Notes</label>
-                            <textarea name="authority_notes" class="form-control form-control-sm" rows="3" placeholder="Add verification details, ranger team remarks...">{{ report.authority_notes|default:'' }}</textarea>
+                            <label class="form-label">Authority Notes</label>
+                            <textarea name="authority_notes" class="form-control form-control-sm" rows="3"
+                                      placeholder="Verification details, ranger remarks…">{{ report.authority_notes|default:'' }}</textarea>
                         </div>
                         <button type="submit" class="btn btn-teal btn-sm w-100">
-                            <i class="fa-solid fa-floppy-disk me-1"></i> Save Verification Status
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save Verification
                         </button>
                     </form>
                 </div>
 
-                <!-- Volunteer / Responder Assignment Card -->
+                <!-- Responder Assignment -->
                 <div class="card-clean p-4 mb-4">
-                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-truck-medical text-teal me-2"></i> Assign Emergency Responder</h5>
+                    <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
+                        <i class="fa-solid fa-truck-medical me-2" style="color: var(--primary);"></i>
+                        Assign Responder
+                    </h5>
                     <form method="post" action="{% url 'reports:assign_responder' pk=report.pk %}">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Select Authorized Responder</label>
+                            <label class="form-label">Select Authorized Responder</label>
                             <select name="responder_id" class="form-select form-select-sm">
-                                <option value="">-- Unassigned --</option>
+                                <option value="">— Unassigned —</option>
                                 {% for u in responders %}
                                     <option value="{{ u.id }}" {% if report.assigned_responder == u %}selected{% endif %}>
-                                        {{ u.username }} ({% if u.profile %}{{ u.profile.organization|default:u.profile.get_role_display }}{% else %}Responder{% endif %})
+                                        {{ u.username }}
+                                        ({% if u.profile %}{{ u.profile.organization|default:u.profile.get_role_display }}{% else %}Responder{% endif %})
                                     </option>
                                 {% endfor %}
                             </select>
                         </div>
                         <button type="submit" class="btn btn-outline-teal btn-sm w-100">
-                            <i class="fa-solid fa-user-plus me-1"></i> Update Responder Assignment
+                            <i class="fa-solid fa-user-plus me-1"></i> Update Assignment
                         </button>
                     </form>
                 </div>
             {% endif %}
 
-            <!-- Response Task Status Progress Card -->
+            <!-- Response Status -->
             {% if is_authority or is_assigned_responder %}
                 <div class="card-clean p-4">
-                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-circle-play text-info me-2"></i> Response Task Status</h5>
+                    <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
+                        <i class="fa-solid fa-circle-play me-2" style="color: var(--info);"></i>
+                        Response Task Status
+                    </h5>
                     <div class="mb-3">
-                        <small class="text-muted d-block">Assigned Responder: <strong>{{ report.assigned_responder.username|default:"Unassigned" }}</strong></small>
-                        <small class="text-muted d-block mb-2">Current Rescue Status: <strong>{{ report.get_response_status_display }}</strong></small>
+                        <p class="text-muted mb-1" style="font-size: 0.8rem;">
+                            Assigned responder:
+                            <strong style="color: var(--text);">{{ report.assigned_responder.username|default:"Unassigned" }}</strong>
+                        </p>
+                        <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                            Current status:
+                            <strong style="color: var(--text);">{{ report.get_response_status_display }}</strong>
+                        </p>
                     </div>
-
                     <form method="post" action="{% url 'reports:update_response_status' pk=report.pk %}">
                         {% csrf_token %}
                         <div class="mb-3">
                             <select name="response_status" class="form-select form-select-sm">
                                 {% for val, label in report.RESPONSE_STATUS_CHOICES %}
-                                    <option value="{{ val }}" {% if report.response_status == val %}selected{% endif %}>{{ label }}</option>
+                                    <option value="{{ val }}" {% if report.response_status == val %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
                         <button type="submit" class="btn btn-teal btn-sm w-100">
-                            <i class="fa-solid fa-check-double me-1"></i> Update Response Status
+                            <i class="fa-solid fa-check-double me-1"></i> Update Status
                         </button>
                     </form>
                 </div>
@@ -181,6 +282,7 @@
 
         </div>
     </div>
+
 </div>
 {% endblock %}
 

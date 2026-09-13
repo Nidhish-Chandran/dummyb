@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from .models import SightingReport
 from .forms import SightingReportForm
 from .services import DuplicateSpamDetectionService
-from ai.services import SnakeAIDetectionService
+from ai.services import SnakeAIPipelineService
 from hotspots.services import DBSCANHotspotService
 from accounts.decorators import authority_required
 from django.views.decorators.cache import never_cache
@@ -24,21 +24,22 @@ def create_report_view(request):
                 report.user = request.user
             report.save()
 
-            # 1. Trigger AI Detection & Species Classification Pipeline
+            # 1. Trigger Two-Stage AI Pipeline (Model #1 Snake Detection + Model #2 Venom Classification)
             try:
-                ai_results = SnakeAIDetectionService.analyze_image(report.original_image.path)
+                ai_results = SnakeAIPipelineService.analyze_image(report.original_image.path)
                 
-                report.ai_detected = ai_results.get('detected', True)
-                report.species_predicted = ai_results.get('species')
-                report.common_name = ai_results.get('common_name')
-                report.venom_category = ai_results.get('venom_category')
-                report.toxicity_level = ai_results.get('toxicity_level')
-                report.danger_score = ai_results.get('danger_score', 50)
-                report.ai_confidence = ai_results.get('confidence', 95.0)
+                report.snake_detected = ai_results.get('snake_detected', False)
+                report.snake_confidence = ai_results.get('snake_confidence', 0.0)
+                report.venomous = ai_results.get('venomous')
+                report.venom_confidence = ai_results.get('venom_confidence')
                 
-                if ai_results.get('processed_image_path'):
-                    report.processed_image = ai_results.get('processed_image_path')
-                    
+                report.ai_detected = report.snake_detected
+                report.species_predicted = ai_results.get('species', 'Snake')
+                report.venom_category = ai_results.get('venom_category', 'NON_VENOMOUS')
+                report.ai_confidence = report.venom_confidence if report.venom_confidence is not None else report.snake_confidence
+                report.model_1_name = ai_results.get('model_1', 'Snake Detection.v2 YOLOv8')
+                report.model_2_name = ai_results.get('model_2', 'venom_watch_cnn2_keras')
+                
                 report.save()
             except Exception as e:
                 messages.warning(request, f"Report logged. AI processing note: {str(e)}")

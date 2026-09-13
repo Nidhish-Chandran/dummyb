@@ -1,135 +1,174 @@
 {% extends 'base.html' %}
 
-{% block title %}Emergency Support & Anti-Venom Hospitals - Venom Watch{% endblock %}
+{% block title %}Emergency Support & Hospital Locator — Venom Watch{% endblock %}
 
 {% block content %}
 <div class="container py-4">
 
-    <!-- Emergency Action Header -->
-    <div class="emergency-banner p-4 mb-4 shadow-sm">
+    <!-- Emergency Header -->
+    <div class="emergency-banner p-4 mb-4">
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
-                <div class="bg-danger text-white p-3 rounded-circle fs-2">
-                    <i class="fa-solid fa-truck-medical"></i>
-                </div>
+                <i class="fa-solid fa-truck-medical" style="color: var(--danger); font-size: 1.4rem;"></i>
                 <div>
-                    <h3 class="fw-bold text-dark mb-1">Snakebite Emergency Support & Hospital Locator</h3>
-                    <p class="text-secondary mb-0 small">Haversine distance calculation to nearest anti-venom hospitals & 24/7 ICU units.</p>
+                    <h2 class="fw-bold mb-1" style="font-size: 1.15rem; color: var(--text);">
+                        Snakebite Emergency Support & Hospital Locator
+                    </h2>
+                    <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                        Nearest anti-venom hospitals sorted by Haversine distance calculation
+                    </p>
                 </div>
             </div>
-            <div class="d-flex gap-2">
-                <a href="tel:108" class="btn btn-danger-venom py-2 px-3 text-nowrap fs-6">
-                    <i class="fa-solid fa-phone me-1"></i> 108
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="tel:108" class="btn btn-danger-venom btn-sm text-nowrap">
+                    <i class="fa-solid fa-phone me-1"></i> Call 108
                 </a>
-                <a href="tel:1926" class="btn btn-outline-danger py-2 px-3 text-nowrap">
-                    <i class="fa-solid fa-tree me-1"></i> 1926
+                <a href="tel:1926" class="btn btn-outline-danger btn-sm text-nowrap">
+                    <i class="fa-solid fa-tree me-1"></i> 1926 Wildlife
                 </a>
-                {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-dark py-2 px-3 text-nowrap">
-                            <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
-                        </button>
-                    </form>
-                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- First Aid Guidelines Banner -->
-    <div class="card-clean p-4 mb-4 border-2 card-warning-clean">
-        <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-kit-medical text-warning me-2"></i> Immediate Snakebite First-Aid Protocol</h5>
-        <div class="row g-3 text-secondary small">
-            <div class="col-md-3">
-                <div class="p-3 bg-light rounded border h-100">
-                    <strong class="text-dark d-block mb-1">1. Keep Patient Still</strong>
-                    Immobilize the bitten limb using a splint or loose bandage. Minimize movement to slow venom transport.
+    <!-- First Aid Protocol -->
+    <div class="card-clean p-4 mb-4 card-warning-clean">
+        <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
+            <i class="fa-solid fa-kit-medical me-2" style="color: var(--warning);"></i>
+            Immediate Snakebite First-Aid Protocol
+        </h5>
+        <div class="row g-3">
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 rounded border" style="background: var(--surface-hover);">
+                    <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
+                        1. Keep Patient Still
+                    </p>
+                    <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                        Immobilize the bitten limb. Minimize movement to slow venom transport.
+                    </p>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="p-3 bg-light rounded border h-100">
-                    <strong class="text-dark d-block mb-1">2. Do NOT Cut or Suck</strong>
-                    Never make incisions or try to suck venom out. Avoid tight tourniquets which cause tissue necrosis.
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 rounded border" style="background: var(--surface-hover);">
+                    <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
+                        2. Do NOT Cut or Suck
+                    </p>
+                    <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                        Never make incisions. Avoid tight tourniquets which cause tissue necrosis.
+                    </p>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="p-3 bg-light rounded border h-100">
-                    <strong class="text-dark d-block mb-1">3. Remove Jewelry/Tight Clothes</strong>
-                    Remove rings, watches, or tight footwear before localized swelling begins.
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 rounded border" style="background: var(--surface-hover);">
+                    <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
+                        3. Remove Jewelry
+                    </p>
+                    <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                        Remove rings, watches, or tight footwear before swelling begins.
+                    </p>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="p-3 bg-light rounded border h-100">
-                    <strong class="text-dark d-block mb-1">4. Rush to Hospital</strong>
-                    Transport immediately to the nearest hospital equipped with polyvalent anti-snake venom (ASV).
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 rounded border" style="background: var(--surface-hover);">
+                    <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
+                        4. Rush to Hospital
+                    </p>
+                    <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                        Transport immediately to the nearest hospital with polyvalent ASV.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Nearest Hospitals List (Sorted by Haversine Distance) -->
-    <div class="card-clean p-4">
-        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-2 border-bottom">
+    <!-- Hospital List -->
+    <div class="card-clean">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 p-4 border-bottom">
             <div>
-                <h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-hospital text-teal me-2"></i> Nearest Anti-Venom Specialty Hospitals</h5>
-                <p class="text-secondary small mb-0">Calculated using Haversine formula based on your location coordinates ({{ user_lat|floatformat:4 }}, {{ user_lng|floatformat:4 }}).</p>
+                <h5 class="fw-semibold mb-1" style="font-size: 0.9375rem; color: var(--text);">
+                    <i class="fa-solid fa-hospital me-2" style="color: var(--primary);"></i>
+                    Nearest Anti-Venom Specialty Hospitals
+                </h5>
+                <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                    Sorted by distance from your location
+                    ({{ user_lat|floatformat:4 }}, {{ user_lng|floatformat:4 }})
+                </p>
             </div>
             <button type="button" id="btnUpdateLocation" class="btn btn-outline-teal btn-sm">
                 <i class="fa-solid fa-location-crosshairs me-1"></i> Update My Location
             </button>
         </div>
 
-        <div class="row g-4">
-            {% for h in hospitals %}
-                <div class="col-md-4">
-                    <div class="card-clean p-4 h-100 d-flex flex-column justify-content-between">
-                        <div>
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="badge bg-teal text-white px-2 py-1 fs-6" style="background-color: var(--primary-teal);">
+        <div class="p-4">
+            <div class="row g-4">
+                {% for h in hospitals %}
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100 d-flex flex-column"
+                             style="background: var(--surface);">
+                            <!-- Distance & Stock Badges -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="fw-semibold" style="color: var(--primary); font-size: 0.875rem;">
+                                    <i class="fa-solid fa-location-arrow me-1"></i>
                                     {{ h.distance_km }} km away
                                 </span>
                                 {% if h.anti_venom_available %}
-                                    <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Anti-Venom Stocked</span>
+                                    <span class="badge" style="background: var(--success-light); color: var(--success);">
+                                        <i class="fa-solid fa-check me-1"></i> Anti-Venom
+                                    </span>
                                 {% else %}
-                                    <span class="badge bg-danger">Out of Stock</span>
+                                    <span class="badge" style="background: var(--danger-light); color: var(--danger);">
+                                        Out of Stock
+                                    </span>
                                 {% endif %}
                             </div>
 
-                            <h5 class="fw-bold text-dark mb-2">{{ h.name }}</h5>
-                            <p class="text-secondary small mb-2"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ h.address }}</p>
-                            
-                            <div class="p-3 bg-light rounded border mb-3 small">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>Anti-Venom Stock:</span>
-                                    <strong class="text-teal">{{ h.anti_venom_stock_vials }} Vials</strong>
+                            <!-- Hospital Info -->
+                            <p class="fw-bold mb-1" style="font-size: 0.9375rem; color: var(--text);">{{ h.name }}</p>
+                            <p class="text-muted mb-3" style="font-size: 0.8125rem;">
+                                <i class="fa-solid fa-location-dot me-1" style="color: var(--danger);"></i>
+                                {{ h.address }}
+                            </p>
+
+                            <!-- Hospital Stats -->
+                            <div class="rounded border p-2 mb-3" style="background: var(--surface-hover);">
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                    <span class="text-muted">Anti-Venom Stock</span>
+                                    <strong style="color: var(--primary);">{{ h.anti_venom_stock_vials }} Vials</strong>
                                 </div>
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>24/7 ICU & Ventilator:</span>
-                                    <strong>{% if h.has_icu %}<span class="text-success">Available</span>{% else %}<span class="text-muted">Limited</span>{% endif %}</strong>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                    <span class="text-muted">24/7 ICU</span>
+                                    <strong>
+                                        {% if h.has_icu %}
+                                            <span style="color: var(--success);">Available</span>
+                                        {% else %}
+                                            <span class="text-muted">Limited</span>
+                                        {% endif %}
+                                    </strong>
                                 </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Operating Hours:</span>
-                                    <strong class="text-dark">{{ h.operating_hours }}</strong>
+                                <div class="d-flex justify-content-between" style="font-size: 0.8rem;">
+                                    <span class="text-muted">Hours</span>
+                                    <strong style="color: var(--text);">{{ h.operating_hours }}</strong>
                                 </div>
                             </div>
-                        </div>
 
-                        <div>
-                            <a href="tel:{{ h.phone_number }}" class="btn btn-teal w-100 btn-sm mb-2">
-                                <i class="fa-solid fa-phone me-1"></i> Call Hospital: {{ h.phone_number }}
-                            </a>
-                            <a href="https://www.google.com/maps/dir/?api=1&destination={{ h.latitude }},{{ h.longitude }}" target="_blank" class="btn btn-outline-secondary w-100 btn-sm">
-                                <i class="fa-solid fa-directions me-1"></i> Get Directions
-                            </a>
+                            <!-- Action Buttons -->
+                            <div class="mt-auto d-flex flex-column gap-2">
+                                <a href="tel:{{ h.phone_number }}" class="btn btn-teal btn-sm w-100">
+                                    <i class="fa-solid fa-phone me-1"></i> Call {{ h.phone_number }}
+                                </a>
+                                <a href="https://www.google.com/maps/dir/?api=1&destination={{ h.latitude }},{{ h.longitude }}"
+                                   target="_blank" class="btn btn-outline-secondary btn-sm w-100">
+                                    <i class="fa-solid fa-directions me-1"></i> Get Directions
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {% empty %}
-                <div class="col-12 text-center py-5 text-muted">
-                    <i class="fa-solid fa-hospital fs-1 text-secondary mb-2 d-block"></i>
-                    No hospital records found in system.
-                </div>
-            {% endfor %}
+                {% empty %}
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="fa-solid fa-hospital fa-2x mb-2 d-block" style="color: var(--border-hover);"></i>
+                        <p class="mb-0" style="font-size: 0.875rem;">No hospital records found in system.</p>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 

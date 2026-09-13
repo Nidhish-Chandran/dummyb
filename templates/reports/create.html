@@ -1,90 +1,136 @@
 {% extends 'base.html' %}
 
-{% block title %}Report Snake Sighting - Venom Watch{% endblock %}
+{% block title %}AI Snake Analysis & Report — Venom Watch{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card-clean p-4 p-md-5">
-                <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom">
+
+                <!-- Page Header -->
+                <div class="d-flex align-items-start justify-content-between mb-4 pb-3 border-bottom">
                     <div>
-                        <h3 class="fw-bold text-dark mb-1"><i class="fa-solid fa-camera text-teal me-2"></i> Report Snake Sighting</h3>
-                        <p class="text-secondary small mb-0">Upload a snake image for AI-assisted identification and capture location coordinates.</p>
+                        <h2 class="fw-bold mb-1" style="font-size: 1.2rem; color: var(--text);">
+                            <i class="fa-solid fa-camera me-2" style="color: var(--primary);"></i>
+                            AI Snake Scanner & Report
+                        </h2>
+                        <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                            Upload a photo to run Stage 1 Snake Detection (YOLOv8) & Stage 2 Venom Classification (CNN) before reporting.
+                        </p>
                     </div>
-                    <a href="{% url 'reports:list' %}" class="btn btn-outline-teal btn-sm">
+                    <a href="{% url 'reports:list' %}" class="btn btn-outline-secondary btn-sm ms-3 flex-shrink-0">
                         <i class="fa-solid fa-list me-1"></i> My Sightings
                     </a>
                 </div>
 
-                <form method="post" enctype="multipart/form-data">
+                <form method="post" enctype="multipart/form-data" id="sightingForm">
                     {% csrf_token %}
 
-                    <div class="row g-4">
-                        <!-- Left Column: Form Details & Image Upload -->
-                        <div class="col-md-6">
+                    <!-- Step 1: Image Upload -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-light border text-muted fw-semibold"
+                                  style="font-size: 0.7rem; letter-spacing: 0.04em;">STEP 1</span>
+                            <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                                Select / Upload Snake Photo
+                            </span>
+                        </div>
+                        <div class="p-4 rounded border" style="background: var(--surface-hover);">
                             <div class="mb-3">
-                                <label class="form-label text-dark fw-medium">Sighting Title / Short Headline *</label>
-                                {{ form.title }}
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label text-dark fw-medium">Upload Snake Image *</label>
+                                <label class="form-label" for="sightingImageInput">Snake Photo *</label>
                                 {{ form.original_image }}
-                                <div class="form-text text-muted">Accepted formats: JPG, PNG, WEBP. OpenCV feature analysis will process the photo.</div>
+                                <div class="form-text">Accepted formats: JPG, PNG, WEBP. Image analyzed on selection.</div>
                             </div>
 
-                            <!-- Live Image Preview -->
-                            <div id="imagePreviewContainer" class="mb-3 d-none text-center p-2 rounded bg-light border">
-                                <small class="text-muted d-block mb-1">Image Preview</small>
-                                <img id="imagePreview" src="#" alt="Selected Image" class="img-fluid rounded" style="max-height: 200px;">
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label text-dark fw-medium">Location Name / Landmark *</label>
-                                {{ form.location_name }}
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label text-dark fw-medium">Observation Notes / Behavior</label>
-                                {{ form.notes }}
-                            </div>
-                        </div>
-
-                        <!-- Right Column: Interactive Leaflet Map Picker & GPS Geolocation -->
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <label class="form-label text-dark fw-medium mb-0"><i class="fa-solid fa-location-dot text-danger me-1"></i> Capture / Pick Location on Map</label>
-                                <button type="button" id="btnGeolocate" class="btn btn-sm btn-outline-teal">
-                                    <i class="fa-solid fa-location-crosshairs me-1"></i> Detect GPS Location
-                                </button>
-                            </div>
-
-                            <!-- Geolocation Status Alert -->
-                            <div id="geoAlert" class="alert alert-info py-2 px-3 small mb-2 d-none">
-                                <span id="geoAlertText">Detecting device GPS location...</span>
-                            </div>
-                            
-                            <div id="pickerMap" class="map-container mb-3" style="height: 280px;"></div>
-
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <label class="form-label text-muted small mb-1">Latitude</label>
-                                    {{ form.latitude }}
+                            <!-- Image Preview & AI Result Container -->
+                            <div id="imagePreviewContainer" class="d-none">
+                                <div class="text-center mb-3 p-3 rounded border"
+                                     style="background: var(--surface);">
+                                    <small class="text-muted d-block mb-2" style="font-size: 0.75rem;">Uploaded Image</small>
+                                    <img id="imagePreview" src="#" alt="Selected Image"
+                                         class="img-fluid rounded" style="max-height: 260px;">
                                 </div>
-                                <div class="col-6">
-                                    <label class="form-label text-muted small mb-1">Longitude</label>
-                                    {{ form.longitude }}
-                                </div>
+
+                                <!-- Dynamic AI Analysis Status -->
+                                <div id="aiAnalysisStatus"></div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-3 border-top text-end">
-                        <button type="submit" class="btn btn-teal btn-lg py-2 px-5 fs-6">
-                            <i class="fa-solid fa-paper-plane me-2"></i> Submit Sighting Report
-                        </button>
+                    <!-- Step 2: Report Details (shown after AI result) -->
+                    <div id="reportFormDetails" class="d-none">
+                        <div class="d-flex align-items-center gap-2 mb-2 mt-4">
+                            <span class="badge bg-light border text-muted fw-semibold"
+                                  style="font-size: 0.7rem; letter-spacing: 0.04em;">STEP 2</span>
+                            <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                                Complete Sighting Report
+                            </span>
+                        </div>
+
+                        <div class="alert alert-info py-2 px-3 mb-4" style="font-size: 0.8125rem;">
+                            <i class="fa-solid fa-location-crosshairs me-1"></i>
+                            Complete location details to notify wildlife authorities and dispatch emergency responders.
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Form Fields -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="id_title">Sighting Title / Headline *</label>
+                                    {{ form.title }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="locationInput">Location Name / Landmark *</label>
+                                    {{ form.location_name }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="id_notes">Observation Notes</label>
+                                    {{ form.notes }}
+                                </div>
+                            </div>
+
+                            <!-- Map & GPS -->
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <label class="form-label mb-0">
+                                        <i class="fa-solid fa-location-dot me-1" style="color: var(--danger);"></i>
+                                        Pick Location on Map
+                                    </label>
+                                    <button type="button" id="btnGeolocate" class="btn btn-outline-teal btn-sm">
+                                        <i class="fa-solid fa-location-crosshairs me-1"></i> Detect GPS
+                                    </button>
+                                </div>
+
+                                <!-- GPS Alert -->
+                                <div id="geoAlert" class="alert alert-info py-2 px-3 small mb-2 d-none"
+                                     style="font-size: 0.8rem;">
+                                    <span id="geoAlertText">Detecting GPS location…</span>
+                                </div>
+
+                                <div id="pickerMap" class="map-container mb-3" style="height: 240px;"></div>
+
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label" style="font-size: 0.75rem; color: var(--text-muted);">Latitude</label>
+                                        {{ form.latitude }}
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" style="font-size: 0.75rem; color: var(--text-muted);">Longitude</label>
+                                        {{ form.longitude }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="mt-4 pt-3 border-top text-end">
+                            <button type="submit" id="submitReportBtn" class="btn btn-teal px-5">
+                                <i class="fa-solid fa-paper-plane me-2"></i> Submit Sighting Report
+                            </button>
+                        </div>
                     </div>
+
                 </form>
             </div>
         </div>
@@ -95,81 +141,255 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const defaultLat = parseFloat(document.getElementById("latInput").value) || 9.9312;
-        const defaultLng = parseFloat(document.getElementById("lngInput").value) || 76.2673;
-
-        const map = L.map('pickerMap').setView([defaultLat, defaultLng], 13);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        let marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
-
-        function updateMarker(lat, lng) {
-            marker.setLatLng([lat, lng]);
-            document.getElementById("latInput").value = lat.toFixed(6);
-            document.getElementById("lngInput").value = lng.toFixed(6);
-        }
-
-        map.on('click', function(e) {
-            updateMarker(e.latlng.lat, e.latlng.lng);
-        });
-
-        marker.on('dragend', function(e) {
-            const position = marker.getLatLng();
-            updateMarker(position.lat, position.lng);
-        });
-
-        // Geolocation Button & Logic
-        const geoBtn = document.getElementById("btnGeolocate");
-        const geoAlert = document.getElementById("geoAlert");
-        const geoAlertText = document.getElementById("geoAlertText");
-
-        geoBtn.addEventListener("click", function() {
-            if ("geolocation" in navigator) {
-                geoAlert.classList.remove("d-none", "alert-warning", "alert-success");
-                geoAlert.classList.add("alert-info");
-                geoAlertText.innerText = "Attempting device GPS detection...";
-
-                navigator.geolocation.getCurrentPosition(function(pos) {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    map.setView([lat, lng], 15);
-                    updateMarker(lat, lng);
-                    
-                    geoAlert.classList.remove("alert-info");
-                    geoAlert.classList.add("alert-success");
-                    geoAlertText.innerText = "GPS location captured successfully!";
-                }, function(err) {
-                    geoAlert.classList.remove("alert-info");
-                    geoAlert.classList.add("alert-warning");
-                    geoAlertText.innerText = "Browser GPS location unavailable (" + err.message + "). Please manually pick location on map or type landmark name.";
-                }, { timeout: 8000 });
-            } else {
-                geoAlert.classList.remove("d-none", "alert-info");
-                geoAlert.classList.add("alert-warning");
-                geoAlertText.innerText = "Geolocation not supported by your browser. Please drag the marker on the map manually.";
-            }
-        });
-
-        // Image Preview Script
         const imageInput = document.getElementById("sightingImageInput");
         const previewContainer = document.getElementById("imagePreviewContainer");
         const previewImg = document.getElementById("imagePreview");
+        const aiStatusDiv = document.getElementById("aiAnalysisStatus");
+        const reportFormDetails = document.getElementById("reportFormDetails");
 
+        let map = null;
+        let marker = null;
+
+        function initMap() {
+            if (map) return;
+            const defaultLat = parseFloat(document.getElementById("latInput").value) || 9.9312;
+            const defaultLng = parseFloat(document.getElementById("lngInput").value) || 76.2673;
+
+            map = L.map('pickerMap').setView([defaultLat, defaultLng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+            function updateMarker(lat, lng) {
+                marker.setLatLng([lat, lng]);
+                document.getElementById("latInput").value = lat.toFixed(6);
+                document.getElementById("lngInput").value = lng.toFixed(6);
+            }
+
+            map.on('click', function(e) {
+                updateMarker(e.latlng.lat, e.latlng.lng);
+            });
+
+            marker.on('dragend', function(e) {
+                const position = marker.getLatLng();
+                updateMarker(position.lat, position.lng);
+            });
+
+            // Geolocation button
+            const geoBtn = document.getElementById("btnGeolocate");
+            const geoAlert = document.getElementById("geoAlert");
+            const geoAlertText = document.getElementById("geoAlertText");
+
+            geoBtn.addEventListener("click", function() {
+                if ("geolocation" in navigator) {
+                    geoAlert.classList.remove("d-none", "alert-warning", "alert-success");
+                    geoAlert.classList.add("alert-info");
+                    geoAlertText.innerText = "Attempting device GPS detection…";
+
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        map.setView([lat, lng], 15);
+                        updateMarker(lat, lng);
+
+                        geoAlert.classList.remove("alert-info");
+                        geoAlert.classList.add("alert-success");
+                        geoAlertText.innerText = "GPS location captured successfully!";
+                    }, function(err) {
+                        geoAlert.classList.remove("alert-info");
+                        geoAlert.classList.add("alert-warning");
+                        geoAlertText.innerText = "GPS unavailable (" + err.message + "). Pick location on map.";
+                    }, { timeout: 8000 });
+                } else {
+                    geoAlert.classList.remove("d-none", "alert-info");
+                    geoAlert.classList.add("alert-warning");
+                    geoAlertText.innerText = "Geolocation not supported by your browser.";
+                }
+            });
+        }
+
+        // Image selection & AI analysis
         if (imageInput) {
             imageInput.addEventListener("change", function() {
                 const file = this.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImg.setAttribute("src", e.target.result);
-                        previewContainer.classList.remove("d-none");
+                if (!file) return;
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.setAttribute("src", e.target.result);
+                    previewContainer.classList.remove("d-none");
+                };
+                reader.readAsDataURL(file);
+
+                // Loading state
+                aiStatusDiv.innerHTML = `
+                    <div class="alert alert-secondary d-flex align-items-center gap-3 py-2 px-3 mb-0" style="font-size: 0.875rem;">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                        <div>
+                            <strong>Running AI Analysis…</strong>
+                            <span class="text-muted ms-1">YOLOv8 Snake Detection + CNN Venom Classification</span>
+                        </div>
+                    </div>
+                `;
+
+                reportFormDetails.classList.add("d-none");
+
+                const formData = new FormData();
+                formData.append('image', file);
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                fetch('/ai/api/analyze/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        aiStatusDiv.innerHTML = `
+                            <div class="alert alert-danger py-2 px-3 mb-0" style="font-size: 0.875rem;">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                AI Analysis Error: ${data.error}
+                            </div>
+                        `;
+                        return;
                     }
-                    reader.readAsDataURL(file);
-                }
+
+                    const snakeDetected = data.snake_detected;
+                    const snakeConf = data.snake_confidence || 0.0;
+                    const venomous = data.venomous;
+                    const venomConf = data.venom_confidence || 0.0;
+
+                    // CASE 1: No snake detected
+                    if (!snakeDetected) {
+                        aiStatusDiv.innerHTML = `
+                            <div class="border rounded overflow-hidden mb-0">
+                                <div style="padding: 0.5rem 0.85rem; background: var(--surface-hover); border-bottom: 1px solid var(--border);">
+                                    <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+                                        AI Analysis Result
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="fa-solid fa-circle-xmark text-secondary"></i>
+                                        <strong style="font-size: 0.9rem; color: var(--text);">No snake detected</strong>
+                                    </div>
+                                    <p class="text-muted mb-2" style="font-size: 0.8125rem;">
+                                        Snake detection could not be reliably confirmed.
+                                        Detection confidence: <strong>${snakeConf}%</strong>
+                                    </p>
+                                    <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                                        Venom classification: <span class="fw-semibold">Not performed</span>
+                                    </p>
+                                    <p class="text-muted mb-0 mt-2" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-info-circle me-1"></i>
+                                        Reporting is not available for unconfirmed snake images.
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                        reportFormDetails.classList.add("d-none");
+                    }
+
+                    // CASE 2: Snake detected & Non-Venomous
+                    else if (snakeDetected && !venomous) {
+                        aiStatusDiv.innerHTML = `
+                            <div class="border rounded overflow-hidden mb-0">
+                                <div style="padding: 0.5rem 0.85rem; background: var(--surface-hover); border-bottom: 1px solid var(--border);">
+                                    <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+                                        AI Analysis Result
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge" style="background: var(--success-light); color: var(--success);">
+                                                <i class="fa-solid fa-check me-1"></i> Snake Detected
+                                            </span>
+                                            <small class="text-muted">${snakeConf}% confidence</small>
+                                        </div>
+                                        <small class="text-muted">Model #1 (YOLOv8) + #2 (CNN)</small>
+                                    </div>
+                                    <p class="fw-semibold mb-1" style="font-size: 0.9375rem; color: var(--text);">
+                                        <i class="fa-solid fa-shield me-1" style="color: var(--success);"></i>
+                                        AI Prediction: Non-Venomous
+                                    </p>
+                                    <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                                        Classification confidence: <strong>${venomConf}%</strong>
+                                    </p>
+                                    <p class="text-muted mb-0 mt-2" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-circle-info me-1"></i>
+                                        AI predictions may be incorrect. Professional verification recommended.
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                        reportFormDetails.classList.add("d-none");
+                    }
+
+                    // CASE 3: Snake detected & Venomous
+                    else if (snakeDetected && venomous) {
+                        aiStatusDiv.innerHTML = `
+                            <div class="border rounded overflow-hidden mb-0" style="border-color: var(--danger-muted) !important;">
+                                <div style="padding: 0.5rem 0.85rem; background: var(--danger-light); border-bottom: 1px solid var(--danger-muted);">
+                                    <span style="font-size: 0.72rem; font-weight: 600; color: var(--danger); text-transform: uppercase; letter-spacing: 0.04em;">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> AI Analysis Result — Warning
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge" style="background: var(--danger-light); color: var(--danger);">
+                                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Snake Detected
+                                            </span>
+                                            <small class="text-muted">${snakeConf}% confidence</small>
+                                        </div>
+                                        <small class="text-muted">Model #1 (YOLOv8) + #2 (CNN)</small>
+                                    </div>
+                                    <p class="fw-semibold mb-1" style="font-size: 0.9375rem; color: var(--danger);">
+                                        <i class="fa-solid fa-skull-crossbones me-1"></i> AI Prediction: Venomous
+                                    </p>
+                                    <p class="mb-3" style="font-size: 0.8125rem; color: var(--text-secondary);">
+                                        Classification confidence: <strong>${venomConf}%</strong>
+                                    </p>
+                                    <div class="alert alert-warning py-2 px-3 mb-3" style="font-size: 0.8rem;">
+                                        <i class="fa-solid fa-shield-halved me-1"></i>
+                                        <strong>Safety:</strong> Maintain a safe distance. If bitten, seek emergency medical help immediately.
+                                    </div>
+                                    <button type="button" id="btnReportSnakeSighting" class="btn btn-danger-venom btn-sm w-100">
+                                        <i class="fa-solid fa-bullhorn me-2"></i> Report This Snake Sighting
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+
+                        setTimeout(() => {
+                            const btnReport = document.getElementById("btnReportSnakeSighting");
+                            if (btnReport) {
+                                btnReport.addEventListener("click", function() {
+                                    reportFormDetails.classList.remove("d-none");
+                                    initMap();
+                                    reportFormDetails.scrollIntoView({ behavior: 'smooth' });
+                                });
+                            }
+                        }, 100);
+                    }
+                })
+                .catch(err => {
+                    aiStatusDiv.innerHTML = `
+                        <div class="alert alert-warning py-2 px-3 mb-0" style="font-size: 0.875rem;">
+                            <i class="fa-solid fa-circle-exclamation me-2"></i>
+                            Network or server error running AI prediction. You can still complete the report manually.
+                        </div>
+                    `;
+                    reportFormDetails.classList.remove("d-none");
+                    initMap();
+                });
             });
         }
     });

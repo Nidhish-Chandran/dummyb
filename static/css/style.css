@@ -1,191 +1,564 @@
-/* Venom Watch Light-Neutral Professional Theme */
+/* =============================================================
+   VENOM WATCH — Professional Design System
+   Minimal · Medical-grade · Public-Safety SaaS
+   ============================================================= */
 
+/* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
-    --border-color: #e2e8f0;
-    --border-color-hover: #cbd5e1;
-    --primary-teal: #0d9488;
-    --primary-teal-dark: #0f766e;
-    --primary-teal-light: #ccfbf1;
-    --primary-teal-text: #115e59;
-    --danger-red: #dc2626;
-    --danger-light: #fee2e2;
-    --danger-text: #991b1b;
-    --warning-amber: #d97706;
-    --warning-light: #fef3c7;
-    --warning-text: #92400e;
-    --success-green: #16a34a;
-    --success-light: #dcfce7;
-    --success-text: #15803d;
-    --text-primary: #0f172a;
+    /* Brand */
+    --primary:        #0f766e;
+    --primary-hover:  #115e59;
+    --primary-light:  #f0fdfa;
+    --primary-muted:  #ccfbf1;
+
+    /* Semantic */
+    --success:        #15803d;
+    --success-light:  #f0fdf4;
+    --success-muted:  #bbf7d0;
+    --warning:        #b45309;
+    --warning-light:  #fffbeb;
+    --warning-muted:  #fde68a;
+    --danger:         #dc2626;
+    --danger-light:   #fef2f2;
+    --danger-muted:   #fecaca;
+    --info:           #2563eb;
+    --info-light:     #eff6ff;
+    --info-muted:     #bfdbfe;
+
+    /* Text */
+    --text:           #0f172a;
     --text-secondary: #475569;
-    --text-muted: #64748b;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    --text-muted:     #64748b;
+
+    /* Surface */
+    --background:     #f8fafc;
+    --surface:        #ffffff;
+    --surface-hover:  #f8fafc;
+
+    /* Border */
+    --border:         #e2e8f0;
+    --border-hover:   #cbd5e1;
+
+    /* Radius */
+    --radius-sm:      6px;
+    --radius:         8px;
+    --radius-lg:      10px;
+
+    /* Shadow */
+    --shadow-xs:      0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-sm:      0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md:      0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+
+    /* Transitions */
+    --transition:     150ms ease;
+    --transition-md:  200ms ease;
+
+    /* Backward-compat aliases used in templates */
+    --bg-main:            var(--background);
+    --bg-card:            var(--surface);
+    --border-color:       var(--border);
+    --border-color-hover: var(--border-hover);
+    --primary-teal:       var(--primary);
+    --primary-teal-dark:  var(--primary-hover);
+    --primary-teal-light: var(--primary-muted);
+    --primary-teal-text:  var(--primary-hover);
+    --danger-red:         var(--danger);
+    --danger-light:       var(--danger-light);
+    --danger-text:        #991b1b;
+    --warning-amber:      var(--warning);
+    --warning-light:      var(--warning-light);
+    --warning-text:       #92400e;
+    --success-green:      var(--success);
+    --success-light:      var(--success-light);
+    --success-text:       var(--success);
+    --text-primary:       var(--text);
+    --text-secondary:     var(--text-secondary);
+    --text-muted:         var(--text-muted);
+    --shadow-lg:          var(--shadow-md);
+}
+
+/* ─── Base ───────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
 body {
-    background-color: var(--bg-main);
-    color: var(--text-primary);
+    background-color: var(--background);
+    color: var(--text);
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-/* White Cards */
-.card-clean {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+/* ─── Layout ────────────────────────────────────────────────── */
+.page-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 32px;
 }
 
-.card-clean:hover {
-    border-color: var(--border-color-hover);
-    box-shadow: var(--shadow-md);
+/* Override Bootstrap container width for consistency */
+.container {
+    max-width: 1280px !important;
 }
 
-.card-danger-clean {
-    border-left: 4px solid var(--danger-red);
-}
-
-.card-warning-clean {
-    border-left: 4px solid var(--warning-amber);
-}
-
-.card-success-clean {
-    border-left: 4px solid var(--success-green);
-}
-
-/* Navbar */
+/* ─── Navbar ─────────────────────────────────────────────────── */
 .navbar-venom {
-    background: #ffffff !important;
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: var(--shadow-sm);
+    background: var(--surface) !important;
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+    min-height: 64px;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .navbar-brand {
+    font-size: 1.1rem;
     font-weight: 700;
-    font-size: 1.35rem;
-    color: var(--text-primary) !important;
+    color: var(--text) !important;
     letter-spacing: -0.3px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.navbar-brand .fa-staff-snake {
+    font-size: 1.2rem;
+    color: var(--primary);
+}
+
+.navbar-brand span {
+    color: var(--text);
+}
+
+.navbar-brand .text-teal {
+    color: var(--primary) !important;
 }
 
 .nav-link {
     color: var(--text-secondary) !important;
+    font-size: 0.875rem;
     font-weight: 500;
-    margin: 0 4px;
-    transition: color 0.2s ease;
+    padding: 0.4rem 0.6rem !important;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition), background-color var(--transition);
+    margin: 0 1px;
 }
 
-.nav-link:hover, .nav-link.active {
-    color: var(--primary-teal) !important;
+.nav-link:hover {
+    color: var(--primary) !important;
+    background-color: var(--primary-light);
 }
 
-/* Buttons */
-.btn-teal {
-    background-color: var(--primary-teal);
-    color: #ffffff;
+.nav-link.active {
+    color: var(--primary) !important;
+    background-color: var(--primary-light);
     font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    padding: 0.55rem 1.25rem;
-    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-.btn-teal:hover {
-    background-color: var(--primary-teal-dark);
+/* Emergency nav item — always slightly distinct */
+.nav-link.fw-semibold.text-danger {
+    color: var(--danger) !important;
+}
+
+.nav-link.fw-semibold.text-danger:hover {
+    background-color: var(--danger-light);
+    color: var(--danger) !important;
+}
+
+.navbar-toggler {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+/* ─── Buttons ────────────────────────────────────────────────── */
+.btn {
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition), border-color var(--transition),
+                color var(--transition), box-shadow var(--transition);
+    line-height: 1.4;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-sm {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.8125rem;
+}
+
+/* Primary / Teal */
+.btn-teal,
+.btn-neon {
+    background-color: var(--primary);
+    color: #ffffff;
+    border: 1px solid var(--primary);
+}
+
+.btn-teal:hover,
+.btn-neon:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
     color: #ffffff;
 }
 
+.btn-teal:focus,
+.btn-neon:focus {
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+    outline: none;
+}
+
+/* Outline Teal */
+.btn-outline-teal {
+    background-color: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+}
+
+.btn-outline-teal:hover {
+    background-color: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+.btn-outline-teal:focus {
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+    outline: none;
+}
+
+/* Danger */
 .btn-danger-venom {
-    background-color: var(--danger-red);
+    background-color: var(--danger);
     color: #ffffff;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
     font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    padding: 0.55rem 1.25rem;
-    transition: background-color 0.2s ease;
 }
 
 .btn-danger-venom:hover {
     background-color: #b91c1c;
+    border-color: #b91c1c;
     color: #ffffff;
 }
 
-.btn-outline-teal {
-    border: 1px solid var(--primary-teal);
-    color: var(--primary-teal);
-    background: transparent;
-    border-radius: 8px;
+/* Bootstrap danger override */
+.btn-danger {
+    border-radius: var(--radius-sm);
     font-weight: 600;
-    transition: all 0.2s ease;
 }
 
-.btn-outline-teal:hover {
-    background-color: var(--primary-teal);
-    color: #ffffff;
+/* Bootstrap outline-danger override */
+.btn-outline-danger {
+    border-radius: var(--radius-sm);
+    font-weight: 600;
 }
 
-/* Badges */
+/* Bootstrap outline-secondary override */
+.btn-outline-secondary {
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    border-color: var(--border-hover);
+    color: var(--text-secondary);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--surface-hover);
+    border-color: var(--border-hover);
+    color: var(--text);
+}
+
+.btn-outline-dark {
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+}
+
+/* Ensure btn-lg sizing is contained */
+.btn-lg {
+    padding: 0.55rem 1.25rem;
+    font-size: 0.9375rem;
+}
+
+/* ─── Cards ──────────────────────────────────────────────────── */
+.card-clean {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+}
+
+.card-danger-clean {
+    border-left: 3px solid var(--danger);
+}
+
+.card-warning-clean {
+    border-left: 3px solid var(--warning);
+}
+
+.card-success-clean {
+    border-left: 3px solid var(--success);
+}
+
+/* Auth pages: replaces old glass-card dark theme */
+.glass-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Bootstrap card override */
+.card {
+    border-color: var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+}
+
+/* ─── Forms ──────────────────────────────────────────────────── */
+.form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+}
+
+/* In glass-card (auth) context labels were text-light — fix */
+.glass-card .form-label,
+.glass-card label {
+    color: var(--text) !important;
+}
+
+.form-control,
+.form-select {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 0.875rem !important;
+    padding: 0.5rem 0.75rem !important;
+    height: auto;
+    min-height: 40px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12) !important;
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+    font-weight: 400;
+}
+
+.form-control-sm,
+.form-select-sm {
+    min-height: 36px;
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.8125rem !important;
+}
+
+textarea.form-control {
+    min-height: auto;
+}
+
+.form-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ─── Badges ─────────────────────────────────────────────────── */
+/* Venom semantic badges */
 .badge-venomous {
+    display: inline-flex;
+    align-items: center;
     background-color: var(--danger-light);
-    color: var(--danger-text);
+    color: #991b1b;
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.35em 0.65em;
-    border-radius: 6px;
-    border: 1px solid rgba(220, 38, 38, 0.2);
+    padding: 0.25em 0.6em;
+    border-radius: 4px;
+    border: 1px solid rgba(220, 38, 38, 0.18);
+    white-space: nowrap;
 }
 
 .badge-non-venomous {
+    display: inline-flex;
+    align-items: center;
     background-color: var(--success-light);
-    color: var(--success-text);
+    color: var(--success);
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.35em 0.65em;
-    border-radius: 6px;
-    border: 1px solid rgba(22, 163, 74, 0.2);
+    padding: 0.25em 0.6em;
+    border-radius: 4px;
+    border: 1px solid rgba(21, 128, 61, 0.18);
+    white-space: nowrap;
 }
 
 .badge-mild {
+    display: inline-flex;
+    align-items: center;
     background-color: var(--warning-light);
-    color: var(--warning-text);
+    color: #92400e;
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.35em 0.65em;
-    border-radius: 6px;
-    border: 1px solid rgba(217, 119, 6, 0.2);
+    padding: 0.25em 0.6em;
+    border-radius: 4px;
+    border: 1px solid rgba(180, 83, 9, 0.18);
+    white-space: nowrap;
 }
 
 .badge-status {
+    font-size: 0.75rem;
     font-weight: 600;
-    border-radius: 6px;
-    padding: 0.35em 0.65em;
+    border-radius: 4px;
+    padding: 0.25em 0.6em;
 }
 
-/* Form Controls */
-.form-control, .form-select {
-    background-color: #ffffff !important;
-    border: 1px solid var(--border-color) !important;
-    color: var(--text-primary) !important;
-    border-radius: 8px;
-    padding: 0.65rem 0.9rem;
+/* Bootstrap badge overrides — keep consistent sizing */
+.badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 0.28em 0.58em;
+    letter-spacing: 0.01em;
 }
 
-.form-control:focus, .form-select:focus {
-    border-color: var(--primary-teal) !important;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15) !important;
+/* Override Bootstrap's oversized badges when fs-6 is used in detail header */
+.badge.fs-6 {
+    font-size: 0.78rem !important;
 }
 
-/* Leaflet Custom Map Container */
+/* ─── Table ──────────────────────────────────────────────────── */
+.table {
+    font-size: 0.875rem;
+    color: var(--text);
+    margin-bottom: 0;
+}
+
+.table thead th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 0.85rem;
+    background-color: #f8fafc;
+    white-space: nowrap;
+}
+
+.table tbody td {
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table-hover tbody tr:hover td {
+    background-color: var(--surface-hover);
+    transition: background-color var(--transition);
+}
+
+.table-light {
+    background-color: #f8fafc !important;
+}
+
+.table-light th {
+    background-color: #f8fafc !important;
+}
+
+/* ─── Alerts ─────────────────────────────────────────────────── */
+.alert {
+    font-size: 0.875rem;
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+}
+
+.alert-info {
+    background-color: var(--info-light);
+    border-color: var(--info-muted);
+    color: #1e40af;
+}
+
+.alert-success {
+    background-color: var(--success-light);
+    border-color: var(--success-muted);
+    color: var(--success);
+}
+
+.alert-warning {
+    background-color: var(--warning-light);
+    border-color: var(--warning-muted);
+    color: #92400e;
+}
+
+.alert-danger {
+    background-color: var(--danger-light);
+    border-color: var(--danger-muted);
+    color: #991b1b;
+}
+
+.alert-secondary {
+    background-color: #f8fafc;
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+/* ─── Stat Boxes (Dashboard Metrics) ────────────────────────── */
+.stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow-xs);
+}
+
+.stat-box h4 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* Semantic icon backgrounds */
+.bg-danger-light { background-color: var(--danger-light) !important; }
+.bg-warning-light { background-color: var(--warning-light) !important; }
+.bg-success-light { background-color: var(--success-light) !important; }
+
+/* ─── Map ────────────────────────────────────────────────────── */
 .map-container {
-    height: 480px;
-    border-radius: 12px;
+    border-radius: var(--radius);
     overflow: hidden;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
 }
 
 .leaflet-container {
@@ -193,40 +566,277 @@ body {
 }
 
 .leaflet-popup-content-wrapper {
-    background: #ffffff !important;
-    color: var(--text-primary) !important;
-    border-radius: 8px !important;
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-md) !important;
+    font-size: 0.85rem;
+}
+
+.leaflet-popup-tip {
+    background: var(--surface) !important;
+}
+
+/* ─── Emergency Section ──────────────────────────────────────── */
+.emergency-banner {
+    background-color: var(--danger-light);
+    border: 1px solid var(--danger-muted);
+    border-radius: var(--radius-lg);
+}
+
+/* ─── Dropdown ───────────────────────────────────────────────── */
+.dropdown-menu {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    font-size: 0.875rem;
+    padding: 0.35rem;
+}
+
+.dropdown-item {
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.7rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    transition: background-color var(--transition), color var(--transition);
+}
+
+.dropdown-item:hover {
+    background-color: var(--surface-hover);
+    color: var(--text);
+}
+
+.dropdown-divider {
+    border-color: var(--border);
+    margin: 0.25rem 0;
+}
+
+/* ─── Utility Aliases ────────────────────────────────────────── */
+.text-teal {
+    color: var(--primary) !important;
+}
+
+.bg-teal {
+    background-color: var(--primary) !important;
+    color: #ffffff;
+}
+
+/* Auth pages: fix labels that still use text-light */
+.text-light {
+    color: var(--text-secondary) !important;
+}
+
+/* Auth pages: fix text-white in glass-card context */
+.glass-card .text-white,
+.glass-card h3.fw-bold.text-white {
+    color: var(--text) !important;
+}
+
+.glass-card .text-success {
+    color: var(--primary) !important;
+}
+
+/* Profile info blocks */
+.glass-card .bg-dark.bg-opacity-50 {
+    background-color: var(--surface-hover) !important;
+    border-color: var(--border) !important;
+}
+
+.glass-card .text-success.fw-bold {
+    color: var(--primary) !important;
+}
+
+.glass-card .text-white.fw-bold {
+    color: var(--text) !important;
+}
+
+.glass-card .border-secondary {
+    border-color: var(--border) !important;
+}
+
+/* ─── Page Header Pattern ────────────────────────────────────── */
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.page-header h3,
+.page-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.page-header p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+/* ─── Filter Toolbar ────────────────────────────────────────── */
+.filter-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+}
+
+/* ─── AI Result Panel ────────────────────────────────────────── */
+.ai-result-panel {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.ai-result-panel .ai-result-header {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: #f8fafc;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ai-result-panel .ai-result-body {
+    padding: 1rem;
+}
+
+/* ─── Footer ─────────────────────────────────────────────────── */
+footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding: 1rem 0;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+/* ─── Link styles ────────────────────────────────────────────── */
+a.text-teal {
+    color: var(--primary) !important;
+    text-decoration: none;
+}
+
+a.text-teal:hover {
+    color: var(--primary-hover) !important;
+    text-decoration: underline;
+}
+
+/* ─── Bootstrap Overrides ────────────────────────────────────── */
+.rounded-3 {
+    border-radius: var(--radius) !important;
+}
+
+.rounded-circle {
+    border-radius: 50% !important;
+}
+
+.shadow-sm {
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.shadow {
     box-shadow: var(--shadow-md) !important;
 }
 
-/* Emergency Banner */
-.emergency-banner {
-    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-    border: 1px solid #fca5a5;
-    border-radius: 12px;
+/* Tighten up badge bg overrides */
+.bg-light {
+    background-color: #f8fafc !important;
 }
 
-/* Stat Cards */
-.stat-box {
-    background: #ffffff;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.25rem;
-    box-shadow: var(--shadow-sm);
+.border-top {
+    border-color: var(--border) !important;
 }
 
-.stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
+.border-bottom {
+    border-color: var(--border) !important;
 }
 
-footer {
-    margin-top: auto;
-    border-top: 1px solid var(--border-color);
-    background: #ffffff;
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        padding: 0.5rem 0 0.75rem;
+        border-top: 1px solid var(--border);
+        margin-top: 0.5rem;
+    }
+
+    .navbar-nav .nav-link {
+        padding: 0.45rem 0.5rem !important;
+        border-radius: var(--radius-sm);
+    }
+
+    .navbar .d-flex.align-items-center.gap-2 {
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+        gap: 0.4rem !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    body {
+        font-size: 14px;
+    }
+
+    .page-container {
+        padding: 16px 16px;
+    }
+
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .stat-box {
+        padding: 0.75rem 0.9rem;
+    }
+
+    .stat-box h4 {
+        font-size: 1.2rem;
+    }
+
+    .map-container {
+        height: 280px !important;
+    }
+
+    /* Emergency page: stack buttons on mobile */
+    .emergency-banner .d-flex.gap-2 {
+        flex-wrap: wrap;
+    }
+
+    /* Auth pages: reduce padding */
+    .glass-card {
+        padding: 1.5rem !important;
+    }
+
+    /* Ensure big map containers are mobile-friendly */
+    #mainDashboardMap,
+    #hotspotMap {
+        height: 320px !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Filter toolbar stacks vertically */
+    .filter-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-toolbar .form-control,
+    .filter-toolbar .form-select {
+        width: 100%;
+    }
 }

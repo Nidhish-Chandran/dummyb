@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['Snake']
+
+roboflow:
+  workspace: project-rh1jo
+  project: snake-detection
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/project-rh1jo/snake-detection/dataset/2

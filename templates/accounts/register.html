@@ -1,262 +1,61 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Register - Venom Watch{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/auth.css' %}">
-{% endblock %}
+{% block title %}Create Account — Venom Watch{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-wrapper">
-        <div class="auth-header">
-            <div class="auth-logo">
-                <i class="fa-solid fa-user-plus"></i>
-            </div>
-            <h1>Create Account</h1>
-            <p>Join the Community Snake Surveillance & Alert Network</p>
-        </div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card p-4 p-md-5">
 
-        <div class="auth-body">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                         style="width: 48px; height: 48px; background: var(--primary-light);">
+                        <i class="fa-solid fa-user-plus" style="color: var(--primary); font-size: 1.1rem;"></i>
                     </div>
-                {% endfor %}
-            {% endif %}
-
-            <form method="post" action="{% url 'accounts:register' %}" id="registerForm">
-                {% csrf_token %}
-                
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
-
-                <!-- Username Field -->
-                <div class="form-group">
-                    <label for="{{ form.username.id_for_label }}">
-                        Username <span class="required">*</span>
-                    </label>
-                    <div class="input-group">
-                        <i class="fa-solid fa-user input-group-icon"></i>
-                        <input type="text" 
-                               name="username" 
-                               id="{{ form.username.id_for_label }}" 
-                               class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
-                               placeholder="Choose a username"
-                               value="{{ form.username.value|default:'' }}"
-                               required>
-                    </div>
-                    {% if form.username.help_text %}
-                        <div class="form-text">{{ form.username.help_text }}</div>
-                    {% endif %}
-                    {% for error in form.username.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
+                    <h3 class="fw-bold mb-1" style="font-size: 1.2rem; color: var(--text);">Create account</h3>
+                    <p class="text-muted mb-0" style="font-size: 0.875rem;">Join the Venom Watch surveillance network</p>
                 </div>
 
-                <!-- Email Field -->
-                <div class="form-group">
-                    <label for="{{ form.email.id_for_label }}">
-                        Email Address <span class="required">*</span>
-                    </label>
-                    <div class="input-group">
-                        <i class="fa-solid fa-envelope input-group-icon"></i>
-                        <input type="email" 
-                               name="email" 
-                               id="{{ form.email.id_for_label }}" 
-                               class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
-                               placeholder="your@email.com"
-                               value="{{ form.email.value|default:'' }}"
-                               required>
-                    </div>
-                    {% if form.email.help_text %}
-                        <div class="form-text">{{ form.email.help_text }}</div>
-                    {% endif %}
-                    {% for error in form.email.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                </div>
+                <form method="post" action="{% url 'accounts:register' %}">
+                    {% csrf_token %}
 
-                <!-- Phone Number Field -->
-                <div class="form-group">
-                    <label for="{{ form.phone_number.id_for_label }}">
-                        Phone Number <span class="required">*</span>
-                    </label>
-                    <div class="input-group">
-                        <i class="fa-solid fa-phone input-group-icon"></i>
-                        <input type="tel" 
-                               name="phone_number" 
-                               id="{{ form.phone_number.id_for_label }}" 
-                               class="form-control {% if form.phone_number.errors %}is-invalid{% endif %}" 
-                               placeholder="+91 1234567890"
-                               value="{{ form.phone_number.value|default:'' }}"
-                               required>
-                    </div>
-                    {% if form.phone_number.help_text %}
-                        <div class="form-text">{{ form.phone_number.help_text }}</div>
-                    {% endif %}
-                    {% for error in form.phone_number.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                <!-- Role Selection -->
-                <div class="form-group">
-                    <label>Select Your Role <span class="required">*</span></label>
-                    <div class="role-selection">
-                        <div class="role-option">
-                            <input type="radio" name="role" id="role_citizen" value="citizen" {% if form.role.value == 'citizen' or not form.role.value %}checked{% endif %}>
-                            <label class="role-card" for="role_citizen">
-                                <span class="role-icon">👤</span>
-                                <span class="role-label">Citizen</span>
-                            </label>
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2" style="font-size: 0.8125rem;">
+                            {{ form.non_field_errors }}
                         </div>
-                        <div class="role-option">
-                            <input type="radio" name="role" id="role_authority" value="authority" {% if form.role.value == 'authority' %}checked{% endif %}>
-                            <label class="role-card" for="role_authority">
-                                <span class="role-icon">🏛️</span>
-                                <span class="role-label">Authority</span>
-                            </label>
-                        </div>
-                        <div class="role-option">
-                            <input type="radio" name="role" id="role_responder" value="responder" {% if form.role.value == 'responder' %}checked{% endif %}>
-                            <label class="role-card" for="role_responder">
-                                <span class="role-icon">🚑</span>
-                                <span class="role-label">Responder</span>
-                            </label>
-                        </div>
-                    </div>
-                    {% if form.role.help_text %}
-                        <div class="form-text">{{ form.role.help_text }}</div>
                     {% endif %}
-                    {% for error in form.role.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
+
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger mt-1" style="font-size: 0.8rem;">
+                                    <i class="fa-solid fa-circle-exclamation me-1"></i>{{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% endfor %}
+
+                    <button type="submit" class="btn btn-teal w-100 py-2 mt-2">
+                        <i class="fa-solid fa-check-circle me-2"></i> Create Account
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 pt-3 border-top">
+                    <p class="text-muted mb-1" style="font-size: 0.8125rem;">Already have an account?</p>
+                    <a href="{% url 'accounts:login' %}" class="fw-semibold text-decoration-none"
+                       style="color: var(--primary); font-size: 0.875rem;">
+                        Sign in <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
                 </div>
-
-                <!-- Password Field -->
-                <div class="form-group">
-                    <label for="{{ form.password1.id_for_label }}">
-                        Password <span class="required">*</span>
-                    </label>
-                    <div class="input-group">
-                        <i class="fa-solid fa-lock input-group-icon"></i>
-                        <input type="password" 
-                               name="password1" 
-                               id="{{ form.password1.id_for_label }}" 
-                               class="form-control {% if form.password1.errors %}is-invalid{% endif %}" 
-                               placeholder="Create a strong password"
-                               required>
-                    </div>
-                    {% if form.password1.help_text %}
-                        <div class="form-text">{{ form.password1.help_text|safe }}</div>
-                    {% endif %}
-                    {% for error in form.password1.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                    <div class="password-strength" style="display:none;" id="passwordStrengthBar">
-                        <div class="password-strength-bar" id="passwordStrengthBarFill"></div>
-                    </div>
-                    <div class="password-strength-text" id="passwordStrengthText"></div>
-                </div>
-
-                <!-- Confirm Password Field -->
-                <div class="form-group">
-                    <label for="{{ form.password2.id_for_label }}">
-                        Confirm Password <span class="required">*</span>
-                    </label>
-                    <div class="input-group">
-                        <i class="fa-solid fa-lock input-group-icon"></i>
-                        <input type="password" 
-                               name="password2" 
-                               id="{{ form.password2.id_for_label }}" 
-                               class="form-control {% if form.password2.errors %}is-invalid{% endif %}" 
-                               placeholder="Re-enter your password"
-                               required>
-                    </div>
-                    {% for error in form.password2.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                <!-- Terms Checkbox -->
-                <div class="terms-checkbox">
-                    <input type="checkbox" id="terms_agree" name="terms_agree" required>
-                    <label for="terms_agree">
-                        I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>. I understand that this platform provides AI-assisted preliminary assessments and is not a substitute for professional medical or wildlife expertise.
-                    </label>
-                </div>
-
-                <button type="submit" class="btn-auth" id="submitBtn">
-                    <i class="fa-solid fa-check-circle me-2"></i> Register Account
-                </button>
-            </form>
-
-            <div class="auth-footer">
-                <p class="mb-0">Already have an account?</p>
-                <a href="{% url 'accounts:login' %}">Sign In here <i class="fa-solid fa-arrow-right ms-1"></i></a>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-// Password strength checker
-const passwordInput = document.getElementById('{{ form.password1.id_for_label }}');
-const strengthBar = document.getElementById('passwordStrengthBar');
-const strengthBarFill = document.getElementById('passwordStrengthBarFill');
-const strengthText = document.getElementById('passwordStrengthText');
-
-if (passwordInput) {
-    passwordInput.addEventListener('input', function() {
-        const password = this.value;
-        if (password.length === 0) {
-            strengthBar.style.display = 'none';
-            strengthText.textContent = '';
-            return;
-        }
-        
-        strengthBar.style.display = 'block';
-        let strength = 0;
-        
-        // Length check
-        if (password.length >= 8) strength++;
-        if (password.length >= 12) strength++;
-        
-        // Character variety checks
-        if (/[a-z]/.test(password)) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^a-zA-Z0-9]/.test(password)) strength++;
-        
-        // Update UI
-        strengthBarFill.className = 'password-strength-bar';
-        if (strength <= 2) {
-            strengthBarFill.classList.add('weak');
-            strengthText.textContent = 'Weak password';
-        } else if (strength <= 4) {
-            strengthBarFill.classList.add('medium');
-            strengthText.textContent = 'Medium password';
-        } else {
-            strengthBarFill.classList.add('strong');
-            strengthText.textContent = 'Strong password';
-        }
-    });
-}
-
-// Form submission loading state
-document.getElementById('registerForm')?.addEventListener('submit', function(e) {
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn && !submitBtn.disabled) {
-        submitBtn.classList.add('loading');
-        submitBtn.disabled = true;
-    }
-});
-</script>
 {% endblock %}

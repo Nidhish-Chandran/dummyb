@@ -43,12 +43,18 @@ class SightingReport(models.Model):
 
     # AI Detection Metadata
     ai_detected = models.BooleanField(default=False)
+    snake_detected = models.BooleanField(default=False)
+    snake_confidence = models.FloatField(default=0.0, null=True, blank=True)
+    venomous = models.BooleanField(null=True, blank=True)
+    venom_confidence = models.FloatField(default=0.0, null=True, blank=True)
     species_predicted = models.CharField(max_length=150, blank=True, null=True)
     common_name = models.CharField(max_length=150, blank=True, null=True)
     venom_category = models.CharField(max_length=30, choices=VENOM_CHOICES, default=VENOM_SAFE)
     toxicity_level = models.CharField(max_length=50, default='SAFE')
     danger_score = models.IntegerField(default=10)
     ai_confidence = models.FloatField(default=0.0)
+    model_1_name = models.CharField(max_length=150, default="Snake Detection.v2-model_snake-detection-2.yolov8")
+    model_2_name = models.CharField(max_length=150, default="venom_watch_cnn2_keras")
     notes = models.TextField(blank=True, null=True, help_text="Additional observer details")
 
     # Authority Verification & Task Assignment

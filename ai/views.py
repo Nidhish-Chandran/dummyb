@@ -8,12 +8,19 @@ from django.shortcuts import render
 from django.contrib import messages
 import uuid
 import os
-from .services import SnakeAIDetectionService, WoundScreeningService
+from .services import SnakeAIPipelineService, WoundScreeningService
 
+from django.views.decorators.cache import never_cache
+from django.utils.decorators import method_decorator
+
+@method_decorator(never_cache, name='dispatch')
 class SnakeAIAnalysisAPIView(APIView):
     """
-    REST API endpoint for real-time AI snake image analysis.
+    REST API endpoint for real-time 2-stage AI snake image analysis.
     Accepts POST with 'image' file.
+    Runs Stage 1 (YOLOv8 Snake Detection).
+    If Snake Detected == True, runs Stage 2 (Keras CNN Venom Classification).
+    If Snake Detected == False, Stage 2 is NOT run.
     """
     parser_classes = (MultiPartParser, FormParser)
 
@@ -22,14 +29,19 @@ class SnakeAIAnalysisAPIView(APIView):
             return Response({'error': 'No image file uploaded.'}, status=status.HTTP_400_BAD_REQUEST)
 
         image_file = request.FILES['image']
-        ext = os.path.splitext(image_file.name)[1]
+        ext = os.path.splitext(image_file.name)[1].lower()
+        if ext not in ['.jpg', '.jpeg', '.png', '.webp']:
+            return Response({'error': 'Unsupported file format. Please upload JPG, PNG, or WEBP image.'}, status=status.HTTP_400_BAD_REQUEST)
+
         unique_name = f"temp_ai_{uuid.uuid4().hex}{ext}"
         
-        saved_path = default_storage.save(f"temp_uploads/{unique_name}", ContentFile(image_file.read()))
-        full_path = default_storage.path(saved_path)
-
         try:
-            analysis_result = SnakeAIDetectionService.analyze_image(full_path)
+            saved_path = default_storage.save(f"temp_uploads/{unique_name}", ContentFile(image_file.read()))
+            full_path = default_storage.path(saved_path)
+            
+            analysis_result = SnakeAIPipelineService.analyze_image(full_path)
+            
+            # Clean up temp file
             if default_storage.exists(saved_path):
                 default_storage.delete(saved_path)
                 

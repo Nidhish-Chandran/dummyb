@@ -1,0 +1,5 @@
+Django>=5.0
+numpy<2.0.0
+opencv-python
+pandas
+scipy

@@ -1,93 +1,119 @@
 {% extends 'base.html' %}
 
-{% block title %}Community Risk Zones - Venom Watch{% endblock %}
+{% block title %}Community Risk Zones — Venom Watch{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <!-- Header Card -->
-            <div class="card-clean p-4 mb-4">
-                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 border-bottom pb-3">
-                    <div>
-                        <h3 class="fw-bold text-dark mb-1">
-                            <i class="fa-solid fa-shield-halved text-success me-2"></i> Community Risk Zones (24-Hour Summary)
-                        </h3>
-                        <p class="text-secondary small mb-0">Aggregated public risk assessment based on recent 24-hour verified sighting reports.</p>
-                    </div>
-                    <div>
-                        <span class="badge {{ risk_data.badge_class }} fs-6 px-3 py-2">
-                            Overall Status: {{ risk_data.status_title }}
-                        </span>
-                    </div>
-                </div>
 
-                <!-- Rules Explanation -->
-                <div class="row g-3 mt-3">
+            <!-- Page Header -->
+            <div class="d-flex flex-column flex-md-row align-items-md-start justify-content-between gap-3 mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
+                        <i class="fa-solid fa-shield-halved me-2" style="color: var(--success);"></i>
+                        Community Risk Zones
+                    </h2>
+                    <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                        Aggregated public risk assessment based on 24-hour verified sighting reports.
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <span class="badge {{ risk_data.badge_class }} px-3 py-2" style="font-size: 0.8rem;">
+                        Overall Status: {{ risk_data.status_title }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Risk Zone Legend -->
+            <div class="card-clean p-4 mb-4">
+                <h5 class="fw-semibold mb-3" style="font-size: 0.875rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+                    Zone Classification
+                </h5>
+                <div class="row g-3">
                     <div class="col-md-4">
-                        <div class="p-3 rounded-3 bg-light border border-success border-opacity-50 h-100">
+                        <div class="p-3 rounded border"
+                             style="border-color: var(--success-muted) !important; background: var(--success-light);">
                             <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge bg-success">GREEN ZONE</span>
-                                <span class="fw-bold text-success">0 Reports</span>
+                                <span class="badge" style="background: var(--success); color: #fff;">GREEN</span>
+                                <span class="fw-semibold" style="color: var(--success); font-size: 0.875rem;">0 reports</span>
                             </div>
-                            <small class="text-muted d-block">Low risk area. No active snake sightings logged within the last 24 hours.</small>
+                            <small class="text-muted d-block" style="font-size: 0.8rem;">
+                                No active snake sightings in the last 24 hours.
+                            </small>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="p-3 rounded-3 bg-light border border-warning border-opacity-50 h-100">
+                        <div class="p-3 rounded border"
+                             style="border-color: var(--warning-muted) !important; background: var(--warning-light);">
                             <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge bg-warning text-dark">YELLOW ZONE</span>
-                                <span class="fw-bold text-warning">1–5 Reports</span>
+                                <span class="badge" style="background: var(--warning); color: #fff;">YELLOW</span>
+                                <span class="fw-semibold" style="color: var(--warning); font-size: 0.875rem;">1–5 reports</span>
                             </div>
-                            <small class="text-muted d-block">Moderate risk area. 1 to 5 active snake sightings logged within 24 hours.</small>
+                            <small class="text-muted d-block" style="font-size: 0.8rem;">
+                                Moderate risk. Exercise precaution in affected areas.
+                            </small>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="p-3 rounded-3 bg-light border border-danger border-opacity-50 h-100">
+                        <div class="p-3 rounded border"
+                             style="border-color: var(--danger-muted) !important; background: var(--danger-light);">
                             <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge bg-danger">RED ZONE</span>
-                                <span class="fw-bold text-danger">>5 Reports</span>
+                                <span class="badge" style="background: var(--danger); color: #fff;">RED</span>
+                                <span class="fw-semibold" style="color: var(--danger); font-size: 0.875rem;">&gt;5 reports</span>
                             </div>
-                            <small class="text-muted d-block">High risk area. More than 5 active snake sightings logged within 24 hours.</small>
+                            <small class="text-muted d-block" style="font-size: 0.8rem;">
+                                High risk. Avoid unlit areas. Carry torchlight.
+                            </small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Aggregated Location Breakdown -->
-            <div class="card-clean p-4">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-map-pin me-2 text-teal"></i> Regional Risk Overview</h5>
-                
+            <!-- Regional Risk Table -->
+            <div class="card-clean">
+                <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+                    <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem; color: var(--text);">
+                        <i class="fa-solid fa-map-pin me-2" style="color: var(--primary);"></i>
+                        Regional Risk Overview
+                    </h5>
+                    <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom btn-sm">
+                        <i class="fa-solid fa-kit-medical me-1"></i> Emergency SOS
+                    </a>
+                </div>
+
                 {% if risk_data.location_summary %}
                     <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead class="table-light">
+                        <table class="table align-middle mb-0">
+                            <thead>
                                 <tr>
                                     <th>Locality / District</th>
-                                    <th>24h Sighting Count</th>
-                                    <th>Assessed Risk Status</th>
-                                    <th>Public Recommendation</th>
+                                    <th>24h Sightings</th>
+                                    <th>Risk Status</th>
+                                    <th>Recommendation</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for loc in risk_data.location_summary %}
                                     <tr>
-                                        <td class="fw-semibold">{{ loc.location_name }}</td>
+                                        <td class="fw-semibold" style="font-size: 0.875rem;">{{ loc.location_name }}</td>
                                         <td>
-                                            <span class="badge bg-secondary rounded-pill px-3">{{ loc.sighting_count }}</span>
+                                            <span class="badge bg-light text-dark border px-2">
+                                                {{ loc.sighting_count }}
+                                            </span>
                                         </td>
                                         <td>
-                                            <span class="fw-bold {{ loc.class_name }}">
+                                            <span class="fw-semibold {{ loc.class_name }}" style="font-size: 0.875rem;">
                                                 {% if loc.risk_level == 'GREEN' %}
-                                                    <i class="fa-solid fa-circle-check me-1"></i> Green Zone (Safe)
+                                                    <i class="fa-solid fa-circle-check me-1"></i> Green Zone
                                                 {% elif loc.risk_level == 'YELLOW' %}
-                                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Yellow Zone (Moderate)
+                                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Yellow Zone
                                                 {% else %}
-                                                    <i class="fa-solid fa-circle-exclamation me-1"></i> Red Zone (High Risk)
+                                                    <i class="fa-solid fa-circle-exclamation me-1"></i> Red Zone
                                                 {% endif %}
                                             </span>
                                         </td>
-                                        <td class="small text-secondary">
+                                        <td class="text-muted" style="font-size: 0.8125rem;">
                                             {% if loc.risk_level == 'GREEN' %}
                                                 Normal community activity.
                                             {% elif loc.risk_level == 'YELLOW' %}
@@ -102,19 +128,23 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="text-center py-4 text-muted">
-                        <i class="fa-solid fa-shield-check fs-2 text-success mb-2 d-block"></i>
-                        No active sightings logged in the last 24 hours. All community zones are currently evaluated as <strong>GREEN (Safe)</strong>.
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-shield-check fa-2x mb-2 d-block" style="color: var(--success);"></i>
+                        <p class="mb-0" style="font-size: 0.875rem;">
+                            No active sightings in the last 24 hours.
+                            All zones are currently <strong>GREEN (Safe)</strong>.
+                        </p>
                     </div>
                 {% endif %}
 
-                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
-                    <small class="text-muted"><i class="fa-solid fa-user-shield me-1"></i> Note: For citizen privacy, exact GPS coordinates are aggregated into regional zones.</small>
-                    <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom btn-sm">
-                        <i class="fa-solid fa-kit-medical me-1"></i> Emergency SOS Contacts
-                    </a>
+                <div class="p-3 border-top">
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-user-shield me-1"></i>
+                        Exact GPS coordinates are aggregated into regional zones to protect citizen privacy.
+                    </small>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
