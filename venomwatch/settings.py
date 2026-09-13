@@ -135,12 +135,26 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Authentication URLs & Session Security
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:home'
-LOGOUT_REDIRECT_URL = 'accounts:login'
+LOGOUT_REDIRECT_URL = 'dashboard:home'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_NAME = 'sessionid'
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SECURE = False  # Set True in production with HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session after browser close
+SESSION_COOKIE_AGE = 1209600  # 2 weeks (default Django value)
+
+CSRF_COOKIE_HTTPONLY = False  # Must be False for CSRF to work
+CSRF_COOKIE_SECURE = False  # Set True in production with HTTPS
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# For local development with both localhost and 127.0.0.1
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
