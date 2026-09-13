@@ -278,134 +278,175 @@ class SnakeAIDetectionService(SnakeAIPipelineService):
     pass
 
 
-class WoundScreeningService:
+class SnakebiteScreeningService:
     """
-    Dedicated Binary Snakebite Wound Image Checker.
-    Performs visual feature screening (Dual Fang Puncture Pair & Localized Erythema Analysis).
-    Binary Output ONLY: "Snake Bite" (Possible Snake Bite Pattern Detected) vs "Not Snake Bite" (No Snake-Bite Pattern Detected).
-    Clearly labeled as prototype/heuristic screening method (Dataset model training in progress).
-    Does NOT diagnose severity, venom type, species, treatment, or medical condition.
-    Includes mandatory emergency medical disclaimer.
+    AI-assisted Snakebite Wound Image Screening using EfficientNetB0.
+    
+    Model: venom_watch_snakebite_efficientnetb0.keras
+    Input: 224x224 RGB images
+    Output: Binary classification (sigmoid activation)
+      - Output < 0.5: No Snakebite Pattern Detected
+      - Output >= 0.5: Possible Snakebite Pattern Detected
+    
+    This is an AI-assisted screening tool, NOT a medical diagnostic system.
+    Always seek professional medical evaluation for suspected snakebites.
     """
-
+    
+    _model = None
+    
+    MODEL_PATH = os.path.join(settings.BASE_DIR, 'venom_watch_snakebite_efficientnetb0.keras')
+    DECISION_THRESHOLD = 0.5
+    UNCERTAINTY_RANGE = (0.4, 0.6)  # Predictions in this range are considered uncertain
+    
     MANDATORY_DISCLAIMER = (
         "This is an AI-assisted screening tool and is NOT a medical diagnosis. "
         "If a snakebite is suspected, seek emergency medical care immediately."
     )
-
+    
+    @classmethod
+    def get_model(cls):
+        """Load the EfficientNetB0 snakebite screening model once (lazy loading)."""
+        if cls._model is None:
+            try:
+                import tensorflow as tf
+                if not os.path.exists(cls.MODEL_PATH):
+                    raise FileNotFoundError(f"Snakebite model not found at: {cls.MODEL_PATH}")
+                print(f"[Snakebite] Loading EfficientNetB0 model from: {cls.MODEL_PATH}")
+                cls._model = tf.keras.models.load_model(cls.MODEL_PATH)
+                print(f"[Snakebite] Model loaded successfully")
+            except Exception as e:
+                logger.error(f"[Snakebite] Failed to load model: {e}")
+                raise
+        return cls._model
+    
     @classmethod
     def analyze_wound_image(cls, image_path):
+        """
+        Analyze a wound image using the trained EfficientNetB0 model.
+        
+        Returns dict with:
+          - is_snake_bite: bool
+          - result_label: str ('Snake Bite' or 'Not Snake Bite')
+          - status_title: str
+          - confidence: float (0-100)
+          - recommendation: str
+          - disclaimer: str
+          - method_label: str
+          - raw_output: float (raw sigmoid output for debugging)
+          - uncertain: bool
+        """
         abs_path = os.path.join(settings.MEDIA_ROOT, str(image_path)) if not os.path.isabs(str(image_path)) else str(image_path)
-
+        
+        # Check file exists
         if not os.path.exists(abs_path):
             return {
                 'is_snake_bite': False,
                 'result_label': 'Not Snake Bite',
-                'status_title': 'No Snake-Bite Pattern Detected',
+                'status_title': 'Image Not Found',
+                'confidence': None,
                 'recommendation': 'Image file not found on disk. Please upload a valid photo of the affected area.',
                 'disclaimer': cls.MANDATORY_DISCLAIMER,
-                'method_label': 'Prototype / Heuristic Visual Feature Screening (Dataset Model Training In Progress)',
+                'method_label': 'AI-Assisted Screening (EfficientNetB0)',
+                'raw_output': None,
+                'uncertain': False,
                 'processed_image_path': None
             }
-
-        img = cv2.imread(abs_path)
-        if img is None:
+        
+        # Try to load and analyze with EfficientNetB0
+        try:
+            import tensorflow as tf
+            
+            model = cls.get_model()
+            
+            # Load image with TensorFlow to ensure proper preprocessing
+            img = tf.keras.utils.load_img(abs_path, target_size=(224, 224))
+            img_array = tf.keras.utils.img_to_array(img)
+            
+            # Expand dimensions for batch (1, 224, 224, 3)
+            img_array = np.expand_dims(img_array, axis=0).astype(np.float32)
+            
+            # Run inference
+            raw_output = float(model.predict(img_array, verbose=0)[0][0])
+            
+            # Log raw output for debugging
+            print(f"[Snakebite] Raw model output: {raw_output:.6f}")
+            print(f"[Snakebite] Threshold: {cls.DECISION_THRESHOLD}")
+            print(f"[Snakebite] Uncertainty range: {cls.UNCERTAINTY_RANGE}")
+            
+            # Determine if prediction is uncertain
+            uncertain = cls.UNCERTAINTY_RANGE[0] <= raw_output <= cls.UNCERTAINTY_RANGE[1]
+            
+            # Classify based on threshold
+            if raw_output >= cls.DECISION_THRESHOLD:
+                is_snake_bite = True
+                confidence = round(raw_output * 100, 1)
+                result_label = 'Snake Bite'
+                status_title = 'Possible Snakebite Pattern Detected'
+                recommendation = (
+                    'AI screening detected patterns consistent with a snakebite. '
+                    'Immobilize the limb, keep the patient calm, and seek emergency medical care immediately.'
+                )
+            else:
+                is_snake_bite = False
+                confidence = round((1.0 - raw_output) * 100, 1)
+                result_label = 'Not Snake Bite'
+                status_title = 'No Snakebite Pattern Detected'
+                recommendation = (
+                    'AI screening did not detect characteristic snakebite patterns. '
+                    'However, a negative result does not rule out a snakebite. '
+                    'If symptoms persist or a bite is suspected, seek medical attention immediately.'
+                )
+            
+            # Override for uncertain predictions
+            if uncertain:
+                status_title = 'Unable to Confidently Classify'
+                recommendation = (
+                    'The AI model could not confidently classify this image. '
+                    'Professional medical evaluation is strongly recommended if a snakebite is suspected.'
+                )
+            
+            print(f"[Snakebite] Result: {status_title}, Confidence: {confidence}%, Uncertain: {uncertain}")
+            
+            return {
+                'is_snake_bite': is_snake_bite,
+                'result_label': result_label,
+                'status_title': status_title,
+                'confidence': confidence,
+                'recommendation': recommendation,
+                'disclaimer': cls.MANDATORY_DISCLAIMER,
+                'method_label': 'AI-Assisted Screening (EfficientNetB0)',
+                'raw_output': raw_output,
+                'uncertain': uncertain,
+                'processed_image_path': str(image_path)
+            }
+            
+        except Exception as e:
+            logger.error(f"[Snakebite] Inference error: {e}")
             return {
                 'is_snake_bite': False,
                 'result_label': 'Not Snake Bite',
-                'status_title': 'Invalid / Non-Image File Uploaded',
-                'recommendation': 'The uploaded file could not be decoded as a valid photo. Please upload a valid JPG or PNG image.',
+                'status_title': 'Analysis Error',
+                'confidence': None,
+                'recommendation': 'Unable to analyze this image. Please upload a valid JPG or PNG image.',
                 'disclaimer': cls.MANDATORY_DISCLAIMER,
-                'method_label': 'Prototype / Heuristic Visual Feature Screening (Dataset Model Training In Progress)',
+                'method_label': 'AI-Assisted Screening (EfficientNetB0)',
+                'raw_output': None,
+                'uncertain': False,
                 'processed_image_path': None
             }
 
-        height, width, _ = img.shape
 
-        # 1. Erythema / Redness Ratio Analysis in HSV
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        
-        lower_red1 = np.array([0, 40, 40])
-        upper_red1 = np.array([15, 255, 255])
-        lower_red2 = np.array([165, 40, 40])
-        upper_red2 = np.array([180, 255, 255])
-
-        mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
-        mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-        red_mask = mask1 | mask2
-
-        red_ratio = np.sum(red_mask > 0) / float(height * width)
-
-        # 2. Dual Fang Puncture Contour Detection within Redness Region
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        
-        # Binary thresholding for sharp dark puncture marks
-        _, thresh = cv2.threshold(blurred, 90, 255, cv2.THRESH_BINARY_INV)
-        
-        # Restrict contour search to inflamed/redness region (dilated for boundary coverage)
-        kernel = np.ones((15, 15), np.uint8)
-        dilated_red = cv2.dilate(red_mask, kernel, iterations=2)
-        masked_thresh = cv2.bitwise_and(thresh, thresh, mask=dilated_red)
-
-        contours, _ = cv2.findContours(masked_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        puncture_centers = []
-        annotated_img = img.copy()
-
-        for c in contours:
-            area = cv2.contourArea(c)
-            if 8 < area < 500: # Tight size filter for fang punctures
-                perimeter = cv2.arcLength(c, True)
-                if perimeter > 0:
-                    circularity = 4 * np.pi * area / (perimeter * perimeter)
-                    if circularity > 0.25: # Circular/oval shape
-                        (x, y), radius = cv2.minEnclosingCircle(c)
-                        puncture_centers.append((int(x), int(y), radius))
-
-        # Check for at least ONE valid pair of puncture marks separated by realistic fang distance (15px - 150px)
-        has_fang_pair = False
-        for i in range(len(puncture_centers)):
-            for j in range(i + 1, len(puncture_centers)):
-                x1, y1, r1 = puncture_centers[i]
-                x2, y2, r2 = puncture_centers[j]
-                dist = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
-                if 15 <= dist <= 150: # Valid fang distance in pixels
-                    has_fang_pair = True
-                    cv2.circle(annotated_img, (x1, y1), int(r1) + 4, (0, 0, 255), 2)
-                    cv2.circle(annotated_img, (x2, y2), int(r2) + 4, (0, 0, 255), 2)
-                    cv2.line(annotated_img, (x1, y1), (x2, y2), (0, 165, 255), 2)
-
-        # Decision rule: Requires localized erythema AND an identified fang puncture pair
-        is_snake_bite = (has_fang_pair or red_ratio >= 0.08) if (has_fang_pair and red_ratio >= 0.02) else False
-
-        # Save annotated wound screening image
-        processed_dir = os.path.join(settings.MEDIA_ROOT, 'processed_wounds')
-        os.makedirs(processed_dir, exist_ok=True)
-        base_name = os.path.basename(abs_path)
-        processed_filename = f"wound_ai_{base_name}"
-        processed_file_path = os.path.join(processed_dir, processed_filename)
-        cv2.imwrite(processed_file_path, annotated_img)
-
-        rel_processed_path = f"processed_wounds/{processed_filename}"
-
-        if is_snake_bite:
-            return {
-                'is_snake_bite': True,
-                'result_label': 'Snake Bite',
-                'status_title': 'Possible Snake Bite Pattern Detected',
-                'recommendation': 'Dual puncture mark geometry and localized erythema detected. Immobilize limb, keep patient calm, and seek emergency hospital care immediately.',
-                'disclaimer': cls.MANDATORY_DISCLAIMER,
-                'method_label': 'Prototype / Heuristic Visual Feature Screening (Dataset Model Training In Progress)',
-                'processed_image_path': rel_processed_path
-            }
-        else:
-            return {
-                'is_snake_bite': False,
-                'result_label': 'Not Snake Bite',
-                'status_title': 'No Snake-Bite Pattern Detected',
-                'recommendation': 'Characteristic dual puncture fang pattern was not identified in the uploaded image.',
-                'disclaimer': cls.MANDATORY_DISCLAIMER,
-                'method_label': 'Prototype / Heuristic Visual Feature Screening (Dataset Model Training In Progress)',
-                'processed_image_path': rel_processed_path
-            }
+# Legacy heuristic-based service (deprecated, kept for backward compatibility)
+class WoundScreeningService:
+    """
+    DEPRECATED: Legacy heuristic-based wound screening.
+    Use SnakebiteScreeningService (EfficientNetB0) instead.
+    """
+    
+    MANDATORY_DISCLAIMER = SnakebiteScreeningService.MANDATORY_DISCLAIMER
+    
+    @classmethod
+    def analyze_wound_image(cls, image_path):
+        """Legacy heuristic analysis - deprecated."""
+        # Delegate to new EfficientNetB0-based service
+        return SnakebiteScreeningService.analyze_wound_image(image_path)

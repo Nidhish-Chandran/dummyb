@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.contrib import messages
 import uuid
 import os
-from .services import SnakeAIPipelineService, WoundScreeningService
+from .services import SnakeAIPipelineService, SnakebiteScreeningService, WoundScreeningService
 
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
@@ -58,7 +58,7 @@ from django.views.decorators.cache import never_cache
 def wound_checker_view(request):
     """
     Snakebite Wound Image Checker view for citizens.
-    Accepts wound photo upload, runs WoundScreeningService binary screening,
+    Accepts wound photo upload, runs SnakebiteScreeningService (EfficientNetB0),
     displays results with mandatory medical disclaimer.
     """
     result = None
@@ -71,7 +71,8 @@ def wound_checker_view(request):
         full_path = default_storage.path(saved_path)
 
         try:
-            result = WoundScreeningService.analyze_wound_image(full_path)
+            # Use the new EfficientNetB0-based screening service
+            result = SnakebiteScreeningService.analyze_wound_image(full_path)
         except Exception as e:
             messages.error(request, f"Error processing wound image: {str(e)}")
 
