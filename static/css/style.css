@@ -611,47 +611,289 @@ textarea.form-control {
     margin: 0.25rem 0;
 }
 
-/* ─── Utility Aliases ────────────────────────────────────────── */
-.text-teal {
-    color: var(--primary) !important;
+/* ─── Authentication Pages Layout ───────────────────────────── */
+.auth-page {
+    background-color: var(--background);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-.bg-teal {
-    background-color: var(--primary) !important;
+.auth-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 0;
+}
+
+.auth-header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.auth-brand {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auth-brand i {
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+.auth-back-link {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition);
+}
+
+.auth-back-link:hover {
+    color: var(--primary);
+}
+
+.auth-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.auth-footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 1rem 0;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 440px;
+    padding: 0 1rem;
+}
+
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 2rem;
+}
+
+@media (min-width: 576px) {
+    .auth-card {
+        padding: 2.5rem;
+    }
+}
+
+.auth-card-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.auth-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background-color: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.auth-icon-wrapper i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.auth-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+}
+
+.auth-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+.auth-form-group {
+    margin-bottom: 1.25rem;
+}
+
+.auth-form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+    display: block;
+}
+
+.auth-form-control {
+    width: 100%;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 42px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.auth-form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    outline: none;
+}
+
+.auth-form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.auth-btn-primary {
+    width: 100%;
+    background-color: var(--primary);
+    color: #ffffff;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-sm);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    min-height: 42px;
+    transition: background-color var(--transition-md), border-color var(--transition-md);
+}
+
+.auth-btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
     color: #ffffff;
 }
 
-/* Auth pages: fix labels that still use text-light */
-.text-light {
-    color: var(--text-secondary) !important;
+.auth-divider {
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
 }
 
-/* Auth pages: fix text-white in glass-card context */
-.glass-card .text-white,
-.glass-card h3.fw-bold.text-white {
-    color: var(--text) !important;
+.auth-footer-text {
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
 }
 
-.glass-card .text-success {
-    color: var(--primary) !important;
+.auth-link {
+    font-size: 0.875rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition);
 }
 
-/* Profile info blocks */
-.glass-card .bg-dark.bg-opacity-50 {
-    background-color: var(--surface-hover) !important;
-    border-color: var(--border) !important;
+.auth-link:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
 }
 
-.glass-card .text-success.fw-bold {
-    color: var(--primary) !important;
+/* Two-column form layout for register on desktop */
+.auth-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
-.glass-card .text-white.fw-bold {
-    color: var(--text) !important;
+@media (max-width: 575px) {
+    .auth-form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .auth-header .container {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .auth-back-link {
+        order: -1;
+    }
 }
 
-.glass-card .border-secondary {
-    border-color: var(--border) !important;
+/* Password requirements help */
+.password-help {
+    background-color: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    margin-top: 0.5rem;
+}
+
+.password-help-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.password-help-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.password-help-list li {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    padding-left: 1.25rem;
+    position: relative;
+    margin-bottom: 0.25rem;
+}
+
+.password-help-list li:last-child {
+    margin-bottom: 0;
+}
+
+.password-help-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
+}
+
+/* Form error styling */
+.auth-form-error {
+    font-size: 0.75rem;
+    color: var(--danger);
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Select dropdown styling */
+.auth-form-select {
+    width: 100%;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 42px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.auth-form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    outline: none;
 }
 
 /* ─── Page Header Pattern ────────────────────────────────────── */
@@ -839,4 +1081,47 @@ a.text-teal:hover {
     .filter-toolbar .form-select {
         width: 100%;
     }
+}
+
+/* ─── Utility Aliases ────────────────────────────────────────── */
+.text-teal {
+    color: var(--primary) !important;
+}
+
+.bg-teal {
+    background-color: var(--primary) !important;
+    color: #ffffff;
+}
+
+/* Auth pages: fix labels that still use text-light */
+.text-light {
+    color: var(--text-secondary) !important;
+}
+
+/* Auth pages: fix text-white in glass-card context */
+.glass-card .text-white,
+.glass-card h3.fw-bold.text-white {
+    color: var(--text) !important;
+}
+
+.glass-card .text-success {
+    color: var(--primary) !important;
+}
+
+/* Profile info blocks */
+.glass-card .bg-dark.bg-opacity-50 {
+    background-color: var(--surface-hover) !important;
+    border-color: var(--border) !important;
+}
+
+.glass-card .text-success.fw-bold {
+    color: var(--primary) !important;
+}
+
+.glass-card .text-white.fw-bold {
+    color: var(--text) !important;
+}
+
+.glass-card .border-secondary {
+    border-color: var(--border) !important;
 }
