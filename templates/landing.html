@@ -1,0 +1,717 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venom Watch — AI-Powered Snake Safety Platform</title>
+    <meta name="description" content="Venom Watch combines AI-assisted snake detection, venom classification, location intelligence and community reporting to support safer snake-sighting response.">
+
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <!-- Venom Watch Design System -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        /* Landing Page Specific Styles */
+        .landing-navbar {
+            background: var(--surface) !important;
+            border-bottom: 1px solid var(--border);
+            box-shadow: none;
+            min-height: 68px;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .landing-nav-brand {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text) !important;
+            letter-spacing: -0.3px;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .landing-nav-brand .fa-staff-snake {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .landing-nav-link {
+            color: var(--text-secondary) !important;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.4rem 0.75rem !important;
+            border-radius: var(--radius-sm);
+            transition: color var(--transition), background-color var(--transition);
+        }
+
+        .landing-nav-link:hover {
+            color: var(--primary) !important;
+            background-color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        .hero-section {
+            padding: 5rem 0 4rem;
+            background: linear-gradient(180deg, var(--background) 0%, var(--surface) 100%);
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text);
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 580px;
+            margin-bottom: 2rem;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: 1px solid var(--primary);
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            border-radius: var(--radius);
+            transition: all var(--transition-md);
+        }
+
+        .btn-hero-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .btn-hero-secondary {
+            background-color: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            border-radius: var(--radius);
+            transition: all var(--transition-md);
+        }
+
+        .btn-hero-secondary:hover {
+            background-color: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+
+        .section-padding {
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .section-subtitle {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+        }
+
+        .capability-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            height: 100%;
+            transition: box-shadow var(--transition-md), border-color var(--transition-md);
+        }
+
+        .capability-card:hover {
+            border-color: var(--primary-muted);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .capability-icon {
+            width: 44px;
+            height: 44px;
+            background-color: var(--primary-light);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .capability-icon i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .capability-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .capability-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* How It Works Steps */
+        .steps-container {
+            display: flex;
+            gap: 2rem;
+            position: relative;
+        }
+
+        .step-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background-color: var(--primary);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0 auto 0.75rem;
+        }
+
+        .step-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .step-text {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .step-connector {
+            position: absolute;
+            top: 18px;
+            right: -1rem;
+            width: 2rem;
+            height: 2px;
+            background-color: var(--border);
+        }
+
+        .step-item:last-child .step-connector {
+            display: none;
+        }
+
+        /* AI Pipeline */
+        .pipeline-container {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .pipeline-box {
+            background-color: var(--primary-light);
+            border: 1px solid var(--primary-muted);
+            border-radius: var(--radius);
+            padding: 0.75rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--primary-hover);
+        }
+
+        .pipeline-arrow {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Safety Section */
+        .safety-box {
+            background-color: var(--warning-light);
+            border: 1px solid var(--warning-muted);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+        }
+
+        .safety-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--warning);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .safety-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0 0 0.75rem;
+        }
+
+        .safety-emergency {
+            font-size: 0.8125rem;
+            color: var(--danger);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background-color: var(--primary-light);
+            border: 1px solid var(--primary-muted);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-text {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        .landing-footer {
+            border-top: 1px solid var(--border);
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+
+        .footer-brand {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-tagline {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-copyright {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 3rem 0 2.5rem;
+            }
+
+            .hero-title {
+                font-size: 1.875rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .section-padding {
+                padding: 2.5rem 0;
+            }
+
+            .steps-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .step-connector {
+                display: none;
+            }
+
+            .pipeline-flow {
+                flex-direction: column;
+            }
+
+            .pipeline-arrow {
+                transform: rotate(90deg);
+            }
+
+            .cta-section {
+                padding: 1.75rem;
+            }
+
+            .cta-title {
+                font-size: 1.125rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg landing-navbar sticky-top">
+        <div class="container">
+            <!-- Brand -->
+            <a class="landing-nav-brand d-flex align-items-center gap-2" href="#">
+                <i class="fa-solid fa-staff-snake"></i>
+                <span>VENOM<span style="color: var(--primary);">WATCH</span></span>
+            </a>
+
+            <!-- Mobile toggle -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#landingNavbar"
+                    aria-controls="landingNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="landingNavbar">
+                <!-- Center links -->
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="landing-nav-link" href="#how-it-works">How It Works</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="landing-nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="landing-nav-link" href="#community">Community</a>
+                    </li>
+                </ul>
+
+                <!-- Right actions -->
+                <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                    <a href="{% url 'accounts:login' %}" class="btn btn-hero-secondary">Sign In</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-hero-primary">Create Account</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1 class="hero-title">AI-Powered Snake Safety</h1>
+                    <p class="hero-subtitle">
+                        Know what you're dealing with. Respond with confidence. Venom Watch combines 
+                        AI-assisted snake detection, venom classification, location intelligence and 
+                        community reporting to support safer responses to snake sightings.
+                    </p>
+                    <div class="hero-cta-group">
+                        <a href="{% url 'accounts:register' %}" class="btn btn-hero-primary">
+                            Get Started
+                        </a>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-hero-secondary">
+                            Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What Venom Watch Does -->
+    <section class="section-padding" id="features">
+        <div class="container">
+            <h2 class="section-title">What Venom Watch Does</h2>
+            <p class="section-subtitle">
+                A comprehensive platform for snake sighting assessment and community safety awareness.
+            </p>
+
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="capability-card">
+                        <div class="capability-icon">
+                            <i class="fa-solid fa-camera"></i>
+                        </div>
+                        <h3 class="capability-title">AI Snake Detection</h3>
+                        <p class="capability-text">
+                            Upload a photo and use AI to determine whether a snake is present in the image.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="capability-card">
+                        <div class="capability-icon">
+                            <i class="fa-solid fa-dna"></i>
+                        </div>
+                        <h3 class="capability-title">Venom Classification</h3>
+                        <p class="capability-text">
+                            When a snake is detected, AI provides a prediction of venomous or non-venomous classification.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="capability-card">
+                        <div class="capability-icon">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <h3 class="capability-title">Location Intelligence</h3>
+                        <p class="capability-text">
+                            Snake sightings are associated with geographic locations and analyzed for community risk patterns.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="capability-card">
+                        <div class="capability-icon">
+                            <i class="fa-solid fa-file-pen"></i>
+                        </div>
+                        <h3 class="capability-title">Incident Reporting</h3>
+                        <p class="capability-text">
+                            Users can report relevant snake sightings for monitoring and community awareness.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section-padding" id="how-it-works" style="background-color: var(--surface);">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">
+                A simple four-step process for snake identification and reporting.
+            </p>
+
+            <div class="steps-container">
+                <div class="step-item">
+                    <div class="step-number">01</div>
+                    <h3 class="step-title">Upload</h3>
+                    <p class="step-text">Upload a snake image for analysis.</p>
+                    <div class="step-connector"></div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">02</div>
+                    <h3 class="step-title">Analyze</h3>
+                    <p class="step-text">AI checks for snake presence and evaluates venom classification.</p>
+                    <div class="step-connector"></div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">03</div>
+                    <h3 class="step-title">Decide</h3>
+                    <p class="step-text">Review the AI-assisted result and determination.</p>
+                    <div class="step-connector"></div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">04</div>
+                    <h3 class="step-title">Report</h3>
+                    <p class="step-text">If appropriate, submit a sighting with location information.</p>
+                </div>
+            </div>
+
+            <!-- AI Pipeline Visual -->
+            <div class="mt-5">
+                <div class="pipeline-container">
+                    <div class="pipeline-flow">
+                        <div class="pipeline-box">Image</div>
+                        <i class="fa-solid fa-arrow-right pipeline-arrow"></i>
+                        <div class="pipeline-box">Snake Detection</div>
+                        <i class="fa-solid fa-arrow-right pipeline-arrow"></i>
+                        <div class="pipeline-box">Snake?</div>
+                        <i class="fa-solid fa-arrow-right pipeline-arrow"></i>
+                        <div class="pipeline-box">Venom Classification</div>
+                        <i class="fa-solid fa-arrow-right pipeline-arrow"></i>
+                        <div class="pipeline-box">Result</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community & Location Intelligence -->
+    <section class="section-padding" id="community">
+        <div class="container">
+            <h2 class="section-title">Community Risk Awareness</h2>
+            <p class="section-subtitle">
+                Contributing to safer communities through shared location intelligence.
+            </p>
+
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <p style="font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.6;">
+                        Reported sightings contribute to aggregated geographic risk information, 
+                        helping communities and authorities understand where snake activity is being reported.
+                        This collective data supports better awareness and informed decision-making for 
+                        public safety.
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 1rem;">
+                        <i class="fa-solid fa-shield-halved me-1" style="color: var(--primary);"></i>
+                        Your privacy is protected — individual user locations are not exposed publicly.
+                    </p>
+                </div>
+                <div class="col-lg-6">
+                    <div class="capability-card" style="background-color: var(--primary-light); border-color: var(--primary-muted);">
+                        <div class="text-center py-4">
+                            <i class="fa-solid fa-map" style="color: var(--primary); font-size: 3rem; opacity: 0.5;"></i>
+                            <p class="mt-3 mb-0" style="font-size: 0.875rem; color: var(--text-secondary);">
+                                Aggregated sighting data helps identify patterns and high-activity areas
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Safety & Trust -->
+    <section class="section-padding" style="background-color: var(--surface);">
+        <div class="container">
+            <div class="safety-box">
+                <h3 class="safety-title">
+                    <i class="fa-solid fa-circle-info"></i>
+                    AI-Assisted Identification
+                </h3>
+                <p class="safety-text">
+                    Venom Watch provides AI-generated predictions to support snake-sighting assessment. 
+                    Predictions may be incorrect and should not replace professional identification or 
+                    medical advice. Always exercise caution and consult wildlife experts when needed.
+                </p>
+                <p class="safety-emergency">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    For suspected snakebite: Seek emergency medical attention immediately.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="section-padding">
+        <div class="container">
+            <div class="cta-section">
+                <h2 class="cta-title">Ready to use Venom Watch?</h2>
+                <p class="cta-text">
+                    Create an account to report sightings, track your submissions and access safety tools.
+                </p>
+                <div class="hero-cta-group" style="justify-content: center;">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-hero-primary">
+                        Create Account
+                    </a>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-hero-secondary">
+                        Sign In
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="footer-brand">
+                        <i class="fa-solid fa-staff-snake me-1" style="color: var(--primary);"></i>
+                        VENOM WATCH
+                    </p>
+                    <p class="footer-tagline">
+                        AI-powered snake safety and community monitoring.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <ul class="footer-links justify-content-md-end">
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#community">Community</a></li>
+                        <li><a href="{% url 'accounts:login' %}">Sign In</a></li>
+                        <li><a href="{% url 'accounts:register' %}">Create Account</a></li>
+                    </ul>
+                </div>
+            </div>
+            <p class="footer-copyright">
+                &copy; 2026 Venom Watch. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
