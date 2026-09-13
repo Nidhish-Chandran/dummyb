@@ -49,7 +49,7 @@ def logout_view(request):
     if hasattr(request, 'session'):
         request.session.flush()
     messages.info(request, "You have been successfully logged out.")
-    return redirect('accounts:login')
+    return redirect('dashboard:home')
 
 
 

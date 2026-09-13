@@ -65,10 +65,20 @@
             background: linear-gradient(180deg, var(--background) 0%, var(--surface) 100%);
         }
 
+        .hero-eyebrow {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.75rem;
+        }
+
         .hero-title {
-            font-size: 2.5rem;
+            font-size: 2.75rem;
             font-weight: 700;
-            line-height: 1.2;
+            line-height: 1.15;
             color: var(--text);
             margin-bottom: 1rem;
             letter-spacing: -0.02em;
@@ -78,7 +88,7 @@
             font-size: 1.125rem;
             color: var(--text-secondary);
             line-height: 1.6;
-            max-width: 580px;
+            max-width: 540px;
             margin-bottom: 2rem;
         }
 
@@ -86,6 +96,67 @@
             display: flex;
             gap: 0.75rem;
             flex-wrap: wrap;
+        }
+
+        .hero-visual-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-visual-placeholder {
+            width: 100%;
+            max-width: 420px;
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--surface) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .hero-visual-placeholder i {
+            font-size: 4rem;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+
+        .hero-visual-placeholder span {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* Trust Strip */
+        .trust-strip-section {
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .trust-strip {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .trust-item i {
+            color: var(--primary);
+            font-size: 1rem;
         }
 
         .btn-hero-primary {
@@ -465,25 +536,58 @@
         </div>
     </nav>
 
+
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-7">
-                    <h1 class="hero-title">AI-Powered Snake Safety</h1>
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <span class="hero-eyebrow">AI-POWERED SNAKE SAFETY PLATFORM</span>
+                    <h1 class="hero-title">Smarter snake-sighting<br>assessment for safer<br>communities.</h1>
                     <p class="hero-subtitle">
-                        Know what you're dealing with. Respond with confidence. Venom Watch combines 
-                        AI-assisted snake detection, venom classification, location intelligence and 
+                        Venom Watch combines AI-assisted image analysis, location intelligence and 
                         community reporting to support safer responses to snake sightings.
                     </p>
                     <div class="hero-cta-group">
                         <a href="{% url 'accounts:register' %}" class="btn btn-hero-primary">
-                            Get Started
+                            Create Account
                         </a>
                         <a href="{% url 'accounts:login' %}" class="btn btn-hero-secondary">
                             Sign In
                         </a>
                     </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-visual-wrapper">
+                        <div class="hero-visual-placeholder">
+                            <i class="fa-solid fa-staff-snake"></i>
+                            <span>Venom Watch</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Strip -->
+    <section class="trust-strip-section">
+        <div class="container">
+            <div class="trust-strip">
+                <div class="trust-item">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span>AI-Assisted Analysis</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Location Intelligence</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Community Reporting</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fa-solid fa-phone-volume"></i>
+                    <span>Emergency Support</span>
                 </div>
             </div>
         </div>
