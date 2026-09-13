@@ -42,13 +42,31 @@ def register_view(request):
 
 
 from django.views.decorators.cache import never_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 @never_cache
 def logout_view(request):
+    """
+    Properly terminate the user's Django session.
+    """
+    if request.user.is_authenticated:
+        username = request.user.username
+        logger.info(f"Logging out user: {username}")
+    
+    # Use Django's built-in logout to clear authentication
     logout(request)
+    
+    # Flush the session to remove all session data
     if hasattr(request, 'session'):
         request.session.flush()
+        logger.info("Session flushed successfully")
+    
+    from django.contrib import messages
     messages.info(request, "You have been successfully logged out.")
+    
+    # Redirect to public landing page (not login page)
     return redirect('dashboard:home')
 
 
