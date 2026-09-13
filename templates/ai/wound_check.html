@@ -10,11 +10,11 @@
             <!-- Page Header -->
             <div class="mb-4">
                 <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
-                    <i class="fa-solid fa-bandage me-2" style="color: var(--warning);"></i>
+                    <i class="fa-solid fa-bandage me-2" style="color: var(--primary);"></i>
                     Snakebite Wound Checker
                 </h2>
                 <p class="text-muted mb-0" style="font-size: 0.8125rem;">
-                    AI-assisted visual screening for dual puncture mark patterns and bite mark erythema.
+                    AI-assisted wound image screening using EfficientNetB0 deep learning.
                 </p>
             </div>
 
@@ -82,20 +82,22 @@
                         {% endif %}
                     </div>
 
-                    <!-- Status Label -->
-                    <p class="fw-semibold mb-3" style="font-size: 0.875rem; color: var(--text-secondary);">
-                        {{ result.status_title }}
-                    </p>
-
-                    {% if result.processed_image_path %}
-                        <div class="text-center mb-3 p-2 rounded border" style="background: var(--surface-hover);">
-                            <img src="/media/{{ result.processed_image_path }}" alt="Annotated Screening"
-                                 class="img-fluid rounded" style="max-height: 240px;">
-                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
-                                Diagnostic feature contour overlay
-                            </small>
-                        </div>
-                    {% endif %}
+                    <!-- Status Label with Confidence -->
+                    <div class="mb-3">
+                        <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
+                            {{ result.status_title }}
+                        </p>
+                        {% if result.confidence %}
+                            <p class="mb-0" style="font-size: 0.8125rem; color: var(--text-secondary);">
+                                Screening confidence: <strong>{{ result.confidence }}%</strong>
+                            </p>
+                        {% endif %}
+                        {% if result.uncertain %}
+                            <p class="mb-0" style="font-size: 0.75rem; color: var(--warning);">
+                                <i class="fa-solid fa-circle-exclamation me-1"></i> Low confidence prediction
+                            </p>
+                        {% endif %}
+                    </div>
 
                     <!-- Recommendation -->
                     <div class="p-3 rounded border mb-3" style="background: var(--surface-hover);">

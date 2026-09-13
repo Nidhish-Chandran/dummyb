@@ -807,21 +807,32 @@ textarea.form-control {
 /* Two-column form layout for register on desktop */
 .auth-form-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
 }
 
-@media (max-width: 575px) {
+.auth-form-group {
+    margin-bottom: 0;
+}
+
+.auth-form-control,
+.auth-form-select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
     .auth-form-row {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
-    
+
     .auth-header .container {
         flex-direction: column;
         gap: 0.5rem;
         text-align: center;
     }
-    
+
     .auth-back-link {
         order: -1;
     }
