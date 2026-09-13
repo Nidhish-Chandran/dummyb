@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils import timezone
 from datetime import timedelta
 from reports.models import SightingReport
@@ -6,6 +6,19 @@ from hotspots.services import DBSCANHotspotService
 from django.contrib.auth.decorators import login_required
 from accounts.decorators import authority_required
 from django.views.decorators.cache import never_cache
+
+def landing_page_view(request):
+    """
+    Public landing page for unauthenticated visitors.
+    If user is authenticated, redirect to appropriate dashboard.
+    """
+    if request.user.is_authenticated:
+        if hasattr(request.user, 'profile') and request.user.profile.is_authority:
+            return redirect('dashboard:home')
+        return redirect('reports:list')
+    
+    return render(request, 'landing.html')
+
 
 @login_required
 @authority_required
