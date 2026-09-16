@@ -1,32 +1,35 @@
 ```
-# Python
-__pycache__/
+# Python compiled files
 *.pyc
-*.pyo
-*.pyd
+__pycache__/
 
-# Databases
-db.sqlite3
+# Logs and temporary files
+*.log
+*.tmp
 
-# Environment
-.venv/
-venv/
+# Environment files
 .env
 .env.local
 *.env.*
 
-# Logs
-*.log
-
-# Coverage
-.coverage
-coverage/
-htmlcov/
-
-# IDE
+# Editor/IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*.tmp
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
 ```

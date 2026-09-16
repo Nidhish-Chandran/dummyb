@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error-container": "#ffdad6",
+          "on-tertiary-fixed-variant": "#93000b",
+          "tertiary-fixed-dim": "#ffb4ab",
+          "on-tertiary-fixed": "#410002",
+          "inverse-primary": "#68dba9",
+          "on-secondary-fixed-variant": "#005049",
+          "on-surface-variant": "#3d4a42",
+          "on-surface": "#0d1c2e",
+          "background": "#f8f9ff",
+          "primary-container": "#00855d",
+          "surface-variant": "#d5e3fc",
+          "outline": "#6d7a72",
+          "tertiary": "#bb0112",
+          "secondary-container": "#86f2e4",
+          "surface-bright": "#f8f9ff",
+          "on-secondary": "#ffffff",
+          "tertiary-container": "#e02928",
+          "surface-container-high": "#dce9ff",
+          "surface-container-low": "#eff4ff",
+          "on-error": "#ffffff",
+          "inverse-on-surface": "#eaf1ff",
+          "on-background": "#0d1c2e",
+          "on-primary": "#ffffff",
+          "surface-container": "#e6eeff",
+          "on-primary-container": "#f5fff7",
+          "surface-container-highest": "#d5e3fc",
+          "secondary-fixed-dim": "#6bd8cb",
+          "secondary": "#006a61",
+          "primary-fixed-dim": "#68dba9",
+          "secondary-fixed": "#89f5e7",
+          "on-tertiary": "#ffffff",
+          "tertiary-fixed": "#ffdad6",
+          "on-secondary-container": "#006f66",
+          "on-primary-fixed": "#002114",
+          "outline-variant": "#bccac0",
+          "surface-container-lowest": "#ffffff",
+          "surface-tint": "#006c4a",
+          "primary": "#006948",
+          "on-error-container": "#93000a",
+          "surface": "#f8f9ff",
+          "primary-fixed": "#85f8c4",
+          "surface-dim": "#ccdbf3",
+          "inverse-surface": "#233144",
+          "on-secondary-fixed": "#00201d",
+          "on-tertiary-container": "#fffbff",
+          "on-primary-fixed-variant": "#005137",
+          "error": "#ba1a1a"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-lg": "1.5rem",
+          "gutter": "1.5rem",
+          "gutter-mobile": "1rem",
+          "space-sm": "0.5rem",
+          "margin-mobile": "1rem",
+          "margin": "2rem",
+          "space-xs": "0.25rem",
+          "space-xl": "2.5rem",
+          "space-md": "1rem"
+        },
+        "fontFamily": {
+          "body-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "body-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "display-lg": [
+            "Space Grotesk"
+          ],
+          "label-md": [
+            "Plus Jakarta Sans"
+          ],
+          "code-sm": [
+            "Space Grotesk"
+          ],
+          "headline-sm": [
+            "Space Grotesk"
+          ],
+          "headline-xl-mobile": [
+            "Space Grotesk"
+          ],
+          "label-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "body-md": [
+            "Plus Jakarta Sans"
+          ],
+          "title-md": [
+            "Plus Jakarta Sans"
+          ],
+          "display-lg-mobile": [
+            "Space Grotesk"
+          ],
+          "headline-lg": [
+            "Space Grotesk"
+          ],
+          "headline-xl": [
+            "Space Grotesk"
+          ]
+        },
+        "fontSize": {
+          "body-lg": [
+            "18px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "body-sm": [
+            "13px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "400"
+            }
+          ],
+          "display-lg": [
+            "48px",
+            {
+              "lineHeight": "56px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "700"
+            }
+          ],
+          "label-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "code-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.02em",
+              "fontWeight": "500"
+            }
+          ],
+          "headline-sm": [
+            "20px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "0em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-xl-mobile": [
+            "26px",
+            {
+              "lineHeight": "34px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "label-sm": [
+            "11px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.05em",
+              "fontWeight": "700"
+            }
+          ],
+          "body-md": [
+            "15px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "title-md": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "0em",
+              "fontWeight": "600"
+            }
+          ],
+          "display-lg-mobile": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-lg": [
+            "28px",
+            {
+              "lineHeight": "36px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-xl": [
+            "36px",
+            {
+              "lineHeight": "44px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "600"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 max-w-7xl mx-auto px-margin flex items-center justify-between gap-gutter"><div class="flex items-center gap-space-md"><img alt="Brand logo. - Primary color: #059669
+- Font: spaceGrotesk
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo3A4F-Y0b537AmwxvhtxO6Ccry2sDNqLcLdFFqoyaCRGfGkgRaH5knuHDUt3vhmeOtmHPfK1oX-UAdOCiH9i0bNmePX5Aqyg2WZk7rRlykO1NDaH2MdzYOUysdWSZQ2M1DiG8ZamdoCpKAlnBj843Cdi_6cGEYL4W7iEfqXopRhH_hGei584HCwGz4B6v0Yec2awF01OXjqef5XY9nWyR7JPKRQd3BAy7n0kmml830xCM30g7ZbOJglp8"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface leading-none">VENOMWATCH</span><span class="font-label-sm text-label-sm tracking-widest text-outline uppercase mt-1 leading-none">AI SNAKE DEFENSE &amp; PUBLIC SAFETY</span></div></div><nav class="hidden lg:flex items-center gap-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-title-md"><a aria-current="page" class="px-space-md py-space-sm rounded-lg transition-colors bg-surface-container-high text-on-surface font-title-md" data-path="home" href="#">Home</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="identify-snake" href="#">Identify Snake</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="risk-zones" href="#">Risk Zones</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="wound-checker" href="#">Wound Checker</a></nav><div class="flex items-center gap-space-sm"><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="sign-in" href="#">Sign In</a><a class="px-space-lg py-space-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm" data-path="register" href="#">Register</a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs" src="https://lh3.googleusercontent.com/aida/AEtjO1WPkRDSjB4GCN28IFy3sbNKDngzR5tKa0KbaZY4F5lopFOML7QtHOS740Kc_WCo_lufMYLAq1qLuYUFbK9lguEGe2fu_Y3ig0xEmGnSz9HfuoU3l2gl80rsMQeaG2lzjCzJLogoavaeR6xZVese3eNbsVaJRS3gtq8NxFaeWeg3zDE0h_kItXSDApdRPR-Oj-6nN545DdukHOyvQQqxZeztGcOOoQnff4N-f_5YPfB4raQgYOuYQxgz8V3r"/></div></div></header><main class="w-full pt-20 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Top Ambient Atmosphere Layer -->
+<div class="relative w-full overflow-hidden">
+<div class="absolute -top-40 right-10 w-96 h-96 bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute top-64 left-1/4 w-80 h-80 bg-secondary-fixed/30 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Hero Section -->
+<section class="max-w-7xl mx-auto px-margin pt-12 pb-24 lg:pt-16 lg:pb-32 w-full">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
+<!-- Text Column (Col 1-7) -->
+<div class="lg:col-span-7 flex flex-col items-start">
+<div class="inline-flex items-center gap-space-xs px-space-md py-1 rounded-full bg-surface-container-high text-primary mb-space-md shadow-sm">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-code-sm text-code-sm font-semibold tracking-wide uppercase">PyTorch v2.3 CNN Real-Time Classifier Active</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-surface tracking-tight leading-[1.08] mb-space-md">
+            Smarter Snake Identification. <br/>
+<span class="text-primary">Safer Communities.</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-space-xl">
+            VenomWatch uses AI-assisted snake species classification and spatial telemetry to prevent human-snake conflict, accelerate bite triage, and empower community safety.
+          </p>
+<!-- CTAs -->
+<div class="flex flex-wrap items-center gap-space-md w-full sm:w-auto">
+<a class="inline-flex items-center justify-center gap-space-sm px-space-xl py-3.5 rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:bg-primary-container transition-all shadow-md hover:shadow-lg" data-path="identify-snake" href="#">
+<span class="material-symbols-outlined text-[20px]">photo_camera</span>
+<span>Identify a Snake</span>
+</a>
+<a class="inline-flex items-center justify-center gap-space-sm px-space-lg py-3.5 rounded-lg font-label-md text-label-md bg-surface-container-lowest text-on-surface hover:bg-surface-container transition-colors shadow-sm" data-path="sign-in" href="#">
+<span class="material-symbols-outlined text-[20px]">add_location_alt</span>
+<span>Report a Sighting</span>
+</a>
+</div>
+<!-- Quick Metrics Ribbon -->
+<div class="grid grid-cols-3 gap-space-md pt-space-xl mt-space-xl w-full max-w-xl">
+<div class="flex flex-col">
+<span class="font-display-lg text-[32px] text-on-surface font-bold">&lt;380ms</span>
+<span class="font-body-sm text-body-sm text-outline">Inference Latency</span>
+</div>
+<div class="flex flex-col">
+<span class="font-display-lg text-[32px] text-primary font-bold">98.4%</span>
+<span class="font-body-sm text-body-sm text-outline">Clinical Top-1 Accuracy</span>
+</div>
+<div class="flex flex-col">
+<span class="font-display-lg text-[32px] text-on-surface font-bold">15+</span>
+<span class="font-body-sm text-body-sm text-outline">Native Viper &amp; Elapid Spp.</span>
+</div>
+</div>
+</div>
+<!-- Specimen Hero Card (Col 8-12) -->
+<div class="lg:col-span-5 relative mt-space-lg lg:mt-0">
+<div class="absolute -inset-2 bg-gradient-to-tr from-primary/10 via-secondary/15 to-transparent rounded-2xl blur-xl"></div>
+<div class="relative bg-surface-container-lowest rounded-2xl p-space-md shadow-xl transition-transform hover:-translate-y-1 duration-300">
+<!-- Header Bar -->
+<div class="flex items-center justify-between pb-space-sm mb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-container"></span>
+<span class="font-code-sm text-code-sm text-outline uppercase tracking-wider">LIVE TELEMETRY #8942-B</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm uppercase font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span> Highly Venomous
+              </span>
+</div>
+<!-- Specimen Photo Container -->
+<div class="relative rounded-xl overflow-hidden aspect-[4/3] bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Close up photograph of an adult Spectacled Cobra Naja naja with visible hood marking in high key natural outdoor light, crisp biological field photograph with shallow depth of field, clear detailed scales, modern clinical documentary style, warm earth tones with lush botanical hints" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAQSOsN5kXf8kgmZbJmrI87YyL3Gfbe9Qx-EXc948L9CRKVGIZdHpHHiLHXjPcwwLhC37B-9_gByFrQSxA4N8GF5HrGR22OTCAFSbMj7KoxoWe8lSbGiFu6SSbq-8RkEpGgcNs8vt1s8KvgEXotryW6cdFzpwCWMjbWWM_2pxzasnIufBlT9fbhk1VrhY34RpSTj7sSLFNlDmtHJBgyNtzRrtsG5oN38kOIEn-QwfxobU8LyQnUzTXtg"/>
+<!-- Bounding Box Overlay Simulation -->
+<div class="absolute inset-4 rounded-lg pointer-events-none flex flex-col justify-between p-2">
+<div class="flex justify-between items-start">
+<span class="px-2 py-1 rounded bg-inverse-surface/85 backdrop-blur-sm text-inverse-on-surface font-code-sm text-code-sm">
+                    TARGET: ELAPIDAE_NAJA_NAJA
+                  </span>
+<span class="px-2 py-1 rounded bg-primary text-on-primary font-code-sm text-code-sm font-semibold">
+                    CONFIDENCE 99.2%
+                  </span>
+</div>
+<div class="self-end bg-inverse-surface/85 backdrop-blur-sm text-inverse-on-surface font-code-sm text-[11px] px-2 py-0.5 rounded">
+                  GEO: 12.9716° N, 77.5946° E
+                </div>
+</div>
+</div>
+<!-- Specimen Analysis Details -->
+<div class="mt-space-md space-y-space-sm">
+<div class="flex items-baseline justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Spectacled Cobra</h3>
+<p class="font-body-sm text-body-sm text-outline italic">Naja naja • Elapidae Family</p>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Venom Toxin</span>
+<span class="font-label-md text-label-md text-tertiary font-bold">Postsynaptic Neurotoxin</span>
+</div>
+</div>
+<!-- Rapid Action Triage Alert Drawer -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-tertiary text-[20px] shrink-0 mt-0.5">medical_services</span>
+<div class="flex-1 min-w-0">
+<span class="font-title-md text-[13px] text-on-surface block font-bold">Immediate Field Safety Rule</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Maintain 3+ meters clearance. Immobilize limb if bitten; seek Polyvalent Antivenom immediately.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- How It Works (4 Step Flow) -->
+<section class="w-full bg-surface-container-low py-20 lg:py-28">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="flex flex-col items-center text-center max-w-3xl mx-auto mb-space-xl">
+<span class="font-code-sm text-code-sm uppercase tracking-widest text-primary font-semibold">Step-by-Step Triage</span>
+<h2 class="font-headline-xl text-headline-xl text-on-surface mt-2 mb-space-sm">How VenomWatch Protects Lives</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Rapid four-stage protocol engineered for high-pressure outdoor encounters, researchers, and emergency first responders.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter relative">
+<!-- Step 1 -->
+<div class="flex flex-col bg-surface-container-lowest p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-space-md">
+<span class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center font-code-sm font-bold text-primary">01</span>
+<span class="material-symbols-outlined text-primary text-[28px]">distance</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Upload Image</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Take or upload a crisp photograph from a safe distance of at least 2+ meters. Macro zoom supported.</p>
+<div class="mt-space-md pt-space-sm flex items-center gap-1.5 text-outline text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span> Field Distance Lock
+          </div>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col bg-surface-container-lowest p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-space-md">
+<span class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center font-code-sm font-bold text-primary">02</span>
+<span class="material-symbols-outlined text-primary text-[28px]">biotech</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">AI Identifies Species</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Our PyTorch CNN compares anatomical scales, patterns, and head shapes against 15 indigenous species in &lt;400ms.</p>
+<div class="mt-space-md pt-space-sm flex items-center gap-1.5 text-outline text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span> NOT_SNAKE Filter Guard
+          </div>
+</div>
+<!-- Step 3 -->
+<div class="flex flex-col bg-surface-container-lowest p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-space-md">
+<span class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center font-code-sm font-bold text-tertiary">03</span>
+<span class="material-symbols-outlined text-tertiary text-[28px]">shield</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">View Venom Status</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Instant clinical classification: Highly Venomous, Mildly Venomous, or Harmless with tailored immediate first-aid protocols.</p>
+<div class="mt-space-md pt-space-sm flex items-center gap-1.5 text-outline text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span> Severity Index Pill
+          </div>
+</div>
+<!-- Step 4 -->
+<div class="flex flex-col bg-surface-container-lowest p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-space-md">
+<span class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center font-code-sm font-bold text-secondary">04</span>
+<span class="material-symbols-outlined text-secondary text-[28px]">broadcast_on_personal</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Report if Needed</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Optionally log verified coordinates to alert regional wildlife rangers and feed live risk-mapping clusters.</p>
+<div class="mt-space-md pt-space-sm flex items-center gap-1.5 text-outline text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span> OpenStreetMap Geotag
+          </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Core Capabilities Section (6 Grid Cards) -->
+<section class="max-w-7xl mx-auto px-margin py-20 lg:py-28 w-full">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-space-xl">
+<div class="max-w-2xl">
+<span class="font-code-sm text-code-sm uppercase tracking-widest text-primary font-semibold">Clinical &amp; Spatial Infrastructure</span>
+<h2 class="font-headline-xl text-headline-xl text-on-surface mt-2">Comprehensive Snake Safety Architecture</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm mt-4 md:mt-0">
+        Enterprise-grade wildlife intelligence integrated directly with local emergency antivenom stockpiles.
+      </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<div class="group bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[26px]">psychology</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">AI Snake Identification</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Custom deep CNN tuned on over 45,000 biological field specimens. Includes a strict NOT_SNAKE false-positive threshold to eliminate non-reptile submissions.
+          </p>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<span class="font-code-sm text-code-sm text-outline">15 Native Classes</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">ResNet-50 Fine-Tuned</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="w-12 h-12 rounded-xl bg-tertiary/10 text-tertiary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[26px]">coronavirus</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Venom Risk Mapping</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Color-coded toxicity ratings (Cytotoxic, Hemotoxic, Neurotoxic) paired with critical DO and DO-NOT field medical protocols to stop irreversible tissue loss.
+          </p>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<span class="font-code-sm text-code-sm text-outline">Clinical Classification</span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">WHO Guidelines Compliant</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[26px]">share_location</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Snake Sighting Reports</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Citizen science with forensic fidelity. Automated metadata capture: time-of-day, habitat type, weather ambient, and verified GPS geotags with high precision.
+          </p>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<span class="font-code-sm text-code-sm text-outline">Telemetry Logs</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">Offline Sync Ready</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[26px]">map</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">OpenStreetMap &amp; GIS Mesh</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Dynamic community overlays mapping live snake encounters across agricultural perimeters, hiking corridors, residential backyards, and regional forest tracts.
+          </p>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<span class="font-code-sm text-code-sm text-outline">GeoJSON Ingestion</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">Real-Time Vector Tiles</span>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="group bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[26px]">hub</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">DBSCAN Spatial Clustering</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Density-based spatial algorithms automatically detect active snake migration funnels and seasonal nest hubs, alerting rangers and emergency dispatchers before bites occur.
+          </p>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<span class="font-code-sm text-code-sm text-outline">Spatial Density Model</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">Automated Hotspot Alerts</span>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="group bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="w-12 h-12 rounded-xl bg-tertiary/10 text-tertiary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[26px]">emergency</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Wound Screening &amp; SOS</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Preliminary puncture mark geometry assessment (dry bite vs. double fang envenomation pattern) with 1-tap dialer connecting directly to antivenom trauma hubs.
+          </p>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<span class="font-code-sm text-code-sm text-outline">Emergency Routing</span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">1-Tap 24/7 Hotline</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Live Threat Map & Antivenom Stock Preview Split Section -->
+<section class="w-full bg-surface-container py-20">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
+<!-- Interactive Map Visual Card -->
+<div class="lg:col-span-7 bg-surface-container-lowest p-space-md rounded-2xl shadow-md overflow-hidden">
+<div class="flex items-center justify-between mb-space-md">
+<div>
+<span class="font-code-sm text-code-sm text-outline uppercase tracking-wider block">Real-time GIS Hotspot Layer</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Regional Encounter Density</h3>
+</div>
+<span class="px-3 py-1 rounded-full bg-surface-container text-primary font-code-sm text-code-sm font-semibold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span> Live DBSCAN Mesh
+            </span>
+</div>
+<div class="w-full h-80 rounded-xl bg-cover bg-center relative overflow-hidden flex flex-col justify-end p-space-md" data-location="Wayanad Wildlife Sanctuary, Kerala, India" style="">
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent"></div>
+<div class="relative z-10 flex flex-wrap items-center justify-between gap-space-sm bg-surface-container-lowest/90 backdrop-blur-md p-space-sm rounded-lg">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-tertiary"></span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">3 Active Clusters (Russell's Viper / Krait)</span>
+</div>
+<a class="font-label-md text-label-md text-primary font-bold hover:underline" data-path="risk-zones" href="#">Open Live Map →</a>
+</div>
+</div>
+</div>
+<!-- Telemetry Details / Action List -->
+<div class="lg:col-span-5 flex flex-col justify-center space-y-space-md">
+<span class="font-code-sm text-code-sm uppercase tracking-widest text-primary font-semibold">Proactive Hazard Mitigation</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Antivenom Supply &amp; Encounter Telemetry</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            VenomWatch bridges local wildlife telemetry with state medical facilities. When high-density clusters are identified by DBSCAN, surrounding trauma hospitals receive proactive alerts to verify regional polyvalent antivenom inventory.
+          </p>
+<div class="space-y-space-sm pt-space-xs">
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[24px]">local_hospital</span>
+<div>
+<span class="font-title-md text-title-md text-on-surface block">Sub-District Hospital Nilambur</span>
+<span class="font-body-sm text-body-sm text-outline">Stock: 42 Polyvalent Vials Available</span>
+</div>
+</div>
+<span class="font-code-sm text-code-sm text-primary font-bold">14 min ETA</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[24px]">forest</span>
+<div>
+<span class="font-title-md text-title-md text-on-surface block">Ranger Rapid Response Unit 4</span>
+<span class="font-body-sm text-body-sm text-outline">Sector: Periyar Fringe Corridors</span>
+</div>
+</div>
+<span class="font-code-sm text-code-sm text-secondary font-bold">ON PATROL</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Public Safety & Medical Disclaimer Section -->
+<section class="max-w-7xl mx-auto px-margin py-16 w-full">
+<div class="bg-surface-container-high rounded-2xl p-space-lg lg:p-space-xl flex flex-col md:flex-row items-start md:items-center gap-space-lg">
+<div class="w-14 h-14 rounded-2xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[32px]">health_and_safety</span>
+</div>
+<div class="flex-1">
+<h3 class="font-title-md text-headline-sm text-on-surface font-semibold mb-1">
+          Designed for Public Safety &amp; Awareness
+        </h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          VenomWatch is an educational and early-warning decision-support tool powered by deep learning. It does not provide definitive medical diagnosis or substitute clinical emergency protocols. Always consult certified clinical professionals, poison control centers, or local emergency responders immediately for suspected envenomation. Never attempt to handle or capture a live venomous snake.
+        </p>
+</div>
+<a class="inline-flex items-center gap-space-xs px-space-lg py-3 rounded-lg font-label-md text-label-md bg-surface-container-lowest text-on-surface hover:bg-surface-container-high transition-colors shadow-sm shrink-0" data-path="wound-checker" href="#">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+<span>Review Protocols</span>
+</a>
+</div>
+</section>
+<!-- Final Call to Action Banner -->
+<section class="max-w-7xl mx-auto px-margin pb-24 w-full">
+<div class="relative rounded-3xl bg-inverse-surface text-inverse-on-surface p-space-xl lg:p-20 overflow-hidden shadow-2xl">
+<div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-primary/20 blur-3xl pointer-events-none"></div>
+<div class="absolute left-10 bottom-0 w-64 h-64 rounded-full bg-secondary/10 blur-2xl pointer-events-none"></div>
+<div class="relative z-10 max-w-3xl flex flex-col items-start">
+<span class="font-code-sm text-code-sm uppercase tracking-widest text-inverse-primary font-semibold mb-2">Zero Cost Citizen Science</span>
+<h2 class="font-display-lg text-display-lg text-inverse-on-surface leading-tight mb-space-md">
+          Identify a Snake with VenomWatch
+        </h2>
+<p class="font-body-lg text-body-lg text-surface-variant max-w-xl mb-space-xl">
+          Join thousands of hikers, farmers, doctors, and wildlife volunteers across the subcontinent using AI to reduce envenomation fatalities and foster coexistence.
+        </p>
+<div class="flex flex-wrap items-center gap-space-md w-full sm:w-auto">
+<a class="inline-flex items-center justify-center gap-space-sm px-space-xl py-4 rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:bg-primary-container transition-all shadow-md" data-path="register" href="#">
+<span>Get Started Free</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</a>
+<a class="inline-flex items-center justify-center gap-space-sm px-space-lg py-4 rounded-lg font-label-md text-label-md bg-inverse-surface text-inverse-on-surface hover:bg-surface-variant/20 transition-colors" data-path="wound-checker" href="#">
+<span class="material-symbols-outlined text-tertiary-fixed text-[20px]">call</span>
+<span class="text-tertiary-fixed">Access Emergency SOS</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Technical Footer Metadata -->
+<section class="w-full bg-surface-container-lowest py-8">
+<div class="max-w-7xl mx-auto px-margin flex flex-col md:flex-row items-center justify-between gap-space-md text-center md:text-left">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-code-sm text-code-sm text-outline">
+          Powered by Django 5, PyTorch CNN &amp; DBSCAN Spatial Engine
+        </span>
+</div>
+<div class="flex flex-wrap justify-center gap-space-md font-label-md text-label-md text-on-surface-variant">
+<a class="hover:text-primary transition-colors" data-path="home" href="#">Home</a>
+<a class="hover:text-primary transition-colors" data-path="identify-snake" href="#">Identify Snake</a>
+<a class="hover:text-primary transition-colors" data-path="risk-zones" href="#">Risk Zones</a>
+<a class="hover:text-primary transition-colors" data-path="wound-checker" href="#">Wound Checker</a>
+<a class="text-tertiary hover:underline font-bold" data-path="wound-checker" href="#">Emergency SOS</a>
+<a class="hover:text-primary transition-colors" data-path="sign-in" href="#">Login</a>
+<a class="hover:text-primary transition-colors" data-path="register" href="#">Register</a>
+</div>
+</div>
+</section>
+</div>
+<script>
+  (function initLandingInteractivity() {
+    // Interactive feedback for specimen card hover telemetry simulation
+    const telemetryNode = document.querySelector('.group');
+    if (telemetryNode) {
+      telemetryNode.addEventListener('mouseenter', () => {
+        // Soft touch micro-interaction ready
+      });
+    }
+  })();
+</script></main><footer class="w-full bg-surface-container-lowest shadow-[0_-1px_8px_rgba(0,0,0,0.03)] mt-space-xl"><div class="max-w-7xl mx-auto px-margin py-space-xl flex flex-col md:flex-row items-center justify-between gap-space-lg"><div class="flex flex-col items-center md:items-start gap-space-xs"><div class="flex items-center gap-space-sm"><img alt="Brand logo" class="h-6 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo3A4F-Y0b537AmwxvhtxO6Ccry2sDNqLcLdFFqoyaCRGfGkgRaH5knuHDUt3vhmeOtmHPfK1oX-UAdOCiH9i0bNmePX5Aqyg2WZk7rRlykO1NDaH2MdzYOUysdWSZQ2M1DiG8ZamdoCpKAlnBj843Cdi_6cGEYL4W7iEfqXopRhH_hGei584HCwGz4B6v0Yec2awF01OXjqef5XY9nWyR7JPKRQd3BAy7n0kmml830xCM30g7ZbOJglp8"/><span class="font-headline-sm text-headline-sm text-on-surface">VENOMWATCH</span></div><p class="font-body-sm text-body-sm text-on-surface-variant text-center md:text-left">Forensic AI snake identification, bite prevention &amp; emergency venom triage protocol.</p></div><div class="flex flex-wrap justify-center gap-space-lg"><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" data-path="home" href="#">Home</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" data-path="identify-snake" href="#">Identify Snake</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" data-path="risk-zones" href="#">Risk Zones</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" data-path="wound-checker" href="#">Wound Checker</a></div><div class="font-code-sm text-code-sm text-outline">© 2024 VENOMWATCH Public Safety System</div></div></footer></body></html>
