@@ -16,11 +16,10 @@ from django.utils.decorators import method_decorator
 @method_decorator(never_cache, name='dispatch')
 class SnakeAIAnalysisAPIView(APIView):
     """
-    REST API endpoint for real-time 2-stage AI snake image analysis.
+    REST API endpoint for CNN-based AI snake image analysis.
     Accepts POST with 'image' file.
-    Runs Stage 1 (YOLOv8 Snake Detection).
-    If Snake Detected == True, runs Stage 2 (Keras CNN Venom Classification).
-    If Snake Detected == False, Stage 2 is NOT run.
+    Runs single-stage CNN classification (venomwatch_cnn2_final).
+    Returns: is_snake, species, venomous status, confidence.
     """
     parser_classes = (MultiPartParser, FormParser)
 

@@ -16,7 +16,7 @@
                             AI Snake Scanner & Report
                         </h2>
                         <p class="text-muted mb-0" style="font-size: 0.8125rem;">
-                            Upload a photo to run Stage 1 Snake Detection (YOLOv8) & Stage 2 Venom Classification (CNN) before reporting.
+                            Upload a photo to analyze with our CNN-based AI snake identification system.
                         </p>
                     </div>
                     <a href="{% url 'reports:list' %}" class="btn btn-outline-secondary btn-sm ms-3 flex-shrink-0">
@@ -232,7 +232,7 @@
                         <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
                         <div>
                             <strong>Running AI Analysis…</strong>
-                            <span class="text-muted ms-1">YOLOv8 Snake Detection + CNN Venom Classification</span>
+                            <span class="text-muted ms-1">CNN Snake Identification</span>
                         </div>
                     </div>
                 `;
@@ -313,7 +313,7 @@
                                             </span>
                                             <small class="text-muted">${snakeConf}% confidence</small>
                                         </div>
-                                        <small class="text-muted">Model #1 (YOLOv8) + #2 (CNN)</small>
+                                        <small class="text-muted">venomwatch_cnn2_final (CNN)</small>
                                     </div>
                                     <p class="fw-semibold mb-1" style="font-size: 0.9375rem; color: var(--text);">
                                         <i class="fa-solid fa-shield me-1" style="color: var(--success);"></i>
@@ -349,7 +349,7 @@
                                             </span>
                                             <small class="text-muted">${snakeConf}% confidence</small>
                                         </div>
-                                        <small class="text-muted">Model #1 (YOLOv8) + #2 (CNN)</small>
+                                        <small class="text-muted">venomwatch_cnn2_final (CNN)</small>
                                     </div>
                                     <p class="fw-semibold mb-1" style="font-size: 0.9375rem; color: var(--danger);">
                                         <i class="fa-solid fa-skull-crossbones me-1"></i> AI Prediction: Venomous

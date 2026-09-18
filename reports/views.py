@@ -37,7 +37,7 @@ def create_report_view(request):
                 report.species_predicted = ai_results.get('species', 'Snake')
                 report.venom_category = ai_results.get('venom_category', 'NON_VENOMOUS')
                 report.ai_confidence = report.venom_confidence if report.venom_confidence is not None else report.snake_confidence
-                report.model_1_name = ai_results.get('model_1', 'Snake Detection.v2 YOLOv8')
+                report.model_1_name = ai_results.get('model_1', 'venomwatch_cnn2_final (CNN)')
                 report.model_2_name = ai_results.get('model_2', 'venom_watch_cnn2_keras')
                 
                 report.save()
