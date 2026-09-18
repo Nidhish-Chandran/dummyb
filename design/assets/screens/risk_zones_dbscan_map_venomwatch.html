@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error-container": "#ffdad6",
+          "on-tertiary-fixed-variant": "#93000b",
+          "tertiary-fixed-dim": "#ffb4ab",
+          "on-tertiary-fixed": "#410002",
+          "inverse-primary": "#68dba9",
+          "on-secondary-fixed-variant": "#005049",
+          "on-surface-variant": "#3d4a42",
+          "on-surface": "#0d1c2e",
+          "background": "#f8f9ff",
+          "primary-container": "#00855d",
+          "surface-variant": "#d5e3fc",
+          "outline": "#6d7a72",
+          "tertiary": "#bb0112",
+          "secondary-container": "#86f2e4",
+          "surface-bright": "#f8f9ff",
+          "on-secondary": "#ffffff",
+          "tertiary-container": "#e02928",
+          "surface-container-high": "#dce9ff",
+          "surface-container-low": "#eff4ff",
+          "on-error": "#ffffff",
+          "inverse-on-surface": "#eaf1ff",
+          "on-background": "#0d1c2e",
+          "on-primary": "#ffffff",
+          "surface-container": "#e6eeff",
+          "on-primary-container": "#f5fff7",
+          "surface-container-highest": "#d5e3fc",
+          "secondary-fixed-dim": "#6bd8cb",
+          "secondary": "#006a61",
+          "primary-fixed-dim": "#68dba9",
+          "secondary-fixed": "#89f5e7",
+          "on-tertiary": "#ffffff",
+          "tertiary-fixed": "#ffdad6",
+          "on-secondary-container": "#006f66",
+          "on-primary-fixed": "#002114",
+          "outline-variant": "#bccac0",
+          "surface-container-lowest": "#ffffff",
+          "surface-tint": "#006c4a",
+          "primary": "#006948",
+          "on-error-container": "#93000a",
+          "surface": "#f8f9ff",
+          "primary-fixed": "#85f8c4",
+          "surface-dim": "#ccdbf3",
+          "inverse-surface": "#233144",
+          "on-secondary-fixed": "#00201d",
+          "on-tertiary-container": "#fffbff",
+          "on-primary-fixed-variant": "#005137",
+          "error": "#ba1a1a"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-lg": "1.5rem",
+          "gutter": "1.5rem",
+          "gutter-mobile": "1rem",
+          "space-sm": "0.5rem",
+          "margin-mobile": "1rem",
+          "margin": "2rem",
+          "space-xs": "0.25rem",
+          "space-xl": "2.5rem",
+          "space-md": "1rem"
+        },
+        "fontFamily": {
+          "body-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "body-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "display-lg": [
+            "Space Grotesk"
+          ],
+          "label-md": [
+            "Plus Jakarta Sans"
+          ],
+          "code-sm": [
+            "Space Grotesk"
+          ],
+          "headline-sm": [
+            "Space Grotesk"
+          ],
+          "headline-xl-mobile": [
+            "Space Grotesk"
+          ],
+          "label-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "body-md": [
+            "Plus Jakarta Sans"
+          ],
+          "title-md": [
+            "Plus Jakarta Sans"
+          ],
+          "display-lg-mobile": [
+            "Space Grotesk"
+          ],
+          "headline-lg": [
+            "Space Grotesk"
+          ],
+          "headline-xl": [
+            "Space Grotesk"
+          ]
+        },
+        "fontSize": {
+          "body-lg": [
+            "18px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "body-sm": [
+            "13px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "400"
+            }
+          ],
+          "display-lg": [
+            "48px",
+            {
+              "lineHeight": "56px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "700"
+            }
+          ],
+          "label-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "code-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.02em",
+              "fontWeight": "500"
+            }
+          ],
+          "headline-sm": [
+            "20px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "0em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-xl-mobile": [
+            "26px",
+            {
+              "lineHeight": "34px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "label-sm": [
+            "11px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.05em",
+              "fontWeight": "700"
+            }
+          ],
+          "body-md": [
+            "15px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "title-md": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "0em",
+              "fontWeight": "600"
+            }
+          ],
+          "display-lg-mobile": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-lg": [
+            "28px",
+            {
+              "lineHeight": "36px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-xl": [
+            "36px",
+            {
+              "lineHeight": "44px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "600"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 max-w-7xl mx-auto px-margin flex items-center justify-between gap-gutter"><div class="flex items-center gap-space-md"><img alt="Brand logo. - Primary color: #059669
+- Font: spaceGrotesk
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo3A4F-Y0b537AmwxvhtxO6Ccry2sDNqLcLdFFqoyaCRGfGkgRaH5knuHDUt3vhmeOtmHPfK1oX-UAdOCiH9i0bNmePX5Aqyg2WZk7rRlykO1NDaH2MdzYOUysdWSZQ2M1DiG8ZamdoCpKAlnBj843Cdi_6cGEYL4W7iEfqXopRhH_hGei584HCwGz4B6v0Yec2awF01OXjqef5XY9nWyR7JPKRQd3BAy7n0kmml830xCM30g7ZbOJglp8"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface leading-none">VENOMWATCH</span><span class="font-label-sm text-label-sm tracking-widest text-outline uppercase mt-1 leading-none">AI SNAKE DEFENSE &amp; PUBLIC SAFETY</span></div></div><nav class="hidden lg:flex items-center gap-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-title-md"><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="home" href="#">Home</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="identify-snake" href="#">Identify Snake</a><a aria-current="page" class="px-space-md py-space-sm rounded-lg transition-colors bg-surface-container-high text-on-surface font-title-md" data-path="risk-zones" href="#">Risk Zones</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="wound-checker" href="#">Wound Checker</a></nav><div class="flex items-center gap-space-sm"><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="sign-in" href="#">Sign In</a><a class="px-space-lg py-space-sm rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm" data-path="register" href="#">Register</a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs" src="https://lh3.googleusercontent.com/aida/AEtjO1WPkRDSjB4GCN28IFy3sbNKDngzR5tKa0KbaZY4F5lopFOML7QtHOS740Kc_WCo_lufMYLAq1qLuYUFbK9lguEGe2fu_Y3ig0xEmGnSz9HfuoU3l2gl80rsMQeaG2lzjCzJLogoavaeR6xZVese3eNbsVaJRS3gtq8NxFaeWeg3zDE0h_kItXSDApdRPR-Oj-6nN545DdukHOyvQQqxZeztGcOOoQnff4N-f_5YPfB4raQgYOuYQxgz8V3r"/></div></div></header><main class="w-full pt-20 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<div class="w-full max-w-7xl mx-auto px-margin py-space-lg flex flex-col gap-space-lg">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm font-semibold shadow-sm">
+<span class="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            DBSCAN v2.4 Active • Epsilon: 400m • MinPts: 4
+          </span>
+<span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-sm">warning</span> 3 HIGH-RISK SECTORS
+          </span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight mt-1">Risk Zones</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+          Explore real-time field reports, verified venomous encounters, and algorithmic DBSCAN density boundaries designed for rapid field triage.
+        </p>
+</div>
+<div class="flex items-center gap-2 p-1.5 bg-surface-container rounded-xl self-start md:self-auto overflow-x-auto max-w-full">
+<button class="filter-btn px-space-md py-space-xs rounded-lg font-label-md text-label-md transition-all duration-200 bg-surface-container-lowest text-on-surface shadow-sm font-semibold" data-mode="all" id="filter-all">
+          All Encounters
+        </button>
+<button class="filter-btn px-space-md py-space-xs rounded-lg font-label-md text-label-md transition-all duration-200 text-on-surface-variant hover:text-on-surface" data-mode="venomous" id="filter-venomous">
+          Venomous Only (Red)
+        </button>
+<button class="filter-btn px-space-md py-space-xs rounded-lg font-label-md text-label-md transition-all duration-200 text-on-surface-variant hover:text-on-surface" data-mode="harmless" id="filter-harmless">
+          Non-Venomous (Green)
+        </button>
+<button class="filter-btn px-space-md py-space-xs rounded-lg font-label-md text-label-md transition-all duration-200 text-on-surface-variant hover:text-on-surface" data-mode="clusters" id="filter-clusters">
+          Cluster Outlines Only
+        </button>
+</div>
+</div>
+<div class="relative w-full h-[640px] rounded-xl overflow-hidden shadow-lg bg-surface-container-low select-none">
+<div class="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-700 opacity-95" data-location="Kochi, Kerala, India" style="">
+</div>
+<div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-surface/40 via-transparent to-surface/20"></div>
+<svg class="absolute inset-0 w-full h-full pointer-events-none" id="vector-overlay" preserveaspectratio="none" viewbox="0 0 1000 640">
+<defs>
+<radialgradient cx="50%" cy="50%" fx="50%" fy="50%" id="clusterPulse" r="50%">
+<stop offset="0%" stop-color="#86f2e4" stop-opacity="0.38"></stop>
+<stop offset="70%" stop-color="#006a61" stop-opacity="0.22"></stop>
+<stop offset="100%" stop-color="#006a61" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="50%" cy="50%" fx="50%" fy="50%" id="clusterPulse2" r="50%">
+<stop offset="0%" stop-color="#ffdad6" stop-opacity="0.4"></stop>
+<stop offset="75%" stop-color="#bb0112" stop-opacity="0.18"></stop>
+<stop offset="100%" stop-color="#bb0112" stop-opacity="0"></stop>
+</radialgradient>
+</defs>
+<g class="transition-opacity duration-300" id="cluster-rings">
+<circle cx="430" cy="300" fill="url(#clusterPulse2)" r="140"></circle>
+<circle class="animate-[spin_40s_linear_infinite]" cx="430" cy="300" fill="none" r="140" stroke="#bb0112" stroke-dasharray="6,6" stroke-opacity="0.85" stroke-width="2" style="transform-origin: 430px 300px;"></circle>
+<text fill="#93000b" font-family="'Space Grotesk', sans-serif" font-size="11" font-weight="700" letter-spacing="0.08em" text-anchor="middle" x="430" y="152">CLUSTER ALPHA • ε 400m</text>
+<circle cx="730" cy="220" fill="url(#clusterPulse)" r="110"></circle>
+<circle class="animate-[spin_55s_linear_infinite_reverse]" cx="730" cy="220" fill="none" r="110" stroke="#006a61" stroke-dasharray="6,6" stroke-opacity="0.8" stroke-width="2" style="transform-origin: 730px 220px;"></circle>
+<text fill="#005049" font-family="'Space Grotesk', sans-serif" font-size="11" font-weight="700" letter-spacing="0.08em" text-anchor="middle" x="730" y="100">CLUSTER BETA • ε 400m</text>
+</g>
+</svg>
+<div class="absolute top-space-md right-space-md flex flex-col gap-2 z-20">
+<div class="flex flex-col bg-surface-container-lowest rounded-xl shadow-md p-1">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface transition-colors" id="btn-recenter" title="Recenter Viewport">
+<span class="material-symbols-outlined text-lg">my_location</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface transition-colors" id="btn-zoom-in" title="Zoom In">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface transition-colors" id="btn-zoom-out" title="Zoom Out">
+<span class="material-symbols-outlined text-lg">remove</span>
+</button>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-md p-1">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface transition-colors" title="Toggle Satellite Layer">
+<span class="material-symbols-outlined text-lg">layers</span>
+</button>
+</div>
+</div>
+<div class="absolute top-space-md left-space-md z-20 hidden sm:flex items-center gap-space-sm bg-surface-container-lowest/90 backdrop-blur-md px-space-md py-space-xs rounded-xl shadow-sm">
+<span class="material-symbols-outlined text-primary text-base">radar</span>
+<span class="font-code-sm text-code-sm text-on-surface font-medium">KOCHI METRO REGION • EPSG:4326</span>
+</div>
+<div class="pins-container absolute inset-0 z-10 pointer-events-auto">
+<div class="marker-node venomous absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" data-binomial="Daboia russelii" data-coords="9.9816° N, 76.2999° E" data-notes="Observed near concrete storm drain behind residential boundary wall." data-relocated="false" data-status="HIGHLY VENOMOUS" data-status-type="danger" data-thumb="placeholder" data-thumb-prompt="Macro photography of a dangerous Russells Viper snake coiled near concrete drainage tiles in Kerala India with sharp focus on scale patterns and lethal fangs, daylight biological field documentation" data-time="2 hours ago by Citizen" data-title="Russell's Viper" style="left: 43%; top: 47%;">
+<div class="relative flex items-center justify-center">
+<span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-tertiary-container opacity-40"></span>
+<div class="relative w-10 h-10 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center shadow-lg border-2 border-surface-container-lowest">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="absolute -bottom-1.5 w-2 h-2 bg-tertiary rotate-45"></div>
+</div>
+</div>
+<div class="marker-node venomous absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" data-binomial="Naja naja" data-coords="9.9842° N, 76.2941° E" data-notes="Adult specimen displaying hood near construction materials." data-relocated="false" data-status="HIGHLY VENOMOUS" data-status-type="danger" data-thumb="placeholder" data-thumb-prompt="Close up view of an Indian Spectacled Cobra displaying open hood defense posture in dry outdoor grass field, warm natural light, biological field observation photography" data-time="4 hours ago by Municipal Officer" data-title="Spectacled Cobra" style="left: 40%; top: 43%;">
+<div class="relative flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="absolute -bottom-1 w-2 h-2 bg-tertiary rotate-45"></div>
+</div>
+</div>
+<div class="marker-node venomous absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" data-binomial="Echis carinatus" data-coords="9.9790° N, 76.3045° E" data-notes="Active hunting posture spotted in dry foliage edge." data-relocated="false" data-status="HIGHLY VENOMOUS" data-status-type="danger" data-thumb="placeholder" data-thumb-prompt="Detailed biological documentary shot of a small Saw Scaled Viper camouflaged in dead leaf litter and sand, intense eyes, sharp scales, daytime realistic reptile macro photograph" data-time="14 minutes ago by Park Ranger" data-title="Saw-scaled Viper" style="left: 46%; top: 52%;">
+<div class="relative flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="absolute -bottom-1 w-2 h-2 bg-tertiary rotate-45"></div>
+</div>
+</div>
+<div class="marker-node harmless absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" data-binomial="Ptyas mucosa" data-coords="10.0125° N, 76.3524° E" data-notes="Non-aggressive rat snake foraging harmlessly around farm fencing." data-relocated="false" data-status="NON-VENOMOUS" data-status-type="safe" data-thumb="placeholder" data-thumb-prompt="Clear high quality nature photo of an adult Indian Rat Snake moving through lush tropical garden grass in South India, natural daylight, safe reptile educational guide style" data-time="3 hours ago by Wildlife Volunteer" data-title="Indian Rat Snake" style="left: 73%; top: 34%;">
+<div class="relative flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div class="absolute -bottom-1 w-2 h-2 bg-primary rotate-45"></div>
+</div>
+</div>
+<div class="marker-node harmless absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" data-binomial="Fowlea piscator" data-coords="10.0152° N, 76.3571° E" data-notes="Aquatic non-venomous keelback resting near irrigation canal." data-relocated="false" data-status="NON-VENOMOUS" data-status-type="safe" data-thumb="placeholder" data-thumb-prompt="Checkered Keelback water snake swimming calmly through shallow river canal with water reflections, clear bright sunlight, conservation wildlife biology photo" data-time="5 hours ago by Fishery Worker" data-title="Checkered Keelback" style="left: 76%; top: 30%;">
+<div class="relative flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div class="absolute -bottom-1 w-2 h-2 bg-primary rotate-45"></div>
+</div>
+</div>
+<div class="marker-node harmless absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" data-binomial="Dendrelaphis tristis" data-coords="10.0094° N, 76.3490° E" data-notes="Slender bronze-hued snake resting quietly high on banana tree leaves." data-relocated="false" data-status="NON-VENOMOUS" data-status-type="safe" data-thumb="placeholder" data-thumb-prompt="Slender Common Bronzeback snake climbing through tropical tree foliage with golden sunlight illuminating scales, scientific wildlife documentary capture" data-time="6 hours ago by Resident" data-title="Common Bronzeback Tree Snake" style="left: 70%; top: 40%;">
+<div class="relative flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div class="absolute -bottom-1 w-2 h-2 bg-primary rotate-45"></div>
+</div>
+</div>
+<div class="marker-node safe absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" data-binomial="Hypnale hypnale" data-coords="9.9512° N, 76.2750° E" data-notes="Safely captured from residential backyard and released into deep reserve forest." data-relocated="true" data-status="RELOCATED &amp; SECURED" data-status-type="neutral" data-thumb="placeholder" data-thumb-prompt="Hump nosed pit viper being safely released into deep damp tropical rainforest leaf cover by certified rescue team, ecological conservation wildlife photograph" data-time="8 hours ago • Relocated by Forest Dept" data-title="Hump-nosed Pit Viper" style="left: 28%; top: 58%;">
+<div class="relative flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-outline text-surface-container-lowest flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="absolute -bottom-1 w-2 h-2 bg-outline rotate-45"></div>
+</div>
+</div>
+<div class="marker-node safe absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" data-binomial="Python molurus" data-coords="9.9410° N, 76.3218° E" data-notes="Large non-venomous constrictor retrieved from poultry shed, relocated undamaged." data-relocated="true" data-status="RELOCATED &amp; SECURED" data-status-type="neutral" data-thumb="placeholder" data-thumb-prompt="Large healthy Indian Rock Python resting inside forest sanctuary after gentle wildlife rescue, dramatic dappled jungle light, scientific animal rescue photography" data-time="Yesterday • Relocated by Rapid Response" data-title="Indian Rock Python" style="left: 58%; top: 68%;">
+<div class="relative flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-outline text-surface-container-lowest flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="absolute -bottom-1 w-2 h-2 bg-outline rotate-45"></div>
+</div>
+</div>
+</div>
+<div class="absolute z-30 w-80 sm:w-96 bg-surface-container-lowest rounded-xl shadow-xl transition-all duration-300 transform opacity-100 scale-100" id="sighting-popup" style="left: 45%; top: 22%;">
+<div class="relative w-full h-32 rounded-t-xl overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Macro photography of a dangerous Russells Viper snake coiled near concrete drainage tiles in Kerala India with sharp focus on scale patterns and lethal fangs, daylight biological field documentation" id="popup-thumb" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0f93CuRzHJ3-7BIe5BbJnAByPfk3uYJkEHLm9WIZvIiXVGXYgfsig6BLZJM-2f2YIDE-lkVMR6dqsLZSSFQkqr5dS9Gxo8lgRAgoEpBRAi-c2i1nyUm1EfvF181UM91o2Lmdclxzx0y2DqxA8IB5Ss6A3C3pac78cQQ_AqNzfyyUT9JN3a7z2z4OTtLeFJKD8bnNB1vpN-0qTE43xqVQ5Q1ZYy9Wq1M5gCMvfQh7sPySA3x09zKAXhw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white hover:bg-black/80 flex items-center justify-center transition-colors" id="close-popup">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+<div class="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+<span class="px-space-sm py-0.5 rounded-full font-label-sm text-label-sm uppercase font-bold tracking-wider bg-tertiary-fixed text-on-tertiary-fixed-variant shadow-sm" id="popup-badge">
+              HIGHLY VENOMOUS
+            </span>
+<span class="text-xs font-code-sm text-white/90" id="popup-relocated">ID #VW-9921</span>
+</div>
+</div>
+<div class="p-space-md flex flex-col gap-space-sm">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-snug" id="popup-title">Russell's Viper</h3>
+<p class="font-body-sm text-body-sm italic text-outline" id="popup-binomial">Daboia russelii</p>
+</div>
+<div class="grid grid-cols-2 gap-space-xs py-space-xs bg-surface-container-low rounded-lg px-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wide text-outline">Coordinates</span>
+<span class="font-code-sm text-code-sm font-semibold text-on-surface" id="popup-coords">9.9816° N, 76.2999° E</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wide text-outline">Reported</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface" id="popup-time">2 hours ago</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2" id="popup-notes">
+            Observed near concrete storm drain behind residential boundary wall. Cytotoxic / Hemotoxic risk profile.
+          </p>
+<div class="flex items-center gap-space-sm pt-space-xs">
+<button class="flex-1 py-space-xs px-space-md bg-primary text-on-primary rounded-lg font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors text-center shadow-sm flex items-center justify-center gap-1" id="view-details-btn">
+<span>View Sighting Details</span>
+<span class="material-symbols-outlined text-base">arrow_forward</span>
+</button>
+<button class="p-space-xs px-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" id="copy-coords-btn" title="Copy Coordinates">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="absolute bottom-space-md left-space-md right-space-md z-20 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md pointer-events-none">
+<div class="bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-sm rounded-xl shadow-md pointer-events-auto flex flex-wrap items-center gap-x-space-md gap-y-2 max-w-2xl">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Map Legend:</span>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-tertiary shadow-sm"></span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Venomous Sighting</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-primary shadow-sm"></span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Non-Venomous Sighting</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3.5 h-3.5 rounded-full border-2 border-dashed border-secondary bg-secondary-container/40"></span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">DBSCAN Cluster (≥4 encounters)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-outline shadow-sm"></span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Verified Safe / Relocated</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-sm rounded-xl shadow-md pointer-events-auto flex items-center gap-space-md justify-between self-end lg:self-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">stacked_bar_chart</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase font-bold">Total Mapped</span>
+<span class="font-headline-sm text-headline-sm text-on-surface leading-none font-bold">142 Sightings</span>
+</div>
+</div>
+<div class="w-px h-8 bg-surface-container"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase font-bold">Active Clusters</span>
+<span class="font-headline-sm text-headline-sm text-secondary leading-none font-bold">3 Sectors</span>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-bold">Spatial Algorithm</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mt-0.5">DBSCAN Geospatial Core</h4>
+</div>
+<span class="p-2 rounded-lg bg-surface-container text-primary">
+<span class="material-symbols-outlined text-xl">hub</span>
+</span>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex justify-between text-body-sm">
+<span class="text-on-surface-variant font-body-sm">Epsilon (ε):</span>
+<span class="font-code-sm text-code-sm font-bold text-on-surface">400 Meters</span>
+</div>
+<div class="flex justify-between text-body-sm mt-1">
+<span class="text-on-surface-variant font-body-sm">MinPts Parameter:</span>
+<span class="font-code-sm text-code-sm font-bold text-on-surface">4 Verified Specimens</span>
+</div>
+<div class="flex justify-between text-body-sm mt-1">
+<span class="text-on-surface-variant font-body-sm">Noise Filtration:</span>
+<span class="font-code-sm text-code-sm font-bold text-primary">Isolated Records Isolated</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-bold">Latest Alert Sighting</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mt-0.5">Kochi Sector 4</h4>
+</div>
+<span class="p-2 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined text-xl">farsight_digital</span>
+</span>
+</div>
+<div class="mt-space-md flex items-center justify-between bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase">Active Specimen</span>
+<span class="font-title-md text-title-md text-tertiary font-bold">Echis carinatus</span>
+</div>
+<div class="text-right">
+<span class="font-code-sm text-code-sm text-outline font-bold">REPORT REC'D</span>
+<span class="block font-body-sm text-body-sm text-on-surface font-semibold">14m ago</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-bold">Antivenom Stock Near Clusters</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mt-0.5">Polyvalent Supply</h4>
+</div>
+<span class="p-2 rounded-lg bg-secondary-container text-on-secondary-container">
+<span class="material-symbols-outlined text-xl">local_hospital</span>
+</span>
+</div>
+<div class="mt-space-md flex items-center gap-space-md bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex-1">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface mb-1">
+<span>District General Hospital</span>
+<span class="font-bold text-primary">82 Vials (OK)</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-container">
+<div class="h-2 rounded-full bg-primary" style="width: 82%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none" id="toast-message">
+<div class="bg-inverse-surface text-inverse-on-surface px-space-md py-space-sm rounded-xl shadow-xl flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-inverse-primary text-base">check_circle</span>
+<span class="font-body-sm text-body-sm" id="toast-text">Coordinates copied to clipboard</span>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const popup = document.getElementById('sighting-popup');
+    const closeBtn = document.getElementById('close-popup');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const markers = document.querySelectorAll('.marker-node');
+    const clusterRings = document.getElementById('cluster-rings');
+    const copyCoordsBtn = document.getElementById('copy-coords-btn');
+    const toast = document.getElementById('toast-message');
+    const toastText = document.getElementById('toast-text');
+
+    const popupTitle = document.getElementById('popup-title');
+    const popupBinomial = document.getElementById('popup-binomial');
+    const popupBadge = document.getElementById('popup-badge');
+    const popupCoords = document.getElementById('popup-coords');
+    const popupTime = document.getElementById('popup-time');
+    const popupNotes = document.getElementById('popup-notes');
+    const popupThumb = document.getElementById('popup-thumb');
+    const popupRelocated = document.getElementById('popup-relocated');
+
+    let isPopupOpen = true;
+
+    function showToast(message) {
+      toastText.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2500);
+    }
+
+    markers.forEach(marker => {
+      marker.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const data = marker.dataset;
+        
+        popupTitle.textContent = data.title;
+        popupBinomial.textContent = data.binomial;
+        popupCoords.textContent = data.coords;
+        popupTime.textContent = data.time;
+        popupNotes.textContent = data.notes;
+        popupBadge.textContent = data.status;
+
+        if (data.statusType === 'danger') {
+          popupBadge.className = "px-space-sm py-0.5 rounded-full font-label-sm text-label-sm uppercase font-bold tracking-wider bg-tertiary-fixed text-on-tertiary-fixed-variant shadow-sm";
+        } else if (data.statusType === 'safe') {
+          popupBadge.className = "px-space-sm py-0.5 rounded-full font-label-sm text-label-sm uppercase font-bold tracking-wider bg-primary-fixed text-on-primary-fixed-variant shadow-sm";
+        } else {
+          popupBadge.className = "px-space-sm py-0.5 rounded-full font-label-sm text-label-sm uppercase font-bold tracking-wider bg-surface-container-high text-on-surface-variant shadow-sm";
+        }
+
+        popupRelocated.textContent = data.relocated === 'true' ? 'STATUS: RELOCATED' : 'FIELD CONFIRMED';
+
+        if (data.thumbPrompt) {
+          popupThumb.setAttribute('data-alt', data.thumbPrompt);
+        }
+
+        const rect = marker.getBoundingClientRect();
+        const parentRect = marker.parentElement.getBoundingClientRect();
+        
+        let leftPercent = ((rect.left - parentRect.left) / parentRect.width) * 100;
+        let topPercent = ((rect.top - parentRect.top) / parentRect.height) * 100;
+
+        if (leftPercent > 65) leftPercent -= 30;
+        if (topPercent < 25) topPercent += 20;
+
+        popup.style.left = `${Math.max(10, Math.min(65, leftPercent))}%`;
+        popup.style.top = `${Math.max(10, Math.min(50, topPercent - 25))}%`;
+
+        popup.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+        popup.classList.add('opacity-100', 'scale-100');
+        isPopupOpen = true;
+      });
+    });
+
+    closeBtn.addEventListener('click', () => {
+      popup.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+      popup.classList.remove('opacity-100', 'scale-100');
+      isPopupOpen = false;
+    });
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => {
+          b.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm', 'font-semibold');
+          b.classList.add('text-on-surface-variant');
+        });
+        btn.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm', 'font-semibold');
+        btn.classList.remove('text-on-surface-variant');
+
+        const mode = btn.dataset.mode;
+
+        if (mode === 'all') {
+          markers.forEach(m => m.style.display = 'block');
+          clusterRings.style.opacity = '1';
+        } else if (mode === 'venomous') {
+          markers.forEach(m => {
+            m.style.display = m.classList.contains('venomous') ? 'block' : 'none';
+          });
+          clusterRings.style.opacity = '1';
+        } else if (mode === 'harmless') {
+          markers.forEach(m => {
+            m.style.display = m.classList.contains('harmless') ? 'block' : 'none';
+          });
+          clusterRings.style.opacity = '0.3';
+        } else if (mode === 'clusters') {
+          markers.forEach(m => m.style.display = 'none');
+          clusterRings.style.opacity = '1';
+          popup.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+        }
+      });
+    });
+
+    copyCoordsBtn.addEventListener('click', () => {
+      const coords = popupCoords.textContent;
+      navigator.clipboard?.writeText(coords);
+      showToast(`Copied coordinates (${coords})`);
+    });
+
+    document.getElementById('view-details-btn').addEventListener('click', () => {
+      showToast('Opening incident ledger: ID #VW-9921');
+    });
+
+    document.getElementById('btn-recenter').addEventListener('click', () => {
+      showToast('Map recentered to Kochi Cluster Zone');
+    });
+
+    document.getElementById('btn-zoom-in').addEventListener('click', () => {
+      showToast('Zoom level increased: 14.5x');
+    });
+
+    document.getElementById('btn-zoom-out').addEventListener('click', () => {
+      showToast('Zoom level decreased: 12.0x');
+    });
+  })();
+</script></main><footer class="w-full bg-surface-container-lowest shadow-[0_-1px_8px_rgba(0,0,0,0.03)] mt-space-xl"><div class="max-w-7xl mx-auto px-margin py-space-xl flex flex-col md:flex-row items-center justify-between gap-space-lg"><div class="flex flex-col items-center md:items-start gap-space-xs"><div class="flex items-center gap-space-sm"><img alt="Brand logo" class="h-6 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo3A4F-Y0b537AmwxvhtxO6Ccry2sDNqLcLdFFqoyaCRGfGkgRaH5knuHDUt3vhmeOtmHPfK1oX-UAdOCiH9i0bNmePX5Aqyg2WZk7rRlykO1NDaH2MdzYOUysdWSZQ2M1DiG8ZamdoCpKAlnBj843Cdi_6cGEYL4W7iEfqXopRhH_hGei584HCwGz4B6v0Yec2awF01OXjqef5XY9nWyR7JPKRQd3BAy7n0kmml830xCM30g7ZbOJglp8"/><span class="font-headline-sm text-headline-sm text-on-surface">VENOMWATCH</span></div><p class="font-body-sm text-body-sm text-on-surface-variant text-center md:text-left">Forensic AI snake identification, bite prevention &amp; emergency venom triage protocol.</p></div><div class="flex flex-wrap justify-center gap-space-lg"><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" data-path="home" href="#">Home</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" data-path="identify-snake" href="#">Identify Snake</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" data-path="risk-zones" href="#">Risk Zones</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" data-path="wound-checker" href="#">Wound Checker</a></div><div class="font-code-sm text-code-sm text-outline">© 2024 VENOMWATCH Public Safety System</div></div></footer></body></html>

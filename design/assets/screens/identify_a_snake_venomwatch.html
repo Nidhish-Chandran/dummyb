@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"outline":"#6d7a72","on-primary-fixed-variant":"#005137","surface-bright":"#f8f9ff","background":"#f8f9ff","surface-dim":"#ccdbf3","on-primary-fixed":"#002114","surface-tint":"#006c4a","primary":"#006948","error-container":"#ffdad6","on-error":"#ffffff","surface-container":"#e6eeff","primary-fixed-dim":"#68dba9","on-secondary-fixed":"#00201d","inverse-primary":"#68dba9","on-surface":"#0d1c2e","on-tertiary-container":"#fffbff","surface-container-lowest":"#ffffff","on-tertiary":"#ffffff","tertiary-container":"#e02928","tertiary":"#bb0112","secondary-fixed":"#89f5e7","outline-variant":"#bccac0","on-primary":"#ffffff","surface":"#f8f9ff","primary-container":"#00855d","on-tertiary-fixed":"#410002","surface-container-highest":"#d5e3fc","inverse-on-surface":"#eaf1ff","secondary":"#006a61","on-error-container":"#93000a","error":"#ba1a1a","on-surface-variant":"#3d4a42","on-tertiary-fixed-variant":"#93000b","secondary-fixed-dim":"#6bd8cb","secondary-container":"#86f2e4","surface-container-high":"#dce9ff","on-primary-container":"#f5fff7","on-background":"#0d1c2e","tertiary-fixed-dim":"#ffb4ab","primary-fixed":"#85f8c4","on-secondary-container":"#006f66","tertiary-fixed":"#ffdad6","on-secondary":"#ffffff","on-secondary-fixed-variant":"#005049","surface-container-low":"#eff4ff","surface-variant":"#d5e3fc","inverse-surface":"#233144"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"space-sm":"0.5rem","margin-mobile":"1rem","gutter":"1.5rem","gutter-mobile":"1rem","space-lg":"1.5rem","space-xl":"2.5rem","space-md":"1rem","margin":"2rem","space-xs":"0.25rem"},fontFamily:{"headline-xl":["Space Grotesk"],"code-sm":["Space Grotesk"],"headline-sm":["Space Grotesk"],"headline-xl-mobile":["Space Grotesk"],"label-md":["Plus Jakarta Sans"],"display-lg-mobile":["Space Grotesk"],"headline-lg":["Space Grotesk"],"body-md":["Plus Jakarta Sans"],"label-sm":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"title-md":["Plus Jakarta Sans"],"display-lg":["Space Grotesk"],"body-lg":["Plus Jakarta Sans"]},fontSize:{"headline-xl":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"600"}],"code-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-sm":["20px",{"lineHeight":"28px","letterSpacing":"0em","fontWeight":"600"}],"headline-xl-mobile":["26px",{"lineHeight":"34px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"20px","letterSpacing":"0.01em","fontWeight":"600"}],"display-lg-mobile":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"700"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md":["15px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"400"}],"label-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"700"}],"body-sm":["13px",{"lineHeight":"20px","letterSpacing":"0.01em","fontWeight":"400"}],"title-md":["16px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"600"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-lg":["18px",{"lineHeight":"28px","letterSpacing":"0em","fontWeight":"400"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 max-w-7xl mx-auto px-margin flex items-center justify-between gap-gutter"><div class="flex items-center gap-space-md"><img alt="VENOMWATCH Modern Light Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo3A4F-Y0b537AmwxvhtxO6Ccry2sDNqLcLdFFqoyaCRGfGkgRaH5knuHDUt3vhmeOtmHPfK1oX-UAdOCiH9i0bNmePX5Aqyg2WZk7rRlykO1NDaH2MdzYOUysdWSZQ2M1DiG8ZamdoCpKAlnBj843Cdi_6cGEYL4W7iEfqXopRhH_hGei584HCwGz4B6v0Yec2awF01OXjqef5XY9nWyR7JPKRQd3BAy7n0kmml830xCM30g7ZbOJglp8"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-tight">VENOMWATCH</span><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline leading-tight">AI Snake Defense &amp; Safety</span></div></div><nav class="hidden xl:flex items-center gap-space-sm" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-sm"><a aria-current="page" class="px-space-md py-space-sm transition-colors bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-sm" data-path="identify-snake" href="#">Identify Snake</a><a class="px-space-md py-space-sm font-label-md text-label-md rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="my-sightings" href="#">My Sightings</a><a class="px-space-md py-space-sm font-label-md text-label-md rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="report-sighting" href="#">Report Sighting</a><a class="px-space-md py-space-sm font-label-md text-label-md rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="risk-zones" href="#">Risk Zones</a><a class="px-space-md py-space-sm font-label-md text-label-md rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="wound-checker" href="#">Wound Checker</a><a class="relative inline-flex items-center gap-space-xs px-space-md py-space-sm font-label-md text-label-md rounded-full bg-tertiary text-on-tertiary shadow-[0_2px_8px_rgba(187,1,18,0.35)] hover:bg-tertiary-container hover:text-on-tertiary-container transition-all" data-path="emergency-sos" href="#"><span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary-fixed opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-surface-container-lowest"></span></span><span>Emergency SOS</span></a></nav><div class="relative group"><div class="flex items-center gap-space-md py-space-sm px-space-sm rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" src="https://lh3.googleusercontent.com/aida/AEtjO1WPkRDSjB4GCN28IFy3sbNKDngzR5tKa0KbaZY4F5lopFOML7QtHOS740Kc_WCo_lufMYLAq1qLuYUFbK9lguEGe2fu_Y3ig0xEmGnSz9HfuoU3l2gl80rsMQeaG2lzjCzJLogoavaeR6xZVese3eNbsVaJRS3gtq8NxFaeWeg3zDE0h_kItXSDApdRPR-Oj-6nN545DdukHOyvQQqxZeztGcOOoQnff4N-f_5YPfB4raQgYOuYQxgz8V3r"/><div class="hidden md:flex flex-col text-left"><span class="font-title-md text-title-md text-on-surface leading-tight">john_citizen</span><span class="font-body-sm text-body-sm text-outline leading-tight">Citizen / General Public</span></div><span class="material-symbols-outlined text-outline group-hover:text-on-surface transition-transform duration-200 group-hover:rotate-180">expand_more</span></div><div class="absolute right-0 top-full mt-space-xs w-56 bg-surface-container-lowest rounded-xl shadow-[0_10px_25px_-5px_rgba(15,23,42,0.1)] border border-outline-variant/30 py-space-xs hidden group-hover:block"><div class="px-space-md py-space-sm border-b border-outline-variant/20 md:hidden"><p class="font-title-md text-title-md text-on-surface">john_citizen</p><p class="font-body-sm text-body-sm text-outline">Citizen / General Public</p></div><a class="flex items-center gap-space-sm px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="user-profile" href="#"><span class="material-symbols-outlined text-base">person</span><span>Profile</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="account-settings" href="#"><span class="material-symbols-outlined text-base">settings</span><span>Settings</span></a><div class="my-space-xs border-t border-outline-variant/20"></div><a class="flex items-center gap-space-sm px-space-md py-space-sm font-label-md text-label-md text-tertiary hover:bg-error-container hover:text-on-error-container transition-colors" data-path="logout" href="#"><span class="material-symbols-outlined text-base">logout</span><span>Logout</span></a></div></div></div></header><main class="w-full pt-20 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<section class="w-full max-w-7xl mx-auto px-margin pb-space-xl">
+<!-- Header Block -->
+<div class="pt-space-lg pb-space-md flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div>
+<div class="inline-flex items-center gap-space-xs px-space-sm py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm uppercase tracking-wider mb-space-xs">
+<span class="material-symbols-outlined text-sm">neurology</span>
+<span>Diagnostic Computer Vision v2.4</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight">Identify a Snake</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mt-space-xs">
+          Upload an image to identify the species and determine its venom risk using our trained CNN deep learning model.
+        </p>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-lowest px-space-md py-space-sm rounded-xl shadow-sm">
+<div class="flex flex-col text-right">
+<span class="font-label-sm uppercase tracking-wider text-outline">Classifier Status</span>
+<span class="font-title-md text-title-md text-primary flex items-center gap-1.5 justify-end">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            99.2% Model Latency: 320ms
+          </span>
+</div>
+</div>
+</div>
+<!-- 2 Column Master Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start mt-space-md">
+<!-- Left Column: Upload Terminal -->
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md relative overflow-hidden">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-2xl">photo_camera</span>
+<span class="font-title-md text-title-md text-on-surface">Input Diagnostic Capture</span>
+</div>
+<span class="font-code-sm text-code-sm bg-surface-container px-space-sm py-0.5 rounded text-on-surface-variant">RGB Pipeline</span>
+</div>
+<!-- Drag and Drop Canvas Area -->
+<div class="group relative flex flex-col items-center justify-center p-space-xl rounded-xl bg-surface-container-low transition-all duration-200 cursor-pointer text-center hover:bg-surface-container" id="dropZone">
+<div class="w-16 h-16 rounded-full bg-surface-container-lowest shadow-sm flex items-center justify-center text-primary group-hover:scale-105 transition-transform mb-space-md">
+<span class="material-symbols-outlined text-3xl">add_photo_alternate</span>
+</div>
+<p class="font-title-md text-title-md text-on-surface font-semibold">
+              Drop your image here
+            </p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">
+              or <span class="text-primary font-semibold underline underline-offset-4">browse from your device</span>
+</p>
+<div class="mt-space-lg inline-flex items-center gap-1.5 px-space-md py-space-xs rounded-full bg-surface-container-lowest shadow-sm font-label-sm text-outline text-center">
+<span class="material-symbols-outlined text-xs">info</span>
+<span>JPG, PNG, WEBP (Max 15MB) • Macro recommended</span>
+</div>
+<input accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" id="fileInput" type="file"/>
+</div>
+<!-- Staged Input Preview Bar -->
+<div class="flex items-center justify-between bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-10 h-10 rounded-lg bg-surface-container overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Macro close-up photograph of a coiled Russell's viper showing distinct brown elliptical ring patterns against a dusty terra-cotta background with sharp biological texture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuHllwJ3fEhdyXUlS9Cq0JClI2B32qL95sl_-VDk-VTaABdYb_jBX6feU6SvpEb7WTia84I-96ip4NhfCA054WeHArj8gUmR1Kij9rLjoWPY4iW_AYFSABmMiBKffsFa0K1roMPHkY1Lo1YAysQXFOs_sy_rn3nU7EMzKnX1SR549bZ2E6_0azpHAKH3OtHqRfy_YsZ0ApwG5B__y5YeRP5fhFnTXMFr8tRwXI8zF4BAgx3fcwJHnfPw"/>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface truncate">capture_2025_04_11.jpg</span>
+<span class="font-code-sm text-code-sm text-outline">3.4 MB • 4032 × 3024</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+</div>
+<!-- Action Control Row -->
+<div class="flex items-center gap-space-sm pt-space-xs">
+<button class="flex-1 inline-flex items-center justify-center gap-space-xs bg-primary text-on-primary py-space-sm px-space-md rounded-lg font-label-md shadow-sm hover:bg-primary-container transition-all active:scale-[0.99]" id="btnAnalyze" type="button">
+<span class="material-symbols-outlined text-lg">biotech</span>
+<span>Analyze Image</span>
+</button>
+<button class="inline-flex items-center justify-center gap-space-xs bg-surface-container-lowest text-on-surface py-space-sm px-space-md rounded-lg font-label-md shadow-sm hover:bg-surface-container transition-colors" id="btnReset" type="button">
+<span class="material-symbols-outlined text-lg">restart_alt</span>
+<span>Reset</span>
+</button>
+</div>
+<!-- Guardrail Badge -->
+<div class="bg-surface-container rounded-lg p-space-sm flex items-start gap-space-sm mt-space-xs">
+<span class="material-symbols-outlined text-primary text-lg flex-shrink-0 mt-0.5">verified_user</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold uppercase tracking-wider">Active Guardrail Protection</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                15 Species Classifier Active • NOT_SNAKE False-Positive Filter Enabled. Evaluates background fauna, textures, and false hazards before calculating venom profile.
+              </p>
+</div>
+</div>
+</div>
+<!-- Field Capture Recommendations Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<span class="font-label-sm uppercase tracking-wider text-outline block mb-space-sm">Diagnostic Field Tips</span>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="bg-surface-container-low p-space-sm rounded-lg flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-primary text-base">distance</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Keep 2+ Meters</span>
+<span class="font-body-sm text-body-sm text-outline">Never risk a bite for photography</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-primary text-base">flare</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Target Dorsal</span>
+<span class="font-body-sm text-body-sm text-outline">Scale keeling aids model parsing</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Interactive Multi-State Showcase -->
+<div class="lg:col-span-7 flex flex-col gap-space-md">
+<!-- Showcase Navigation Tabs -->
+<div class="bg-surface-container-lowest p-1.5 rounded-xl shadow-sm flex items-center gap-space-xs">
+<button class="state-tab flex-1 py-space-sm px-space-md rounded-lg font-label-md text-label-md text-center transition-all bg-primary-container text-on-primary-container shadow-sm flex items-center justify-center gap-space-xs" data-state-target="state-venomous" type="button">
+<span class="w-2 h-2 rounded-full bg-error-container"></span>
+<span>State 1: Venomous Result</span>
+</button>
+<button class="state-tab flex-1 py-space-sm px-space-md rounded-lg font-label-md text-label-md text-center transition-all text-on-surface-variant hover:bg-surface-container flex items-center justify-center gap-space-xs" data-state-target="state-harmless" type="button">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>State 2: Non-Venomous</span>
+</button>
+<button class="state-tab flex-1 py-space-sm px-space-md rounded-lg font-label-md text-label-md text-center transition-all text-on-surface-variant hover:bg-surface-container flex items-center justify-center gap-space-xs" data-state-target="state-notsnake" type="button">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<span>State 3: NOT_SNAKE</span>
+</button>
+</div>
+<!-- ================= STATE 1: VENOMOUS RESULT ================= -->
+<div class="state-panel flex flex-col gap-space-md" id="state-venomous">
+<!-- Primary Diagnosis Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden relative">
+<!-- Severe Alert Banner -->
+<div class="bg-error-container text-on-error-container px-space-lg py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-tertiary text-xl" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="font-label-md text-label-md text-on-error-container font-semibold uppercase tracking-wide">
+                  High-Risk Medical Hazard Identified
+                </span>
+</div>
+<span class="font-code-sm text-code-sm bg-surface-container-lowest/80 text-tertiary font-bold px-space-xs py-0.5 rounded">
+                CATEGORY 1 LETHAL
+              </span>
+</div>
+<div class="p-space-lg flex flex-col md:flex-row gap-space-lg">
+<!-- Visual Specimen Preview Card -->
+<div class="md:w-5/12 flex flex-col gap-space-xs flex-shrink-0">
+<div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-sm bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="High-resolution telephoto shot of Russell's Viper Daboia russelii coiled menacingly on dry leaf litter, displaying distinct brown blotches with dark rings and triangular head in clear afternoon lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9Mbga3z8_THCVArS7U60gFE2xL0N1duY1YajcFBbEyN26KTn6TXklsGJBwxfQwG1PK7pHDgBf-EPH-DX4NruhIFbqulSi-xUGv5icLy1nuyVSUsvST4CQcopU3c0FZpRTQqpCQAuUnochmB0G3RgrF6z9m5lTor8B5bkb9xvkrKZ9t-DgsI28jVTwbkSbanfw68sNK0R8fKcwVB3KF0u7Mk8skSD8ZMdYaoTYlt5rm_KRg2K3MgqnqQ"/>
+<div class="absolute bottom-2 left-2 bg-inverse-surface/85 backdrop-blur-sm text-inverse-on-surface px-space-xs py-0.5 rounded font-code-sm text-code-sm">
+                    Inference Source • Model v2.4
+                  </div>
+</div>
+<div class="flex items-center justify-between px-1 text-outline font-body-sm text-body-sm">
+<span>Dorsal blotch profile</span>
+<span class="text-primary font-semibold">Match Found</span>
+</div>
+</div>
+<!-- Diagnostic Details -->
+<div class="md:w-7/12 flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between gap-space-xs">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Russell's Viper</h2>
+<p class="font-title-md text-title-md italic text-outline -mt-1">Daboia russelii</p>
+</div>
+<!-- Red Safety Badge -->
+<span class="inline-flex items-center gap-1 bg-tertiary-fixed text-on-tertiary-fixed px-space-sm py-1 rounded-full font-label-sm tracking-wider uppercase shadow-sm">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">dangerous</span>
+                      VENOMOUS
+                    </span>
+</div>
+<!-- Venom Type Subheading -->
+<div class="mt-space-sm inline-flex items-center gap-1.5 px-space-sm py-1 rounded-md bg-error-container/40 text-tertiary font-label-md">
+<span class="material-symbols-outlined text-base">emergency</span>
+<span>Potent Hemotoxic &amp; Cytotoxic Venom</span>
+</div>
+<!-- Confidence Metrics Bar -->
+<div class="mt-space-md p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex justify-between items-center mb-1.5">
+<span class="font-label-md text-label-md text-on-surface">Neural Certainty</span>
+<span class="font-code-sm text-code-sm font-bold text-primary">94.5% Confidence</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 94.5%;"></div>
+</div>
+<div class="flex justify-between text-outline font-code-sm text-code-sm mt-1">
+<span>Threshold: 85.0%</span>
+<span>False-Positive Index: 0.02</span>
+</div>
+</div>
+</div>
+<!-- Antivenom Status Chip -->
+<div class="mt-space-md pt-space-sm flex items-center gap-space-sm bg-secondary-container/40 text-on-secondary-container p-space-sm rounded-lg">
+<span class="material-symbols-outlined text-secondary text-2xl flex-shrink-0">vaccines</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm uppercase tracking-wider text-secondary font-bold">Antivenom Logistics</span>
+<span class="font-body-md text-body-md truncate font-medium">Available @ Base Hospital Zone 4 (18 Vials)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Medical DOs & DON'Ts Strip -->
+<div class="bg-surface-container-low px-space-lg py-space-md grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex items-start gap-space-xs">
+<span class="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm flex-shrink-0 mt-0.5">✓</span>
+<p class="font-body-sm text-body-sm text-on-surface"><strong>DO:</strong> Immobilize affected limb below heart level, keep calm, proceed immediately to ER.</p>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="w-5 h-5 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center font-label-sm flex-shrink-0 mt-0.5">✕</span>
+<p class="font-body-sm text-body-sm text-on-surface"><strong>DO NOT:</strong> Apply tourniquet, slice wound, suck venom, or administer unverified herbal remedies.</p>
+</div>
+</div>
+</div>
+<!-- Critical Optional Action: Voluntary Ranger Sighting Alert -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm relative overflow-hidden">
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-2xl">campaign</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold">Would you like to alert wildlife rangers?</h3>
+<span class="font-label-sm px-2 py-0.5 bg-surface-container text-outline rounded-full uppercase">Voluntary</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-xl mt-0.5">
+                    Reporting coordinates helps dispatch local rapid-response handlers and updates territorial risk maps. Reporting is voluntary and not submitted automatically.
+                  </p>
+</div>
+</div>
+<button class="w-full md:w-auto flex-shrink-0 inline-flex items-center justify-center gap-space-xs bg-surface-container text-primary font-label-md py-space-sm px-space-lg rounded-lg shadow-sm hover:bg-primary-container hover:text-on-primary-container transition-all" type="button">
+<span class="material-symbols-outlined text-lg">flag</span>
+<span>Report This Snake</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ================= STATE 2: NON-VENOMOUS (HARMFUL: NO) ================= -->
+<div class="state-panel hidden flex flex-col gap-space-md" id="state-harmless">
+<div class="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden">
+<!-- Harmless Status Banner -->
+<div class="bg-surface-container-high text-primary px-space-lg py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+<span class="font-label-md text-label-md font-semibold uppercase tracking-wide">
+                  Harmless Reptile Verified
+                </span>
+</div>
+<span class="font-code-sm text-code-sm bg-surface-container-lowest text-primary font-bold px-space-xs py-0.5 rounded">
+                CATEGORY 0 SAFE
+              </span>
+</div>
+<div class="p-space-lg flex flex-col md:flex-row gap-space-lg">
+<!-- Visual Specimen Preview Card -->
+<div class="md:w-5/12 flex flex-col gap-space-xs flex-shrink-0">
+<div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-sm bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A smooth, slender Indian Rat Snake Ptyas mucosa moving through green meadow grass in daylight, showing polished olive-brown scales and large intelligent eyes." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy39LDkd7a-omchnYo6fsLm6WWOy2PTAt0dFB6Ca2mF0CygHMzArp8KCT9CGseAO9Sj8wxG1TmT-Or41i45KpmdmLnjF0X1dVEmX8iOLlRXX0aze_OcT9egZH-pJ0IQaMSrta-V2nxYLXD-ljU28pENYy1XWda4sb-qISkj3JR5W2L2rEZn34SkFej_T18-NCp1X7JSz9_l7AuiciHy44y1kyjIBEIK0FxYAPdWjTNdHFmsApdYemaOg"/>
+<div class="absolute bottom-2 left-2 bg-inverse-surface/85 backdrop-blur-sm text-inverse-on-surface px-space-xs py-0.5 rounded font-code-sm text-code-sm">
+                    Inference Source • Model v2.4
+                  </div>
+</div>
+<div class="flex items-center justify-between px-1 text-outline font-body-sm text-body-sm">
+<span>Subocular scale pattern</span>
+<span class="text-primary font-semibold">Matched Clean</span>
+</div>
+</div>
+<!-- Diagnostic Details -->
+<div class="md:w-7/12 flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between gap-space-xs">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Indian Rat Snake</h2>
+<p class="font-title-md text-title-md italic text-outline -mt-1">Ptyas mucosa</p>
+</div>
+<!-- Safe Status Badge -->
+<span class="inline-flex items-center gap-1 bg-surface-container-high text-primary px-space-sm py-1 rounded-full font-label-sm tracking-wider uppercase shadow-sm">
+<span class="material-symbols-outlined text-xs">verified</span>
+                      NON-VENOMOUS
+                    </span>
+</div>
+<!-- Confidence Metrics Bar -->
+<div class="mt-space-md p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex justify-between items-center mb-1.5">
+<span class="font-label-md text-label-md text-on-surface">Neural Certainty</span>
+<span class="font-code-sm text-code-sm font-bold text-primary">97.8% Confidence</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 97.8%;"></div>
+</div>
+<div class="flex justify-between text-outline font-code-sm text-code-sm mt-1">
+<span>Threshold: 85.0%</span>
+<span>Colubrid Family Metric: 0.99</span>
+</div>
+</div>
+<!-- Ecological Note -->
+<div class="mt-space-md p-space-md rounded-xl bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-primary text-2xl flex-shrink-0">nature_people</span>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md text-on-surface font-semibold">Ecologically Beneficial</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                        Rat snakes naturally manage rodent populations around agricultural areas and are completely harmless to humans. Please allow the reptile to retreat undisturbed.
+                      </p>
+</div>
+</div>
+</div>
+<!-- Guidance Footer -->
+<div class="mt-space-md pt-space-xs text-outline font-body-sm text-body-sm italic">
+                  * Ecological classification complete. No voluntary ranger dispatch is required for non-venomous species.
+                </div>
+</div>
+</div>
+</div>
+</div>
+<!-- ================= STATE 3: NOT_SNAKE FILTER TRIGGERED ================= -->
+<div class="state-panel hidden flex flex-col gap-space-md" id="state-notsnake">
+<div class="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden">
+<!-- Warning Banner -->
+<div class="bg-surface-container-highest text-on-surface-variant px-space-lg py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-outline text-xl">image_not_supported</span>
+<span class="font-label-md text-label-md font-semibold uppercase tracking-wide">
+                  Model Guardrail: Object Rejected
+                </span>
+</div>
+<span class="font-code-sm text-code-sm bg-surface-container-lowest text-outline font-bold px-space-xs py-0.5 rounded">
+                NOT_SNAKE FLAG
+              </span>
+</div>
+<div class="p-space-lg flex flex-col md:flex-row gap-space-lg">
+<!-- Visual Specimen Preview Card -->
+<div class="md:w-5/12 flex flex-col gap-space-xs flex-shrink-0">
+<div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-sm bg-surface-container">
+<img class="w-full h-full object-cover grayscale opacity-80" data-alt="A coiled green garden hose lying on a backyard patio lawn next to dry branches and fallen leaves, mistaken by user for a serpent in low lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAReSubTm7uIiksFg-usrP5Cy7Bg0rO46PXcbFCRdPew7DwSDXmOjiYesOmxJlbJDBrvEracrX0rWCF5U1wKf7HE7oGFefaCcd-OfTJWDO7KI_0LBW2t_0vAd85ptBX9nnRPRrJMO9I269iFK9yzpTfglbuELkeeqrt8ACj3jWK4gkTC9b7SW-UW0frV-y4CGxE17w750BM0DYHETROFXKkcpu4uglpeaHjORKlJD_A0qs8uMa33J9z5A"/>
+<div class="absolute inset-0 bg-on-surface/20 backdrop-blur-[1px] flex items-center justify-center">
+<span class="px-space-md py-space-xs bg-surface-container-lowest/95 rounded-full font-label-md text-outline flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-base">block</span>
+                      No Serpent Anatomy
+                    </span>
+</div>
+</div>
+<div class="flex items-center justify-between px-1 text-outline font-body-sm text-body-sm">
+<span>Inorganic texture detected</span>
+<span class="text-tertiary font-semibold">Rejected</span>
+</div>
+</div>
+<!-- Diagnostic Details -->
+<div class="md:w-7/12 flex flex-col justify-between">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">No Snake Detected</h2>
+<p class="font-title-md text-title-md text-outline mt-0.5">Please upload an image containing a clear snake specimen.</p>
+<!-- Guidance Panel -->
+<div class="mt-space-md p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+<span class="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-base">lightbulb</span>
+                      Why did the model return this?
+                    </span>
+<ul class="font-body-sm text-body-sm text-on-surface-variant flex flex-col gap-space-xs pl-space-sm">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-outline text-sm mt-0.5">radio_button_checked</span>
+<span>The image contains inanimate items (e.g., garden hose, tree root, electrical cord).</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-outline text-sm mt-0.5">radio_button_checked</span>
+<span>Lighting was insufficient or the reptile was heavily obscured by foliage.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-outline text-sm mt-0.5">radio_button_checked</span>
+<span>Resolution below the required 512 × 512 biological feature limit.</span>
+</li>
+</ul>
+</div>
+</div>
+<div class="mt-space-lg flex items-center gap-space-sm">
+<button class="inline-flex items-center gap-space-xs bg-primary text-on-primary font-label-md py-space-sm px-space-md rounded-lg shadow-sm hover:bg-primary-container transition-all" type="button">
+<span class="material-symbols-outlined text-base">upload_file</span>
+<span>Upload New Photo</span>
+</button>
+<a class="inline-flex items-center gap-space-xs bg-surface-container text-on-surface font-label-md py-space-sm px-space-md rounded-lg hover:bg-surface-container-high transition-colors" data-path="wound-checker" href="#">
+<span class="material-symbols-outlined text-base">healing</span>
+<span>Check Bite Wound Instead</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Comparative Specimen Quick Reference -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-sm uppercase tracking-wider text-outline">Regional Lookalikes • South Asian Zone 4</span>
+<span class="font-code-sm text-code-sm text-primary">Biometric Database Ref</span>
+</div>
+<div class="grid grid-cols-3 gap-space-sm">
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col gap-1">
+<span class="font-label-sm uppercase text-tertiary font-bold">Lethal Lookalike</span>
+<span class="font-label-md text-on-surface font-semibold">Saw-Scaled Viper</span>
+<span class="font-body-sm text-outline">Serrated side-scale rasping</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col gap-1">
+<span class="font-label-sm uppercase text-primary font-bold">Harmless Mimic</span>
+<span class="font-label-md text-on-surface font-semibold">Common Sand Boa</span>
+<span class="font-body-sm text-outline">Blunt tail, keeled body</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col gap-1">
+<span class="font-label-sm uppercase text-tertiary font-bold">Lethal Lookalike</span>
+<span class="font-label-md text-on-surface font-semibold">Spectacled Cobra</span>
+<span class="font-body-sm text-outline">Hood expanders, neurotoxic</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive State Switching Vanilla JS -->
+<script>
+    (function() {
+      const tabs = document.querySelectorAll('.state-tab');
+      const panels = document.querySelectorAll('.state-panel');
+      const dropZone = document.getElementById('dropZone');
+      const btnReset = document.getElementById('btnReset');
+      const btnAnalyze = document.getElementById('btnAnalyze');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const targetId = tab.getAttribute('data-state-target');
+          
+          // Reset tab styles
+          tabs.forEach(t => {
+            t.classList.remove('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+            t.classList.add('text-on-surface-variant');
+          });
+
+          // Activate clicked tab
+          tab.classList.remove('text-on-surface-variant');
+          tab.classList.add('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+
+          // Toggle visibility of panels
+          panels.forEach(p => {
+            if (p.id === targetId) {
+              p.classList.remove('hidden');
+            } else {
+              p.classList.add('hidden');
+            }
+          });
+        });
+      });
+
+      // Simple drag visual affordance
+      if (dropZone) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+          dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('bg-surface-container-high');
+          }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-surface-container-high');
+          }, false);
+        });
+      }
+
+      if (btnReset) {
+        btnReset.addEventListener('click', () => {
+          // Switch back to venomous default state
+          const defaultTab = document.querySelector('[data-state-target="state-venomous"]');
+          if (defaultTab) defaultTab.click();
+        });
+      }
+
+      if (btnAnalyze) {
+        btnAnalyze.addEventListener('click', () => {
+          btnAnalyze.classList.add('opacity-75');
+          const originalText = btnAnalyze.innerHTML;
+          btnAnalyze.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">refresh</span><span>Processing...</span>';
+          setTimeout(() => {
+            btnAnalyze.classList.remove('opacity-75');
+            btnAnalyze.innerHTML = originalText;
+          }, 600);
+        });
+      }
+    })();
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest border-t border-outline-variant/30 py-space-lg"><div class="max-w-7xl mx-auto px-margin flex flex-col md:flex-row items-center justify-between gap-space-md text-center md:text-left"><div class="flex items-center gap-space-sm text-outline font-code-sm text-code-sm"><span class="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span><span>CNN Model v2.4 Online • 15 Species Indexed • DBSCAN Spatial Sync</span></div><div class="font-body-sm text-body-sm text-outline">© 2025 VENOMWATCH Public Safety &amp; Wildlife Intelligence. All rights reserved.</div></div></footer></body></html>
