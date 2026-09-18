@@ -1,189 +1,313 @@
 import os
-import cv2
 import numpy as np
-import random
 from django.conf import settings
-from pathlib import Path
-
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Snake AI Species & Venom Knowledge Base for Display Context
-SNAKE_DATABASE = [
-    {
+# Snake Species Database with Venom Status Mapping
+# Based on actual CNN training classes (15 classes total)
+# Class index mapping is alphabetical: black, boa, cat, cobra, common, keelback, krait, kukri, pit, python, racer, rat, russell, saw, wolf
+SNAKE_SPECIES_DATABASE = {
+    'black': {
+        'species_name': 'Black-headed Royal Snake',
+        'common_name': 'Black-headed Python',
+        'venomous': False,
+        'venom_category': 'NON_VENOMOUS',
+        'description': 'Non-venomous python species found in India.'
+    },
+    'boa': {
+        'species_name': 'Indian Boa',
+        'common_name': 'Common Indian Boa',
+        'venomous': False,
+        'venom_category': 'NON_VENOMOUS',
+        'description': 'Large non-venomous constrictor snake.'
+    },
+    'cobra': {
         'species_name': 'Indian Cobra (Naja naja)',
         'common_name': 'Spectacled Cobra',
+        'venomous': True,
         'venom_category': 'HIGHLY_VENOMOUS',
-        'description': 'Highly venomous elapid snake. AI Prediction: Venomous.'
+        'description': 'Highly venomous elapid snake. One of the Big Four snakes of India.'
     },
-    {
+    'common': {
+        'species_name': 'Common Trinket Snake',
+        'common_name': 'Trinket Snake',
+        'venomous': False,
+        'venom_category': 'NON_VENOMOUS',
+        'description': 'Harmless non-venomous colubrid snake.'
+    },
+    'keelback': {
+        'species_name': 'Keelback Water Snake',
+        'common_name': 'Asiatic Water Snake',
+        'venomous': False,
+        'venom_category': 'NON_VENOMOUS',
+        'description': 'Mildly venomous but generally harmless to humans.'
+    },
+    'krait': {
+        'species_name': 'Common Krait (Bungarus caeruleus)',
+        'common_name': 'Indian Krait',
+        'venomous': True,
+        'venom_category': 'HIGHLY_VENOMOUS',
+        'description': 'Highly venomous elapid. One of the Big Four snakes of India. Nocturnal.'
+    },
+    'kukri': {
+        'species_name': 'Kukri Snake',
+        'common_name': 'Common Kukri Snake',
+        'venomous': False,
+        'venom_category': 'NON_VENOMOUS',
+        'description': 'Small non-venomous colubrid snake.'
+    },
+    'pit': {
+        'species_name': 'Pit Viper',
+        'common_name': 'Himalayan Pit Viper',
+        'venomous': True,
+        'venom_category': 'HIGHLY_VENOMOUS',
+        'description': 'Venomous pit viper species.'
+    },
+    'python': {
+        'species_name': 'Indian Python',
+        'common_name': 'Rock Python',
+        'venomous': False,
+        'venom_category': 'NON_VENOMOUS',
+        'description': 'Large non-venomous constrictor. Protected species.'
+    },
+    'racer': {
+        'species_name': 'Racer Snake',
+        'common_name': 'Yellow-throated Racer',
+        'venomous': False,
+        'venom_category': 'NON_VENOMOUS',
+        'description': 'Fast-moving non-venomous colubrid snake.'
+    },
+    'rat': {
         'species_name': 'Indian Rat Snake (Ptyas mucosa)',
         'common_name': 'Dhaman',
+        'venomous': False,
         'venom_category': 'NON_VENOMOUS',
-        'description': 'Harmless non-venomous snake. AI Prediction: Non-Venomous.'
+        'description': 'Large non-venomous snake commonly found near human settlements.'
+    },
+    'russell': {
+        'species_name': "Russell's Viper (Daboia russelii)",
+        'common_name': "Russell's Viper",
+        'venomous': True,
+        'venom_category': 'HIGHLY_VENOMOUS',
+        'description': 'Highly venomous viper. One of the Big Four snakes of India.'
+    },
+    'saw': {
+        'species_name': 'Saw-scaled Viper (Echis carinatus)',
+        'common_name': 'Saw-scaled Viper',
+        'venomous': True,
+        'venom_category': 'HIGHLY_VENOMOUS',
+        'description': 'Highly venomous small viper. One of the Big Four snakes of India.'
+    },
+    'wolf': {
+        'species_name': 'Wolf Snake',
+        'common_name': 'Common Wolf Snake',
+        'venomous': False,
+        'venom_category': 'NON_VENOMOUS',
+        'description': 'Small non-venomous colubrid snake, often mistaken for kraits.'
     }
-]
+}
+
+# Class indices that represent SNAKES (not 'cat')
+# Alphabetical order: black=0, boa=1, cat=2, cobra=3, common=4, keelback=5, krait=6, kukri=7, pit=8, python=9, racer=10, rat=11, russell=12, saw=13, wolf=14
+SNAKE_CLASS_INDICES = {0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+NON_SNAKE_CLASS_INDICES = {2}  # Class index 2 is 'cat' - used as proxy for non-snake
+
+CLASS_NAMES = ['black', 'boa', 'cat', 'cobra', 'common', 'keelback', 'krait', 'kukri', 'pit', 'python', 'racer', 'rat', 'russell', 'saw', 'wolf']
 
 
 class SnakeAIPipelineService:
     """
-    Two-Stage AI Inference Pipeline with Server-Side Gate:
-    Stage 1: Snake Detection (YOLOv8 - Snake Detection.v2-model_snake-detection-2.yolov8)
-             Determines whether the uploaded photo contains a snake with reliable confidence.
-    Stage 2: Venom Classification (Keras CNN - venom_watch_cnn2_keras)
-             EXECUTED ONLY WHEN Stage 1 reliably confirms a snake (Confidence >= 70%).
-             Classifies snake as Venomous vs Non-Venomous.
+    CNN-based Snake Identification Pipeline (Single-Stage):
+    
+    Model: venomwatch_cnn2_final.keras (MobileNetV2-based CNN)
+    Input: 224x224 RGB images
+    Classes: 15 (14 snake species + 1 non-snake proxy 'cat')
+    
+    Pipeline:
+    USER UPLOADS IMAGE
+            ↓
+        CNN MODEL
+            ↓
+    ┌───────┴────────┐
+    ↓                ↓
+NOT SNAKE          SNAKE
+    ↓                ↓
+  STOP           SPECIES
+                     ↓
+             VENOMOUS STATUS
+                     ↓
+               CONFIDENCE
+                     ↓
+         OPTIONAL USER REPORT
+    
+    This service does NOT use YOLO or any object detection.
+    It performs direct image classification using a trained CNN.
     """
-    _model_1 = None
-    _model_2 = None
-
-    # Threshold required for Model #1 to reliably confirm a snake
-    DETECTION_THRESHOLD = getattr(settings, 'SNAKE_DETECTION_THRESHOLD', 0.35)
-
-    SNAKE_CLASS_INDICES = {0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
-    NON_SNAKE_CLASS_INDICES = {2}  # Class index 2 is 'cat'
-
+    _model = None
+    
+    # Confidence threshold for reliable snake detection
+    SNAKE_CONFIDENCE_THRESHOLD = getattr(settings, 'SNAKE_DETECTION_THRESHOLD', 0.50)
+    
     @classmethod
-    def get_model_1(cls):
-        if cls._model_1 is None:
-            from ultralytics import YOLO
-            paths_to_try = [
-                os.path.join(settings.BASE_DIR, 'Snake Detection.v2-model_snake-detection-2.yolov8', 'best.pt'),
-                os.path.join(settings.BASE_DIR, 'ai', 'models', 'best.pt'),
-                os.path.join(settings.BASE_DIR, 'best.pt'),
-            ]
-            model_path = None
-            for p in paths_to_try:
-                if os.path.exists(p):
-                    model_path = p
-                    break
-            if model_path is None:
-                raise FileNotFoundError("Model #1 weights (best.pt for Snake Detection) not found.")
-            
-            print(f"[AI] Loading Model #1 from: {model_path}")
-            cls._model_1 = YOLO(model_path)
-            print(f"[AI] Model #1 class mapping: {cls._model_1.names}")
-        return cls._model_1
-
+    def get_model(cls):
+        """Load the CNN model once (lazy loading)."""
+        if cls._model is None:
+            try:
+                import tensorflow as tf
+                paths_to_try = [
+                    os.path.join(settings.BASE_DIR, 'venomwatch_cnn2_final.keras'),
+                    os.path.join(settings.BASE_DIR, 'ai', 'models', 'venomwatch_cnn2_final.keras'),
+                ]
+                model_path = None
+                for p in paths_to_try:
+                    if os.path.exists(p):
+                        model_path = p
+                        break
+                if model_path is None:
+                    raise FileNotFoundError("CNN model file (venomwatch_cnn2_final.keras) not found.")
+                
+                print(f"[AI] Loading CNN model from: {model_path}")
+                cls._model = tf.keras.models.load_model(model_path)
+                print(f"[AI] CNN model loaded successfully")
+                print(f"[AI] Model input shape: {cls._model.input_shape}")
+                print(f"[AI] Model output shape: {cls._model.output_shape}")
+            except Exception as e:
+                logger.error(f"[AI] Failed to load CNN model: {e}")
+                raise
+        return cls._model
+    
     @classmethod
-    def get_model_2(cls):
-        if cls._model_2 is None:
-            import keras
-            paths_to_try = [
-                os.path.join(settings.BASE_DIR, 'venomwatch_cnn2_final.keras'),
-                os.path.join(settings.BASE_DIR, 'ai', 'models', 'venomwatch_cnn2_final.keras'),
-            ]
-            model_path = None
-            for p in paths_to_try:
-                if os.path.exists(p):
-                    model_path = p
-                    break
-            if model_path is None:
-                raise FileNotFoundError("Model #2 file (venomwatch_cnn2_final.keras) not found.")
-            
-            print(f"[AI] Loading Model #2 from: {model_path}")
-            cls._model_2 = keras.models.load_model(model_path)
-        return cls._model_2
-
-    @classmethod
-    def detect_snake(cls, abs_path):
+    def classify_snake_image(cls, abs_path):
         """
-        Stage 1: YOLOv8 Classification Model (15-class: 14 snake species + cat)
-        Returns dict with snake_detected (bool), snake_confidence (float), predicted_label (str).
+        Single-stage CNN classification for snake identification.
+        
+        Returns dict with:
+          - is_snake: bool
+          - species: str or None
+          - species_common: str or None
+          - venomous: bool or None
+          - venom_category: str or None ('HIGHLY_VENOMOUS' or 'NON_VENOMOUS')
+          - description: str or None
+          - confidence: float (0-100)
+          - class_index: int
+          - class_name: str (raw class name from model)
+          - all_probabilities: list (for debugging)
         """
         filename = os.path.basename(abs_path)
         file_size = os.path.getsize(abs_path) if os.path.exists(abs_path) else 0
-
+        
         print(f"[AI] Received image: {filename}")
         print(f"[AI] Image path: {abs_path}")
         print(f"[AI] File size: {file_size} bytes")
-        print(f"[AI] Model #1 inference started")
-
-        model = cls.get_model_1()
-        results = model(abs_path, verbose=False)
-
-        print(f"[AI] Model #1 inference completed")
-
-        if not results or not hasattr(results[0], 'probs') or results[0].probs is None:
-            print("[AI] Model #1 raw output: No classification probabilities returned.")
-            return {
-                'snake_detected': False,
-                'snake_confidence': 0.0,
-                'predicted_label': 'unknown'
-            }
-
-        probs = results[0].probs.data.cpu().numpy()
-        top1 = int(results[0].probs.top1)
-        top1_conf = float(results[0].probs.top1conf)
-        top1_name = model.names.get(top1, 'unknown')
-
-        sum_snake_probs = float(np.sum(probs[list(cls.SNAKE_CLASS_INDICES)]))
-        cat_prob = float(probs[2]) if len(probs) > 2 else 0.0
-
-        print(f"[AI] Model #1 raw output: top1={top1} ({top1_name}), top1_conf={top1_conf*100:.1f}%, sum_snake_probs={sum_snake_probs*100:.1f}%, cat_prob={cat_prob*100:.1f}%")
-
-        # GATING RULE: Requires top predicted class to be a snake species AND top-1 species confidence >= 35% AND total snake probability >= 85%
-        is_snake = (top1 in cls.SNAKE_CLASS_INDICES) and (top1_conf >= cls.DETECTION_THRESHOLD) and (sum_snake_probs >= 0.85)
-
-        # Confidence displayed for snake detection: combined snake species probability when snake detected, else top1 conf
-        display_conf = round(sum_snake_probs * 100, 1) if is_snake else round(top1_conf * 100, 1)
-
-        if is_snake:
-            print(f"[AI] Snake gate: PASS (Top species: {top1_name} {top1_conf*100:.1f}%, Combined Snake Confidence: {display_conf}% >= {cls.DETECTION_THRESHOLD*100:.0f}%)")
-            return {
-                'snake_detected': True,
-                'snake_confidence': display_conf,
-                'predicted_label': top1_name
-            }
-        else:
-            print(f"[AI] Snake gate: FAIL (Top species: {top1_name} {top1_conf*100:.1f}% < {cls.DETECTION_THRESHOLD*100:.0f}% threshold or non-snake class)")
-            return {
-                'snake_detected': False,
-                'snake_confidence': display_conf,
-                'predicted_label': top1_name if top1 in cls.NON_SNAKE_CLASS_INDICES else 'no snake'
-            }
-
-    @classmethod
-    def classify_venom(cls, abs_path):
-        """
-        Stage 2: Keras CNN Venomous Classification
-        Executed ONLY when Stage 1 reliably confirms a snake.
-        Returns dict with venomous (bool), venom_confidence (float).
-        """
-        print("[AI] Model #2 inference started")
-        model = cls.get_model_2()
+        print(f"[AI] CNN inference started")
         
-        img = cv2.imread(abs_path)
-        if img is None:
-            print("[AI] Model #2 inference completed: Could not read image.")
-            return {'venomous': False, 'venom_confidence': 50.0}
-
-        img_resized = cv2.resize(img, (224, 224))
-        img_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
-        arr = np.expand_dims(img_rgb / 255.0, axis=0)
-
-        pred = float(model.predict(arr, verbose=0)[0][0])
-        
-        # Sigmoid binary classification: >= 0.5 is Venomous
-        if pred >= 0.5:
-            venomous = True
-            conf = round(pred * 100, 1)
-        else:
-            venomous = False
-            conf = round((1.0 - pred) * 100, 1)
-
-        print(f"[AI] Model #2 inference completed: venomous={venomous}, confidence={conf}%")
-        return {
-            'venomous': venomous,
-            'venom_confidence': conf
-        }
-
+        try:
+            import tensorflow as tf
+            
+            model = cls.get_model()
+            
+            # Load and preprocess image (matching training preprocessing)
+            img = tf.keras.utils.load_img(abs_path, target_size=(224, 224))
+            img_array = tf.keras.utils.img_to_array(img)
+            
+            # Expand dimensions for batch (1, 224, 224, 3)
+            img_array = np.expand_dims(img_array, axis=0).astype(np.float32)
+            
+            # Normalize to [0, 1] range (MobileNetV2 preprocessing)
+            img_array = img_array / 255.0
+            
+            # Run inference
+            predictions = model.predict(img_array, verbose=0)[0]
+            
+            # Get top prediction
+            class_index = int(np.argmax(predictions))
+            confidence = float(np.max(predictions))
+            class_name = CLASS_NAMES[class_index]
+            
+            print(f"[AI] CNN raw output: class_index={class_index}, class_name='{class_name}', confidence={confidence*100:.1f}%")
+            print(f"[AI] All probabilities: {[f'{p*100:.1f}%' for p in predictions]}")
+            
+            # Check if predicted class is a snake or non-snake (cat)
+            is_snake = class_index in SNAKE_CLASS_INDICES
+            
+            if is_snake:
+                species_info = SNAKE_SPECIES_DATABASE.get(class_name, {})
+                result = {
+                    'is_snake': True,
+                    'species': species_info.get('species_name', f'{class_name.capitalize()} Snake'),
+                    'species_common': species_info.get('common_name', class_name.capitalize()),
+                    'venomous': species_info.get('venomous', False),
+                    'venom_category': species_info.get('venom_category', 'NON_VENOMOUS'),
+                    'description': species_info.get('description', ''),
+                    'confidence': round(confidence * 100, 1),
+                    'class_index': class_index,
+                    'class_name': class_name,
+                    'all_probabilities': [round(p * 100, 1) for p in predictions]
+                }
+                print(f"[AI] SNAKE DETECTED: {result['species']} ({result['venom_category']}) - Confidence: {result['confidence']}%")
+            else:
+                # Non-snake detected (class 'cat' or other non-snake proxy)
+                result = {
+                    'is_snake': False,
+                    'species': None,
+                    'species_common': None,
+                    'venomous': None,
+                    'venom_category': None,
+                    'description': 'No snake detected in the image.',
+                    'confidence': round(confidence * 100, 1),
+                    'class_index': class_index,
+                    'class_name': class_name,
+                    'all_probabilities': [round(p * 100, 1) for p in predictions]
+                }
+                print(f"[AI] NOT A SNAKE: {class_name} - Confidence: {result['confidence']}%")
+            
+            print(f"[AI] CNN inference completed")
+            return result
+            
+        except Exception as e:
+            logger.error(f"[AI] CNN classification error: {e}")
+            print(f"[AI] CNN classification exception: {e}")
+            return {
+                'is_snake': False,
+                'species': None,
+                'species_common': None,
+                'venomous': None,
+                'venom_category': None,
+                'description': f'Error processing image: {str(e)}',
+                'confidence': 0.0,
+                'class_index': -1,
+                'class_name': 'error',
+                'all_probabilities': []
+            }
+    
     @classmethod
     def analyze_image(cls, image_path):
         """
-        Full Two-Stage Pipeline Orchestrator with Strict Server-Side Gate.
+        Main pipeline orchestrator for CNN-based snake identification.
+        
+        This method replaces the old two-stage YOLO+CNN pipeline.
+        Now uses single-stage CNN classification only.
+        
+        Args:
+            image_path: Path to the uploaded image file
+            
+        Returns:
+            Dict with standardized fields for backward compatibility:
+            - snake_detected: bool (same as is_snake)
+            - snake_confidence: float (0-100)
+            - venomous: bool or None
+            - venom_confidence: float or None (same as snake_confidence for now)
+            - species: str or None
+            - venom_category: str or None
+            - status: str
+            - message: str
+            - model_1: str (now CNN model name)
+            - model_2: None (removed)
+            - processed_image_path: str
         """
+        # Resolve absolute path
         path_str = str(image_path)
         if os.path.isabs(path_str):
             abs_path = path_str
@@ -191,91 +315,91 @@ class SnakeAIPipelineService:
             abs_path = os.path.abspath(path_str)
         else:
             abs_path = os.path.join(settings.MEDIA_ROOT, path_str)
-
+        
         if not os.path.exists(abs_path):
             return {
                 'snake_detected': False,
                 'snake_confidence': 0.0,
                 'venomous': None,
                 'venom_confidence': None,
-                'status': 'NO_RELIABLE_SNAKE_DETECTED',
+                'species': None,
+                'venom_category': None,
+                'status': 'IMAGE_NOT_FOUND',
                 'message': 'Image file not found on disk.',
-                'model_1': 'Snake Detection.v2-model_snake-detection-2.yolov8',
+                'model_1': 'venomwatch_cnn2_final (CNN)',
                 'model_2': None,
-                'processed_image_path': None
+                'processed_image_path': None,
+                'is_snake': False,
+                'class_name': None,
+                'class_index': -1,
+                'description': 'Image file not found.'
             }
-
-        # --- STAGE 1: SNAKE DETECTION ---
+        
+        # Run CNN classification
         try:
-            stage1 = cls.detect_snake(abs_path)
+            cnn_result = cls.classify_snake_image(abs_path)
         except Exception as e:
-            print(f"[AI] Snake Detection Exception: {e}")
+            logger.error(f"[AI] Pipeline error: {e}")
             return {
                 'snake_detected': False,
                 'snake_confidence': 0.0,
                 'venomous': None,
                 'venom_confidence': None,
-                'status': 'NO_RELIABLE_SNAKE_DETECTED',
-                'message': f'Snake Detection error: {str(e)}',
-                'model_1': 'Snake Detection.v2-model_snake-detection-2.yolov8',
+                'species': None,
+                'venom_category': None,
+                'status': 'CNN_ERROR',
+                'message': f'CNN classification error: {str(e)}',
+                'model_1': 'venomwatch_cnn2_final (CNN)',
                 'model_2': None,
-                'processed_image_path': str(image_path)
+                'processed_image_path': str(image_path),
+                'is_snake': False,
+                'class_name': None,
+                'class_index': -1,
+                'description': f'Error: {str(e)}'
             }
-
-        # STRICT SERVER-SIDE GATE: IF NO RELIABLE SNAKE DETECTED, RETURN IMMEDIATELY & SKIP MODEL #2
-        if not stage1['snake_detected']:
-            print("[AI] Model #2: SKIPPED (Snake gate failed)")
-            return {
-                'snake_detected': False,
-                'snake_confidence': stage1['snake_confidence'],
-                'venomous': None,
-                'venom_confidence': None,
-                'status': 'NO_RELIABLE_SNAKE_DETECTED',
-                'message': f"Unable to reliably confirm a snake in the image (Detection Confidence: {stage1['snake_confidence']}%).",
-                'model_1': 'Snake Detection.v2-model_snake-detection-2.yolov8',
-                'model_2': None,
-                'processed_image_path': str(image_path)
-            }
-
-        # --- STAGE 2: VENOM CLASSIFICATION (RUNS ONLY IF STAGE 1 GATE PASSED) ---
-        try:
-            stage2 = cls.classify_venom(abs_path)
-        except Exception as e:
-            print(f"[AI] Venom Classification Exception: {e}")
-            stage2 = {'venomous': False, 'venom_confidence': 50.0}
-
-        is_venom = stage2['venomous']
-        venom_conf = stage2['venom_confidence']
-
-        if is_venom:
-            status_code = 'SNAKE_DETECTED_VENOMOUS'
-            msg = f"AI Prediction: Venomous ({venom_conf}%)"
-            if venom_conf < 60.0:
-                msg += " — Low-confidence prediction — professional verification recommended."
+        
+        # Map CNN result to legacy format for backward compatibility
+        is_snake = cnn_result['is_snake']
+        
+        if is_snake:
+            if cnn_result['venomous']:
+                status_code = 'SNAKE_DETECTED_VENOMOUS'
+                msg = f"AI Prediction: {cnn_result['species']} - VENOMOUS ({cnn_result['confidence']}%)"
+                if cnn_result['confidence'] < 60.0:
+                    msg += " — Low-confidence prediction — professional verification recommended."
+            else:
+                status_code = 'SNAKE_DETECTED_NON_VENOMOUS'
+                msg = f"AI Prediction: {cnn_result['species']} - NON-VENOMOUS ({cnn_result['confidence']}%)"
+                if cnn_result['confidence'] < 60.0:
+                    msg += " — Low-confidence prediction — professional verification recommended."
         else:
-            status_code = 'SNAKE_DETECTED_NON_VENOMOUS'
-            msg = f"AI Prediction: Non-Venomous ({venom_conf}%)"
-            if venom_conf < 60.0:
-                msg += " — Low-confidence prediction — professional verification recommended."
-
+            status_code = 'NO_SNAKE_DETECTED'
+            msg = f"No snake detected in the image (CNN classified as '{cnn_result['class_name']}' with {cnn_result['confidence']}% confidence)."
+        
         return {
-            'snake_detected': True,
-            'snake_confidence': stage1['snake_confidence'],
-            'venomous': is_venom,
-            'venom_confidence': venom_conf,
+            'snake_detected': is_snake,
+            'snake_confidence': cnn_result['confidence'] if is_snake else 0.0,
+            'venomous': cnn_result['venomous'],
+            'venom_confidence': cnn_result['confidence'] if is_snake and cnn_result['venomous'] is not None else None,
+            'species': cnn_result['species'],
+            'venom_category': cnn_result['venom_category'],
             'status': status_code,
             'message': msg,
-            'species': f"{stage1.get('predicted_label', 'Snake').capitalize()} Snake",
-            'venom_category': 'HIGHLY_VENOMOUS' if is_venom else 'NON_VENOMOUS',
-            'model_1': 'Snake Detection.v2-model_snake-detection-2.yolov8',
-            'model_2': 'venom_watch_cnn2_keras',
-            'processed_image_path': str(image_path)
+            'model_1': 'venomwatch_cnn2_final (CNN)',
+            'model_2': None,
+            'processed_image_path': str(image_path),
+            # Additional detailed fields
+            'is_snake': is_snake,
+            'class_name': cnn_result['class_name'],
+            'class_index': cnn_result['class_index'],
+            'species_common': cnn_result['species_common'],
+            'description': cnn_result['description'],
+            'all_probabilities': cnn_result.get('all_probabilities', [])
         }
 
 
 # Backward compatibility alias
-class SnakeAIDetectionService(SnakeAIPipelineService):
-    pass
+SnakeAIDetectionService = SnakeAIPipelineService
 
 
 class SnakebiteScreeningService:

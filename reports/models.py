@@ -53,7 +53,7 @@ class SightingReport(models.Model):
     toxicity_level = models.CharField(max_length=50, default='SAFE')
     danger_score = models.IntegerField(default=10)
     ai_confidence = models.FloatField(default=0.0)
-    model_1_name = models.CharField(max_length=150, default="Snake Detection.v2-model_snake-detection-2.yolov8")
+    model_1_name = models.CharField(max_length=150, default="venomwatch_cnn2_final (CNN)")
     model_2_name = models.CharField(max_length=150, default="venom_watch_cnn2_keras")
     notes = models.TextField(blank=True, null=True, help_text="Additional observer details")
 
