@@ -71,18 +71,28 @@
                                value="{{ form.assigned_region.value|default:'' }}" placeholder="e.g. Western Ghats Sector 4">
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center gap-2">
+                    <div class="d-flex justify-content-end">
                         <button type="submit" class="btn btn-teal py-2 px-4">
                             <i class="fa-solid fa-floppy-disk me-2"></i> Save Changes
                         </button>
-                        <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger py-2 px-3">
-                                <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
-                            </button>
-                        </form>
                     </div>
                 </form>
+
+                <!-- Danger zone: session -->
+                <div class="mt-4 pt-4 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h6 class="fw-semibold mb-0" style="font-size: 0.95rem; color: var(--text);">
+                            End your session
+                        </h6>
+                        <small class="text-muted">Sign out of your Venom Watch account on this device.</small>
+                    </div>
+                    <form method="post" action="{% url 'accounts:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger py-2 px-4">
+                            <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
+                        </button>
+                    </form>
+                </div>
 
             </div>
         </div>
