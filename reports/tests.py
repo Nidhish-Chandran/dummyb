@@ -18,7 +18,7 @@ class VenomWatchAccessControlTestCase(TestCase):
 
         # Create Higher Authority User
         self.ranger = User.objects.create_user(username='ranger_officer', password='password123')
-        self.ranger.profile.role = UserProfile.ROLE_AUTHORITY
+        self.ranger.profile.role = UserProfile.ROLE_RANGER
         self.ranger.profile.save()
 
         # Create Citizen 1 Sighting Report

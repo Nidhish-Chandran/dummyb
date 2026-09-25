@@ -32,7 +32,7 @@
 
             <!-- Upload Form -->
             <div class="card-clean p-4 mb-4">
-                <form method="post" enctype="multipart/form-data">
+                <form method="post" enctype="multipart/form-data" id="woundForm" autocomplete="off">
                     {% csrf_token %}
 
                     <div class="mb-3">
@@ -55,14 +55,21 @@
                         <a href="{% url 'emergency:assistance' %}" class="btn btn-outline-secondary btn-sm">
                             <i class="fa-solid fa-phone me-1"></i> Emergency Helpline
                         </a>
-                        <button type="submit" class="btn btn-teal">
+                        <button type="submit" id="runScreeningBtn" class="btn btn-teal">
                             <i class="fa-solid fa-microscope me-2"></i> Run AI Screening
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Screening Result -->
+            <!-- Errors -->
+            {% if error %}
+                <div class="alert alert-danger py-2" style="font-size: 0.85rem;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ error }}
+                </div>
+            {% endif %}
+
+            <!-- Screening Result (rendered fresh from the model for THIS upload only) -->
             {% if result %}
                 <div class="card-clean p-4 {% if result.is_snake_bite %}card-danger-clean{% else %}card-success-clean{% endif %}">
 
@@ -70,6 +77,12 @@
                     <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                         <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem; color: var(--text);">
                             AI Screening Result
+                            {% if analysis_id %}
+                                <small class="text-muted fw-normal ms-2" style="font-size: 0.7rem;"
+                                       title="Unique ID for this fresh analysis run">
+                                    #{{ analysis_id|slice:":8" }}
+                                </small>
+                            {% endif %}
                         </h5>
                         {% if result.is_snake_bite %}
                             <span class="badge" style="background: var(--danger-light); color: var(--danger);">
@@ -130,9 +143,20 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        const form = document.getElementById("woundForm");
         const input = document.getElementById("woundInput");
         const container = document.getElementById("woundPreviewContainer");
         const preview = document.getElementById("woundPreview");
+        const submitBtn = document.getElementById("runScreeningBtn");
+
+        // Prevent browsers (Chrome/Edge "back-forward cache") from restoring a
+        // stale page with the PREVIOUS report after back-navigation. If the page
+        // is restored from history, force a fresh reload so no old result lingers.
+        window.addEventListener("pageshow", function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
 
         if (input) {
             input.addEventListener("change", function() {
@@ -145,6 +169,26 @@
                     }
                     reader.readAsDataURL(file);
                 }
+            });
+        }
+
+        if (form && submitBtn) {
+            form.addEventListener("submit", function() {
+                // A new screening always runs the model again on the newly
+                // selected photo — show progress and require a file.
+                if (!input || !input.files || !input.files[0]) {
+                    return; // let native required-validation handle it
+                }
+                submitBtn.disabled = true;
+                submitBtn.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-2" role="status"></span>' +
+                    'Running Model…';
+                // Safety net: re-enable if the browser blocks/aborts the POST
+                setTimeout(function() {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML =
+                        '<i class="fa-solid fa-microscope me-2"></i> Run AI Screening';
+                }, 120000);
             });
         }
     });

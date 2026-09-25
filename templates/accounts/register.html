@@ -3,9 +3,9 @@
 {% block title %}Create Account — Venom Watch{% endblock %}
 
 {% block content %}
-<div class="auth-container" style="max-width: 520px;">
+<div class="auth-container" style="max-width: 560px;">
     <div class="auth-card">
-        
+
         <!-- Header -->
         <div class="auth-card-header">
             <div class="auth-icon-wrapper">
@@ -15,56 +15,60 @@
             <p class="auth-subtitle">Join Venom Watch to report sightings and access community safety tools</p>
         </div>
 
-        <form method="post" action="{% url 'accounts:register' %}">
+        <form method="post" action="{% url 'accounts:register' %}" novalidate autocomplete="off">
             {% csrf_token %}
 
             {% if form.non_field_errors %}
                 <div class="alert alert-danger py-2" style="font-size: 0.8125rem;">
-                    {{ form.non_field_errors }}
+                    {% for error in form.non_field_errors %}
+                        <div><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ error }}</div>
+                    {% endfor %}
                 </div>
             {% endif %}
 
-            <!-- Two-column layout for desktop -->
             <div class="auth-form-row">
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.username.id_for_label }}">Username</label>
+                    <label class="auth-form-label" for="{{ form.username.id_for_label }}">Username *</label>
                     {{ form.username }}
                     {% for error in form.username.errors %}
-                        <div class="auth-form-error">
-                            <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
-                        </div>
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
                     {% endfor %}
                 </div>
 
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.email.id_for_label }}">Email</label>
+                    <label class="auth-form-label" for="{{ form.email.id_for_label }}">Email *</label>
                     {{ form.email }}
                     {% for error in form.email.errors %}
-                        <div class="auth-form-error">
-                            <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
-                        </div>
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
                     {% endfor %}
                 </div>
             </div>
 
             <div class="auth-form-row">
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.password1.id_for_label }}">Password</label>
+                    <label class="auth-form-label" for="{{ form.first_name.id_for_label }}">First name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="auth-form-group">
+                    <label class="auth-form-label" for="{{ form.last_name.id_for_label }}">Last name</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+
+            <div class="auth-form-row">
+                <div class="auth-form-group">
+                    <label class="auth-form-label" for="{{ form.password1.id_for_label }}">Password *</label>
                     {{ form.password1 }}
                     {% for error in form.password1.errors %}
-                        <div class="auth-form-error">
-                            <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
-                        </div>
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
                     {% endfor %}
                 </div>
 
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                    <label class="auth-form-label" for="{{ form.password2.id_for_label }}">Confirm password *</label>
                     {{ form.password2 }}
                     {% for error in form.password2.errors %}
-                        <div class="auth-form-error">
-                            <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
-                        </div>
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
                     {% endfor %}
                 </div>
             </div>
@@ -74,30 +78,29 @@
                 <p class="password-help-title">Password requirements</p>
                 <ul class="password-help-list">
                     <li>At least 8 characters</li>
-                    <li>Not too similar to personal information</li>
-                    <li>Not commonly used</li>
+                    <li>Not too similar to your username or email</li>
+                    <li>Not a commonly used password</li>
                     <li>Not entirely numeric</li>
                 </ul>
             </div>
 
             <div class="auth-form-row" style="margin-top: 1rem;">
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.role.id_for_label }}">Role</label>
+                    <label class="auth-form-label" for="{{ form.role.id_for_label }}">Account type *</label>
                     {{ form.role }}
                     {% for error in form.role.errors %}
-                        <div class="auth-form-error">
-                            <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
-                        </div>
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
                     {% endfor %}
+                    <small style="color: var(--text-muted, #6b7280); font-size: 0.72rem;">
+                        Ranger &amp; Administrator accounts are provisioned by a platform admin.
+                    </small>
                 </div>
 
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                    <label class="auth-form-label" for="{{ form.phone_number.id_for_label }}">Phone number</label>
                     {{ form.phone_number }}
                     {% for error in form.phone_number.errors %}
-                        <div class="auth-form-error">
-                            <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
-                        </div>
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
                     {% endfor %}
                 </div>
             </div>
@@ -106,9 +109,7 @@
                 <label class="auth-form-label" for="{{ form.organization.id_for_label }}">Organization</label>
                 {{ form.organization }}
                 {% for error in form.organization.errors %}
-                    <div class="auth-form-error">
-                        <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
-                    </div>
+                    <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
                 {% endfor %}
             </div>
 

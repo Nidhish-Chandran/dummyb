@@ -59,20 +59,47 @@ def wound_checker_view(request):
     Snakebite Wound Image Checker view for citizens.
     Accepts wound photo upload, runs SnakebiteScreeningService (EfficientNetB0),
     displays results with mandatory medical disclaimer.
+
+    Every analysis is stateless: each uploaded photo is re-run through the model,
+    and only the current POST's result is ever rendered (no session caching).
     """
     result = None
+    error = None
+
     if request.method == 'POST' and request.FILES.get('wound_image'):
         image_file = request.FILES['wound_image']
-        ext = os.path.splitext(image_file.name)[1]
-        unique_name = f"wound_{uuid.uuid4().hex}{ext}"
-        
-        saved_path = default_storage.save(f"wounds/{unique_name}", ContentFile(image_file.read()))
-        full_path = default_storage.path(saved_path)
+        ext = os.path.splitext(image_file.name)[1].lower()
+        if ext not in ['.jpg', '.jpeg', '.png', '.webp']:
+            error = 'Unsupported file format. Please upload a JPG, PNG, or WEBP image.'
+        else:
+            unique_name = f"wound_{uuid.uuid4().hex}{ext}"
+            saved_path = None
+            full_path = None
 
-        try:
-            # Use the new EfficientNetB0-based screening service
-            result = SnakebiteScreeningService.analyze_wound_image(full_path)
-        except Exception as e:
-            messages.error(request, f"Error processing wound image: {str(e)}")
+            try:
+                saved_path = default_storage.save(f"wounds/{unique_name}", ContentFile(image_file.read()))
+                full_path = default_storage.path(saved_path)
 
-    return render(request, 'ai/wound_check.html', {'result': result})
+                # Fresh inference on THIS image only - never reuse a previous result
+                result = SnakebiteScreeningService.analyze_wound_image(full_path)
+            except Exception as e:
+                error = f"Error processing wound image: {str(e)}"
+            finally:
+                # Clean up the temp upload so no stale files linger
+                try:
+                    if saved_path and default_storage.exists(saved_path):
+                        default_storage.delete(saved_path)
+                except Exception:
+                    pass
+
+    response = render(request, 'ai/wound_check.html', {
+        'result': result,
+        'error': error,
+        'analysis_id': uuid.uuid4().hex if result else None,
+    })
+    # Belt-and-suspenders: forbid any browser/proxy caching of this page so
+    # a back-navigation / refresh can never show a previous report.
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
