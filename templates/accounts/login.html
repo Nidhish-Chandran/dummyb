@@ -5,7 +5,7 @@
 {% block content %}
 <div class="auth-container">
     <div class="auth-card">
-        
+
         <!-- Header -->
         <div class="auth-card-header">
             <div class="auth-icon-wrapper">
@@ -15,26 +15,35 @@
             <p class="auth-subtitle">Sign in to your Venom Watch account</p>
         </div>
 
-        <form method="post" action="{% url 'accounts:login' %}">
+        <form method="post" action="{% url 'accounts:login' %}" novalidate autocomplete="on">
             {% csrf_token %}
 
-            {% if form.errors %}
+            {% if form.non_field_errors %}
                 <div class="alert alert-danger py-2" style="font-size: 0.8125rem;">
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                    Invalid username or password. Please try again.
+                    {% for error in form.non_field_errors %}
+                        <div><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ error }}</div>
+                    {% endfor %}
                 </div>
             {% endif %}
 
             <div class="auth-form-group">
-                <label class="auth-form-label" for="id_username">Username</label>
-                <input type="text" name="username" id="id_username" class="auth-form-control"
-                       placeholder="Enter your username" required autofocus>
+                <label class="auth-form-label" for="{{ form.username.id_for_label }}">Username</label>
+                {{ form.username }}
+                {% for error in form.username.errors %}
+                    <div class="auth-form-error">
+                        <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
+                    </div>
+                {% endfor %}
             </div>
 
             <div class="auth-form-group">
-                <label class="auth-form-label" for="id_password">Password</label>
-                <input type="password" name="password" id="id_password" class="auth-form-control"
-                       placeholder="Enter your password" required>
+                <label class="auth-form-label" for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {% for error in form.password.errors %}
+                    <div class="auth-form-error">
+                        <i class="fa-solid fa-circle-exclamation"></i>{{ error }}
+                    </div>
+                {% endfor %}
             </div>
 
             <button type="submit" class="auth-btn-primary">

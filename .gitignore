@@ -1,6 +1,16 @@
-# Python compiled files
+# Python bytecode
 __pycache__/
 *.pyc
 
+# Model weights and AI artifacts
+*.pt
+ai/models/
+runs/
+dataset/
+dataset_snake.yaml
+
 # Database
 db.sqlite3
+
+# Archives
+*.zip

@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from accounts.models import UserProfile
 from reports.models import SightingReport
 from emergency.models import Hospital
-from ai.services import SNAKE_DATABASE
+from ai.services import SNAKE_SPECIES_DATABASE as SNAKE_DATABASE
 
 def seed_data():
     print("Seeding Venom Watch Demo Data...")
@@ -31,7 +31,7 @@ def seed_data():
     if created:
         ranger_user.set_password('ranger123')
         ranger_user.save()
-        ranger_user.profile.role = UserProfile.ROLE_AUTHORITY
+        ranger_user.profile.role = UserProfile.ROLE_RANGER
         ranger_user.profile.organization = 'State Forest Department - Wildlife Division'
         ranger_user.profile.save()
         print("Created Authority User: ranger_officer / ranger123")
