@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Assignment #{{ assignment.pk }} — Ranger Console — Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <a href="{% url 'ranger:assignments' %}" class="text-decoration-none d-inline-flex align-items-center gap-1"
+       style="font-size: 0.8125rem; color: var(--text-muted);">
+        <i class="fa-solid fa-arrow-left"></i> Back to My Assignments
+    </a>
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 mb-4">
+        <h2 class="fw-bold mb-0" style="font-size: 1.2rem; color: var(--text);">
+            Snake Sighting #{{ report.id }}
+        </h2>
+        {% if assignment.status == 'ASSIGNED' %}
+            <span class="badge" style="background: var(--warning-light); color: var(--warning);">NEW ASSIGNMENT — Awaiting your response</span>
+        {% elif assignment.status == 'COMPLETED' %}
+            <span class="badge" style="background: var(--success-light); color: var(--success);">Completed</span>
+        {% elif assignment.status == 'DECLINED' %}
+            <span class="badge bg-secondary">Declined</span>
+        {% elif assignment.status == 'CANCELLED' %}
+            <span class="badge bg-secondary">Cancelled by Authority</span>
+        {% else %}
+            <span class="badge" style="background: var(--info-light); color: var(--info);">{{ assignment.get_status_display }}</span>
+        {% endif %}
+    </div>
+
+    <!-- Lifecycle stepper -->
+    {% if assignment.status != 'DECLINED' and assignment.status != 'CANCELLED' %}
+    <div class="card-clean p-3 mb-4">
+        <div class="d-flex flex-wrap gap-2 align-items-center" style="font-size: 0.78rem;">
+            <span class="{% if assignment.status == 'ASSIGNED' %}fw-bold text-dark{% else %}text-muted{% endif %}">Assigned</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 0.6rem;"></i>
+            <span class="{% if assignment.status == 'ACCEPTED' %}fw-bold text-dark{% else %}text-muted{% endif %}">Accepted</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 0.6rem;"></i>
+            <span class="{% if assignment.status == 'ON_THE_WAY' %}fw-bold text-dark{% else %}text-muted{% endif %}">On the way</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 0.6rem;"></i>
+            <span class="{% if assignment.status == 'AT_LOCATION' %}fw-bold text-dark{% else %}text-muted{% endif %}">At location</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 0.6rem;"></i>
+            <span class="{% if assignment.status == 'COMPLETED' %}fw-bold text-success{% else %}text-muted{% endif %}">Completed</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card-clean p-4">
+                <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem;">
+                    <i class="fa-solid fa-camera me-2" style="color: var(--primary);"></i> Incident Details
+                </h5>
+                <div class="text-center mb-4 p-2 rounded border" style="background: var(--surface-hover);">
+                    {% if report.original_image %}
+                        <img src="{{ report.original_image.url }}" alt="Sighting" class="img-fluid rounded" style="max-height: 340px;">
+                    {% endif %}
+                </div>
+                <table class="table table-sm mb-0" style="font-size: 0.85rem;">
+                    <tr><th style="width: 40%;">Species (AI)</th><td>{{ report.species_predicted|default:"—" }} {{ report.common_name|default:"" }}</td></tr>
+                    <tr><th>Venom status</th><td>
+                        {% if report.is_venomous %}<span class="badge-venomous">Venomous</span>{% else %}<span class="badge-non-venomous">Non-Venomous</span>{% endif %}
+                        {% if report.venom_confidence %}<small class="text-muted ms-1">({{ report.venom_confidence }}%)</small>{% endif %}
+                    </td></tr>
+                    <tr><th>Reported time</th><td>{{ report.created_at|date:"M j, Y H:i" }}</td></tr>
+                    <tr><th>Location</th><td>{{ report.location_name }}</td></tr>
+                    <tr><th>Coordinates</th><td>{{ report.latitude|floatformat:5 }}, {{ report.longitude|floatformat:5 }}</td></tr>
+                    <tr><th>Assigned at</th><td>{{ assignment.assigned_at|date:"M j, Y H:i" }}</td></tr>
+                    {% if report.notes %}<tr><th>Citizen notes</th><td>{{ report.notes }}</td></tr>{% endif %}
+                </table>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card-clean p-4 mb-4">
+                <h5 class="fw-semibold mb-2" style="font-size: 0.9375rem;">
+                    <i class="fa-solid fa-map-location-dot me-2" style="color: var(--danger);"></i> Incident Location
+                </h5>
+                <div id="assignmentMap" class="map-container mb-2" style="height: 200px;"></div>
+                <small class="text-muted" style="font-size: 0.75rem;">Only this assigned incident is shown on your map.</small>
+            </div>
+
+            {% if assignment.status == 'ASSIGNED' %}
+            <div class="card-clean p-4 mb-4 card-warning-clean">
+                <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem;">Respond to Assignment</h5>
+                <div class="d-flex gap-2">
+                    <form method="post" action="{% url 'ranger:assignment_update' pk=assignment.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="ACCEPT">
+                        <button type="submit" class="btn btn-teal btn-sm"><i class="fa-solid fa-check me-1"></i> Accept</button>
+                    </form>
+                    <form method="post" action="{% url 'ranger:assignment_update' pk=assignment.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="DECLINE">
+                        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-xmark me-1"></i> Decline</button>
+                    </form>
+                </div>
+            </div>
+            {% elif next_action %}
+            <div class="card-clean p-4 mb-4">
+                <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem;">Next Step</h5>
+                <form method="post" action="{% url 'ranger:assignment_update' pk=assignment.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="{{ next_action }}">
+                    <button type="submit" class="btn btn-teal btn-sm w-100">
+                        {% if next_action == 'ON_THE_WAY' %}<i class="fa-solid fa-truck-fast me-1"></i> Mark ON THE WAY
+                        {% elif next_action == 'AT_LOCATION' %}<i class="fa-solid fa-location-crosshairs me-1"></i> Mark AT LOCATION
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if assignment.status == 'AT_LOCATION' %}
+            <div class="card-clean p-4 mb-4">
+                <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem;">Complete Assignment</h5>
+                <form method="post" enctype="multipart/form-data" action="{% url 'ranger:assignment_update' pk=assignment.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="COMPLETE">
+                    <div class="mb-3">
+                        <label class="form-label">Outcome *</label>
+                        <select name="outcome" class="form-select form-select-sm" required>
+                            <option value="">— Select outcome —</option>
+                            {% for val, label in assignment.OUTCOME_CHOICES %}
+                                <option value="{{ val }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Field Notes</label>
+                        <textarea name="notes" rows="3" class="form-control form-control-sm" placeholder="What happened on site…"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Outcome photo (optional)</label>
+                        <input type="file" name="outcome_image" accept="image/png,image/jpeg,image/webp" class="form-control form-control-sm">
+                    </div>
+                    <button type="submit" class="btn btn-teal btn-sm w-100">
+                        <i class="fa-solid fa-flag-checkered me-1"></i> Complete Assignment
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if assignment.status == 'COMPLETED' %}
+            <div class="card-clean p-4 mb-4">
+                <h5 class="fw-semibold mb-2" style="font-size: 0.9375rem;">
+                    <i class="fa-solid fa-circle-check me-1" style="color: var(--success);"></i> Outcome Recorded
+                </h5>
+                <p class="mb-1" style="font-size: 0.85rem;"><strong>{{ assignment.get_outcome_display }}</strong> · {{ assignment.completed_at|date:"M j, Y H:i" }}</p>
+                {% if assignment.notes %}<p class="text-muted mb-2" style="font-size: 0.8125rem;">{{ assignment.notes }}</p>{% endif %}
+                {% if assignment.outcome_image %}<img src="{{ assignment.outcome_image.url }}" class="img-fluid rounded" alt="Outcome">{% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const lat = {{ report.latitude }};
+    const lng = {{ report.longitude }};
+    const map = L.map('assignmentMap').setView([lat, lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    L.circleMarker([lat, lng], { color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.8, radius: 9 })
+        .addTo(map).bindPopup('<strong>Sighting #{{ report.id }}</strong><br>{{ report.location_name|escapejs }}').openPopup();
+});
+</script>
+{% endblock %}

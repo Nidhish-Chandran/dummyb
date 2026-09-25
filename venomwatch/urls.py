@@ -27,6 +27,7 @@ urlpatterns = [
     path('ai/', include('ai.urls')),
     path('hotspots/', include('hotspots.urls')),
     path('emergency/', include('emergency.urls')),
+    path('ranger/', include('ranger.urls')),
 ]
 
 if settings.DEBUG:

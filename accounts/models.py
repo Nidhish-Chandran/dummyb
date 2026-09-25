@@ -19,11 +19,34 @@ class UserProfile(models.Model):
     # provisioned by an existing administrator (Django admin or seed script).
     SELF_SERVICE_ROLES = [ROLE_CITIZEN]
 
+    AVAILABILITY_AVAILABLE = 'AVAILABLE'
+    AVAILABILITY_BUSY = 'BUSY'
+    AVAILABILITY_OFFLINE = 'OFFLINE'
+
+    AVAILABILITY_CHOICES = [
+        (AVAILABILITY_AVAILABLE, 'Available'),
+        (AVAILABILITY_BUSY, 'Busy (on active assignment)'),
+        (AVAILABILITY_OFFLINE, 'Offline'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_CITIZEN)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     organization = models.CharField(max_length=100, blank=True, null=True, help_text="Department, Hospital, or Agency")
     assigned_region = models.CharField(max_length=100, blank=True, null=True, help_text="Operational District/Region")
+
+    # --- Ranger operational base (location-based dispatch) ---
+    registered_location = models.CharField(max_length=150, blank=True, null=True,
+                                           help_text="Ranger's registered operational town/city (e.g. Kollam)")
+    latitude = models.FloatField(null=True, blank=True, help_text="Ranger base latitude (decimal degrees)")
+    longitude = models.FloatField(null=True, blank=True, help_text="Ranger base longitude (decimal degrees)")
+    availability = models.CharField(max_length=10, choices=AVAILABILITY_CHOICES,
+                                    default=AVAILABILITY_AVAILABLE)
+
+    @property
+    def display_name(self):
+        full = self.user.get_full_name().strip()
+        return full or self.user.username
 
     def __str__(self):
         return f"{self.user.username} ({self.get_role_display()})"

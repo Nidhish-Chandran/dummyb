@@ -218,35 +218,107 @@
                     </form>
                 </div>
 
-                <!-- Responder Assignment -->
+                <!-- Ranger Dispatch (location-based) -->
                 <div class="card-clean p-4 mb-4">
-                    <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
-                        <i class="fa-solid fa-truck-medical me-2" style="color: var(--primary);"></i>
-                        Assign Responder
+                    <h5 class="fw-semibold mb-1" style="font-size: 0.9375rem; color: var(--text);">
+                        <i class="fa-solid fa-hat-cowboy me-2" style="color: var(--primary);"></i>
+                        Assign Ranger
                     </h5>
-                    <form method="post" action="{% url 'reports:assign_responder' pk=report.pk %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">Select Authorized Responder</label>
-                            <select name="responder_id" class="form-select form-select-sm">
-                                <option value="">— Unassigned —</option>
-                                {% for u in responders %}
-                                    <option value="{{ u.id }}" {% if report.assigned_responder == u %}selected{% endif %}>
-                                        {{ u.username }}
-                                        ({% if u.profile %}{{ u.profile.organization|default:u.profile.get_role_display }}{% else %}Responder{% endif %})
-                                    </option>
-                                {% endfor %}
-                            </select>
+                    <p class="text-muted mb-3" style="font-size: 0.78rem;">
+                        Only AVAILABLE rangers registered in or near
+                        <strong>{{ report.location_name }}</strong> are listed (Haversine radius 30 km).
+                    </p>
+
+                    {% if active_assignment %}
+                        <div class="p-3 rounded border mb-3" style="background: var(--surface-hover); font-size: 0.85rem;">
+                            <p class="fw-semibold mb-1">
+                                <i class="fa-solid fa-user-check me-1" style="color: var(--primary);"></i>
+                                Assigned Ranger: {{ active_assignment.ranger.profile.display_name }}
+                            </p>
+                            <p class="mb-1 text-muted">
+                                Location: {{ active_assignment.ranger.profile.registered_location|default:"—" }}
+                                {% if active_assignment.distance_km is not None %} · Distance: {{ active_assignment.distance_km }} km{% endif %}
+                            </p>
+                            <p class="mb-1 text-muted">
+                                Status:
+                                <span class="badge" style="background: var(--info-light); color: var(--info);">{{ active_assignment.get_status_display }}</span>
+                                · Assigned at {{ active_assignment.assigned_at|date:"M j, Y H:i" }}
+                                {% if active_assignment.responded_at %}· Responded {{ active_assignment.responded_at|date:"M j H:i" }}{% endif %}
+                            </p>
+                            <small class="text-muted d-block mb-2">
+                                Lifecycle: ASSIGNED → ACCEPTED → ON THE WAY → AT LOCATION → COMPLETED
+                            </small>
+                            <form method="post" action="{% url 'reports:cancel_assignment' pk=active_assignment.pk %}"
+                                  onsubmit="return confirm('Cancel this assignment so it can be reassigned?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                    <i class="fa-solid fa-rotate me-1"></i> Cancel &amp; Reassign
+                                </button>
+                            </form>
                         </div>
-                        <button type="submit" class="btn btn-outline-teal btn-sm w-100">
-                            <i class="fa-solid fa-user-plus me-1"></i> Update Assignment
-                        </button>
-                    </form>
+                    {% endif %}
+
+                    {% if candidate_rangers %}
+                        <form method="post" action="{% url 'reports:assign_responder' pk=report.pk %}">
+                            {% csrf_token %}
+                            <div class="list-group list-group-flush mb-3" style="border: 1px solid var(--border); border-radius: 10px; overflow: hidden;">
+                                {% for c in candidate_rangers %}
+                                    <label class="list-group-item d-flex justify-content-between align-items-center gap-2"
+                                           style="font-size: 0.83rem; cursor: pointer;">
+                                        <span>
+                                            <input class="form-check-input me-2" type="radio" name="ranger_id" value="{{ c.user.id }}" required>
+                                            <span class="fw-semibold">{{ c.profile.display_name }}</span><br>
+                                            <small class="text-muted ms-4">
+                                                {{ c.profile.registered_location|default:c.profile.assigned_region|default:"Base not set" }}
+                                                {% if c.distance_km is not None %} · {{ c.distance_km }} km{% else %} · nearby{% endif %}
+                                                · {{ c.profile.get_availability_display }}
+                                            </small>
+                                        </span>
+                                        <span class="badge" style="background: var(--success-light); color: var(--success);">AVAILABLE</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-teal btn-sm w-100">
+                                <i class="fa-solid fa-user-plus me-1"></i> Assign Selected Ranger
+                            </button>
+                        </form>
+                    {% elif not active_assignment %}
+                        <div class="alert alert-warning py-2 mb-0" style="font-size: 0.8rem;">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                            No AVAILABLE rangers are registered in or near this location.
+                            Ask a platform admin to register one, or verify the report coordinates.
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0" style="font-size: 0.78rem;">
+                            No other available rangers near this location for reassignment.
+                        </p>
+                    {% endif %}
                 </div>
+
+                {% if assignment_history %}
+                <div class="card-clean p-4 mb-4">
+                    <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem;">
+                        <i class="fa-solid fa-clock-rotate-left me-2" style="color: var(--info);"></i> Assignment History
+                    </h5>
+                    <table class="table table-sm mb-0" style="font-size: 0.78rem;">
+                        <thead><tr><th>Ranger</th><th>Status</th><th>Assigned</th><th>Outcome</th></tr></thead>
+                        <tbody>
+                        {% for a in assignment_history %}
+                            <tr>
+                                <td>{{ a.ranger.profile.display_name }}</td>
+                                <td>{{ a.get_status_display }}</td>
+                                <td>{{ a.assigned_at|date:"M j, H:i" }}</td>
+                                <td>{{ a.get_outcome_display|default:"—" }}{% if a.notes %}<br><small class="text-muted">{{ a.notes|truncatechars:80 }}</small>{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
             {% endif %}
 
             <!-- Response Status -->
-            {% if is_authority or is_assigned_responder %}
+            {% if is_authority %}
                 <div class="card-clean p-4">
                     <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
                         <i class="fa-solid fa-circle-play me-2" style="color: var(--info);"></i>
