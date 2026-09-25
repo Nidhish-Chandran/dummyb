@@ -163,7 +163,8 @@ class UserProfileForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ['phone_number', 'organization', 'assigned_region']
+        fields = ['phone_number', 'organization', 'assigned_region',
+                  'registered_location', 'latitude', 'longitude', 'availability']
 
     def clean_phone_number(self):
         phone = self.cleaned_data.get('phone_number', '').strip()

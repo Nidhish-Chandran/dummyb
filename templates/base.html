@@ -31,7 +31,7 @@
         <div class="container">
             <!-- Brand -->
             <a class="navbar-brand d-flex align-items-center gap-2"
-               href="{% if user.is_authenticated and user.profile.is_authority %}{% url 'dashboard:home' %}{% else %}{% url 'reports:list' %}{% endif %}">
+               href="{% if user.is_authenticated and user.profile.is_ranger %}{% url 'ranger:dashboard' %}{% elif user.is_authenticated and user.profile.is_admin %}{% url 'dashboard:home' %}{% else %}{% url 'reports:list' %}{% endif %}">
                 <i class="fa-solid fa-staff-snake" style="color: var(--primary); font-size: 1.15rem;"></i>
                 <span style="font-weight: 700; letter-spacing: -0.3px;">VENOM<span style="color: var(--primary);">WATCH</span></span>
             </a>
@@ -45,7 +45,28 @@
             <div class="collapse navbar-collapse" id="venomNavbar">
                 <!-- Primary nav links -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
-                    {% if user.is_authenticated and user.profile.is_authority %}
+                    {% if user.is_authenticated and user.profile.is_ranger %}
+                        {# ---- RANGER NAV: own console only ---- #}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                               href="{% url 'ranger:dashboard' %}">
+                                <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'assignments' in request.path %}active{% endif %}"
+                               href="{% url 'ranger:assignments' %}">
+                                <i class="fa-solid fa-clipboard-list me-1"></i> My Assignments
+                                {% if ranger_unread_count %}<span class="badge rounded-pill bg-danger ms-1">{{ ranger_unread_count }}</span>{% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
+                               href="{% url 'ranger:profile' %}">
+                                <i class="fa-solid fa-id-card me-1"></i> Profile
+                            </a>
+                        </li>
+                    {% elif user.is_authenticated and user.profile.is_admin %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}"
                                href="{% url 'dashboard:home' %}">
@@ -64,7 +85,7 @@
                                 <i class="fa-solid fa-fire me-1"></i> Hotspot Radar
                             </a>
                         </li>
-                    {% else %}
+                    {% elif not user.is_authenticated or user.profile.is_citizen %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'list' %}active{% endif %}"
                                href="{% url 'reports:list' %}">
@@ -79,6 +100,7 @@
                         </li>
                     {% endif %}
 
+                    {% if not user.is_authenticated or not user.profile.is_ranger %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'risk_zones' %}active{% endif %}"
                            href="{% url 'reports:risk_zones' %}">
@@ -99,6 +121,7 @@
                             <i class="fa-solid fa-kit-medical me-1"></i> Emergency SOS
                         </a>
                     </li>
+                    {% endif %}
                 </ul>
 
                 <!-- Right-side actions -->
@@ -117,7 +140,7 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                    <a class="dropdown-item" href="{% if user.profile.is_ranger %}{% url 'ranger:profile' %}{% else %}{% url 'accounts:profile' %}{% endif %}">
                                         <i class="fa-solid fa-id-card me-2 text-muted"></i> Profile
                                     </a>
                                 </li>

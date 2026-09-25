@@ -97,3 +97,90 @@ class SightingReport(models.Model):
     @property
     def is_venomous(self):
         return self.venom_category in [self.VENOM_HIGHLY, self.VENOM_MODERATE]
+
+
+class RangerAssignment(models.Model):
+    """Formal incident assignment linking a SightingReport to a Ranger.
+
+    Object-level security: only the assigned ranger (and Authority/Admin)
+    may view or act on an assignment. Assignments are created by an
+    Authority user for a specific sighting report.
+    """
+
+    STATUS_ASSIGNED = 'ASSIGNED'
+    STATUS_ACCEPTED = 'ACCEPTED'
+    STATUS_ON_THE_WAY = 'ON_THE_WAY'
+    STATUS_AT_LOCATION = 'AT_LOCATION'
+    STATUS_COMPLETED = 'COMPLETED'
+    STATUS_DECLINED = 'DECLINED'
+    STATUS_CANCELLED = 'CANCELLED'
+
+    STATUS_CHOICES = [
+        (STATUS_ASSIGNED, 'Assigned'),
+        (STATUS_ACCEPTED, 'Accepted'),
+        (STATUS_ON_THE_WAY, 'On the way'),
+        (STATUS_AT_LOCATION, 'At location'),
+        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_DECLINED, 'Declined'),
+        (STATUS_CANCELLED, 'Cancelled'),
+    ]
+
+    ACTIVE_STATUSES = [STATUS_ASSIGNED, STATUS_ACCEPTED, STATUS_ON_THE_WAY, STATUS_AT_LOCATION]
+
+    OUTCOME_CHOICES = [
+        ('SNAKE_CAPTURED', 'Snake Captured'),
+        ('SNAKE_ESCAPED', 'Snake Escaped'),
+        ('SNAKE_NOT_FOUND', 'Snake Not Found'),
+        ('FALSE_REPORT', 'False Report'),
+        ('OTHER', 'Other'),
+    ]
+
+    # Allowed ranger-driven status transitions (lifecycle is strictly linear)
+    ALLOWED_TRANSITIONS = {
+        STATUS_ASSIGNED: {STATUS_ACCEPTED, STATUS_DECLINED},
+        STATUS_ACCEPTED: {STATUS_ON_THE_WAY},
+        STATUS_ON_THE_WAY: {STATUS_AT_LOCATION},
+        STATUS_AT_LOCATION: {STATUS_COMPLETED},
+    }
+
+    sighting = models.ForeignKey(SightingReport, on_delete=models.CASCADE, related_name='ranger_assignments')
+    ranger = models.ForeignKey(User, on_delete=models.PROTECT, related_name='ranger_assignments',
+                               limit_choices_to={'profile__role': 'ranger'})
+    assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='assignments_created')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True,
+                                        help_text="When the ranger accepted or declined")
+    completed_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ASSIGNED)
+    distance_km = models.FloatField(null=True, blank=True,
+                                    help_text="Haversine distance from ranger base to report at assignment time")
+    outcome = models.CharField(max_length=30, choices=OUTCOME_CHOICES, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, help_text="Ranger field notes captured at completion")
+    outcome_image = models.ImageField(upload_to='assignment_outcomes/', blank=True, null=True)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-assigned_at']
+
+    def __str__(self):
+        return f"Assignment #{self.pk} - Report #{self.sighting_id} -> {self.ranger.username} ({self.status})"
+
+    @property
+    def is_active(self):
+        return self.status in self.ACTIVE_STATUSES
+
+    def can_transition(self, new_status):
+        return new_status in self.ALLOWED_TRANSITIONS.get(self.status, set())
+
+    @property
+    def next_action(self):
+        """The single next action button label/status for the ranger workflow."""
+        nxt = {
+            self.STATUS_ASSIGNED: self.STATUS_ACCEPTED,
+            self.STATUS_ACCEPTED: self.STATUS_ON_THE_WAY,
+            self.STATUS_ON_THE_WAY: self.STATUS_AT_LOCATION,
+            self.STATUS_AT_LOCATION: None,
+        }
+        return nxt.get(self.status)

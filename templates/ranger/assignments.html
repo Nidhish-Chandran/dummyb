@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}My Assignments — Ranger Console — Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
+        <i class="fa-solid fa-clipboard-list me-2" style="color: var(--primary);"></i> My Assignments
+    </h2>
+    <p class="text-muted mb-4" style="font-size: 0.8125rem;">
+        Only snake reports assigned to you appear here — never the full citizen report repository.
+    </p>
+
+    {% if assignments %}
+        {% for a in assignments %}
+            <div class="card-clean p-4 mb-3 {% if not a.is_read %}border-start border-danger border-3{% endif %}">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <p class="fw-semibold mb-1" style="font-size: 0.9375rem;">
+                            {% if not a.is_read %}<span class="badge bg-danger me-1">NEW</span>{% endif %}
+                            Snake Sighting #{{ a.sighting.id }} — {{ a.sighting.location_name }}
+                        </p>
+                        <small class="text-muted">
+                            {{ a.sighting.species_predicted|default:"Snake" }} ·
+                            Assigned {{ a.assigned_at|date:"M j, Y H:i" }} ·
+                            Outcome: {{ a.get_outcome_display|default:"—" }}
+                        </small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if a.status == 'COMPLETED' %}
+                            <span class="badge" style="background: var(--success-light); color: var(--success);">Completed</span>
+                        {% elif a.status == 'DECLINED' %}
+                            <span class="badge bg-secondary">Declined</span>
+                        {% elif a.status == 'CANCELLED' %}
+                            <span class="badge bg-secondary">Cancelled</span>
+                        {% elif a.status == 'ASSIGNED' %}
+                            <span class="badge" style="background: var(--warning-light); color: var(--warning);">Awaiting response</span>
+                        {% else %}
+                            <span class="badge" style="background: var(--info-light); color: var(--info);">{{ a.get_status_display }}</span>
+                        {% endif %}
+                        <a href="{% url 'ranger:assignment_detail' pk=a.pk %}" class="btn btn-outline-teal btn-sm">View</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-folder-open fa-2x mb-2 d-block" style="color: var(--border-hover);"></i>
+            <p class="mb-0" style="font-size: 0.875rem;">No assignments yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

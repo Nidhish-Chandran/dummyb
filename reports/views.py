@@ -9,8 +9,35 @@ from .forms import SightingReportForm
 from .services import DuplicateSpamDetectionService
 from ai.services import SnakeAIPipelineService
 from hotspots.services import DBSCANHotspotService
+from accounts.models import UserProfile
 from accounts.decorators import authority_required
+from .models import RangerAssignment
+from .dispatch import get_candidate_rangers, haversine_km
 from django.views.decorators.cache import never_cache
+
+
+def _refresh_ranger_availability(ranger_user):
+    """Recompute a ranger's availability from their active assignments.
+
+    BUSY only while an ACCEPTED/ON_THE_WAY/AT_LOCATION assignment exists;
+    otherwise AVAILABLE (an OFFLINE ranger is never auto-changed).
+    """
+    prof = getattr(ranger_user, 'profile', None)
+    if prof is None or not prof.is_ranger:
+        return
+    if prof.availability == UserProfile.AVAILABILITY_OFFLINE:
+        return
+    busy_exists = RangerAssignment.objects.filter(
+        ranger=ranger_user,
+        status__in=[RangerAssignment.STATUS_ACCEPTED,
+                    RangerAssignment.STATUS_ON_THE_WAY,
+                    RangerAssignment.STATUS_AT_LOCATION],
+    ).exists()
+    want = UserProfile.AVAILABILITY_BUSY if busy_exists else UserProfile.AVAILABILITY_AVAILABLE
+    if prof.availability != want:
+        prof.availability = want
+        prof.save(update_fields=['availability'])
+
 
 @login_required
 @never_cache
@@ -177,36 +204,106 @@ def verify_report_view(request, pk):
 @authority_required
 @never_cache
 def assign_responder_view(request, pk):
-    """Authority endpoint to assign a volunteer/responder to a reported incident."""
+    """Authority assigns a location-relevant AVAILABLE ranger to this report.
+
+    Creates a formal RangerAssignment row (no text-only ranger names).
+    Server-side re-validates the candidate against the report location —
+    the Authority cannot assign an arbitrary/unrelated ranger by tampering
+    with the posted ranger_id. Handles reassignment cleanly: the previous
+    active assignment is CANCELLED and its ranger's availability recomputed.
+    """
     report = get_object_or_404(SightingReport, pk=pk)
     if request.method == 'POST':
-        responder_id = request.POST.get('responder_id')
-        if responder_id:
-            responder_user = get_object_or_404(User, pk=responder_id)
-            report.assigned_responder = responder_user
+        ranger_id = request.POST.get('ranger_id') or request.POST.get('responder_id')
+        if ranger_id:
+            ranger_user = get_object_or_404(User, pk=ranger_id)
+            prof = getattr(ranger_user, 'profile', None)
+            if prof is None or prof.effective_role != UserProfile.ROLE_RANGER:
+                messages.error(request, "Selected user is not a registered Ranger.")
+                return redirect('reports:detail', pk=pk)
+
+            # Location guard: the chosen ranger must be relevant to THIS report
+            candidates = get_candidate_rangers(report, only_available=False)
+            if not any(c['user'].pk == ranger_user.pk for c in candidates):
+                messages.error(request,
+                    "Access Denied: That ranger is not registered in or near this report's location.")
+                return redirect('reports:detail', pk=pk)
+            if prof.availability != UserProfile.AVAILABILITY_AVAILABLE:
+                messages.error(request,
+                    f"{ranger_user.username} is currently {prof.get_availability_display()} and cannot take a new incident.")
+                return redirect('reports:detail', pk=pk)
+
+            # Cancel any existing active assignment for this report
+            for prev in report.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES):
+                prev.status = RangerAssignment.STATUS_CANCELLED
+                prev.save(update_fields=['status'])
+                _refresh_ranger_availability(prev.ranger)
+
+            dist = None
+            if prof.latitude is not None and prof.longitude is not None:
+                dist = haversine_km(prof.latitude, prof.longitude, report.latitude, report.longitude)
+
+            RangerAssignment.objects.create(
+                sighting=report,
+                ranger=ranger_user,
+                assigned_by=request.user,
+                distance_km=dist,
+                status=RangerAssignment.STATUS_ASSIGNED,
+            )
+            report.assigned_responder = ranger_user
             report.response_status = SightingReport.RESPONSE_ASSIGNED
-            report.save()
-            messages.success(request, f"Incident assigned to responder: {responder_user.username}")
+            report.save(update_fields=['assigned_responder', 'response_status'])
+            messages.success(request,
+                f"Incident #{report.pk} assigned to ranger {prof.display_name}"
+                + (f" ({dist} km away)." if dist is not None else "."))
         else:
+            for prev in report.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES):
+                prev.status = RangerAssignment.STATUS_CANCELLED
+                prev.save(update_fields=['status'])
+                _refresh_ranger_availability(prev.ranger)
             report.assigned_responder = None
             report.response_status = SightingReport.RESPONSE_UNASSIGNED
-            report.save()
-            messages.info(request, "Incident responder unassigned.")
+            report.save(update_fields=['assigned_responder', 'response_status'])
+            messages.info(request, "Active ranger assignment cancelled; incident marked unassigned.")
 
     return redirect('reports:detail', pk=pk)
 
 
 @login_required
+@authority_required
+@never_cache
+def cancel_assignment_view(request, pk):
+    """Authority cancels the active assignment on a report (reassign control)."""
+    assignment = get_object_or_404(RangerAssignment, pk=pk)
+    if request.method == 'POST':
+        if not assignment.is_active:
+            messages.info(request, "This assignment is already closed.")
+        else:
+            assignment.status = RangerAssignment.STATUS_CANCELLED
+            assignment.save(update_fields=['status'])
+            _refresh_ranger_availability(assignment.ranger)
+            rep = assignment.sighting
+            still_active = rep.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES).first()
+            if still_active is None:
+                rep.assigned_responder = None
+                rep.response_status = SightingReport.RESPONSE_UNASSIGNED
+                rep.save(update_fields=['assigned_responder', 'response_status'])
+            messages.success(request, f"Assignment #{assignment.pk} cancelled.")
+    return redirect('reports:detail', pk=assignment.sighting_id)
+
+
+@login_required
 @never_cache
 def update_response_status_view(request, pk):
-    """Endpoint for assigned responders or authority to update rescue response status."""
-    report = get_object_or_404(SightingReport, pk=pk)
-    user = request.user
-    is_authority = hasattr(user, 'profile') and user.profile.is_authority
-    is_assigned = (report.assigned_responder == user)
+    """Legacy response-status endpoint — now restricted to Authority only.
 
-    if not is_authority and not is_assigned:
-        raise PermissionDenied("Only the assigned responder or wildlife authority can update response status.")
+    Rangers update incidents through the Ranger Console lifecycle
+    (/ranger/assignments/<id>/update/) instead of arbitrary status writes.
+    """
+    report = get_object_or_404(SightingReport, pk=pk)
+    profile = getattr(request.user, 'profile', None)
+    if not (profile and profile.is_admin):
+        raise PermissionDenied("Only the Authority console can change the raw response status here. Rangers must use their assignment workflow.")
 
     if request.method == 'POST':
         new_status = request.POST.get('response_status')

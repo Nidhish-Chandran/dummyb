@@ -24,17 +24,43 @@ def seed_data():
         admin_user.save()
         print("Created Superuser: admin / admin123")
 
-    ranger_user, created = User.objects.get_or_create(username='ranger_officer', defaults={
-        'email': 'ranger@forest.gov.in',
-        'is_staff': True
+    authority_user, created = User.objects.get_or_create(username='authority_admin', defaults={
+        'email': 'admin@forest.gov.in',
+        'is_staff': True,
+        'is_superuser': True
     })
     if created:
-        ranger_user.set_password('ranger123')
-        ranger_user.save()
-        ranger_user.profile.role = UserProfile.ROLE_RANGER
-        ranger_user.profile.organization = 'State Forest Department - Wildlife Division'
-        ranger_user.profile.save()
-        print("Created Authority User: ranger_officer / ranger123")
+        authority_user.set_password('authority123')
+        authority_user.save()
+        authority_user.profile.role = UserProfile.ROLE_ADMIN
+        authority_user.profile.organization = 'State Forest Department - Wildlife Division'
+        authority_user.profile.save()
+        print("Created Authority console user: authority_admin (see README for demo password)")
+
+    # 1b. Demo Rangers — different registered operational bases (for location-based dispatch)
+    rangers_data = [
+        {'username': 'arun_ranger',   'first_name': 'Arun Kumar',      'last_name': '', 'registered_location': 'Kollam',            'latitude': 8.8932,  'longitude': 76.6141},
+        {'username': 'meera_ranger',  'first_name': 'Meera Nair',      'last_name': '', 'registered_location': 'Kollam',            'latitude': 8.8805,  'longitude': 76.5980},
+        {'username': 'suresh_ranger', 'first_name': 'Suresh Menon',    'last_name': '', 'registered_location': 'Kottarakkara',      'latitude': 8.8853,  'longitude': 76.7904},
+        {'username': 'fathima_ranger','first_name': 'Fathima Beevi',   'last_name': '', 'registered_location': 'Thiruvananthapuram','latitude': 8.5241,  'longitude': 76.9366},
+    ]
+    for rd in rangers_data:
+        uname = rd.pop('username')
+        r, made = User.objects.get_or_create(username=uname, defaults={'email': f'{uname}@forest.gov.in'})
+        if made:
+            r.set_password('ranger123')
+            r.first_name = rd['first_name']
+            r.last_name = rd['last_name']
+            r.save()
+        prof = r.profile
+        prof.role = UserProfile.ROLE_RANGER
+        prof.organization = 'State Forest Department - Snake Rescue Unit'
+        prof.registered_location = rd['registered_location']
+        prof.latitude = rd['latitude']
+        prof.longitude = rd['longitude']
+        prof.availability = UserProfile.AVAILABILITY_AVAILABLE
+        prof.save()
+    print("Demo rangers seeded (Kollam x2, Kottarakkara, Thiruvananthapuram).")
 
     citizen_user, created = User.objects.get_or_create(username='john_citizen', defaults={
         'email': 'john@gmail.com'
@@ -188,6 +214,37 @@ def seed_data():
             )
 
         print("Sample sightings seeded successfully.")
+
+    # 3b. Location-dispatch demo reports (Kollam vs Thrissur) so the
+    #     Authority "Assign Ranger" list changes with report location.
+    dispatch_reports = [
+        {
+            'title': 'Cobra near paddy field by Kallada bridge',
+            'latitude': 8.9200, 'longitude': 76.6000,
+            'location_name': 'Kollam town, Asramam ground',
+            'species_predicted': 'Indian Cobra (Naja naja)',
+            'common_name': 'Spectacled Cobra',
+            'venom_category': 'HIGHLY_VENOMOUS', 'toxicity_level': 'CRITICAL',
+            'danger_score': 92, 'ai_confidence': 91.5,
+            'notes': 'Demo incident for ranger dispatch testing.',
+        },
+        {
+            'title': 'Viper spotted behind Thrissur round bus stand',
+            'latitude': 10.5276, 'longitude': 76.2144,
+            'location_name': 'Thrissur Swaraj Round',
+            'species_predicted': "Russell's Viper (Daboia russelii)",
+            'common_name': 'Chitraj',
+            'venom_category': 'HIGHLY_VENOMOUS', 'toxicity_level': 'CRITICAL',
+            'danger_score': 96, 'ai_confidence': 89.0,
+            'notes': 'Demo far-away incident — should show different rangers.',
+        },
+    ]
+    dispatcher = User.objects.filter(username='john_citizen').first()
+    for dr in dispatch_reports:
+        exists = SightingReport.objects.filter(title=dr['title']).exists()
+        if not exists and dispatcher:
+            SightingReport.objects.create(user=dispatcher, **dr)
+    print("Dispatch demo reports seeded (Kollam + Thrissur).")
 
     print("Demo Data Seeding Finished Successfully!")
 

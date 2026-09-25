@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Ranger Dashboard — Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
+                <i class="fa-solid fa-hat-cowboy me-2" style="color: var(--primary);"></i>
+                Ranger Dashboard
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                {{ profile.display_name }} · {{ profile.registered_location|default:"No base location set" }}
+                ·
+                {% if profile.availability == 'AVAILABLE' %}
+                    <span class="badge" style="background: var(--success-light); color: var(--success);">Available</span>
+                {% elif profile.availability == 'BUSY' %}
+                    <span class="badge" style="background: var(--warning-light); color: var(--warning);">Busy</span>
+                {% else %}
+                    <span class="badge bg-secondary">Offline</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card-clean p-3 text-center">
+                <p class="mb-0 fw-bold" style="font-size: 1.6rem; color: var(--danger);">{{ new_count }}</p>
+                <small class="text-muted">New Assignments</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-clean p-3 text-center">
+                <p class="mb-0 fw-bold" style="font-size: 1.6rem; color: var(--primary);">{{ active_count }}</p>
+                <small class="text-muted">Active Assignments</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-clean p-3 text-center">
+                <p class="mb-0 fw-bold" style="font-size: 1.6rem; color: var(--success);">{{ completed_count }}</p>
+                <small class="text-muted">Completed</small>
+            </div>
+        </div>
+    </div>
+
+    {% if new_assignments %}
+    <h5 class="fw-semibold mb-3" style="color: var(--text);">
+        <span class="badge rounded-pill bg-danger me-1">{{ new_assignments|length }}</span> New Assignments
+    </h5>
+    {% endif %}
+
+    {% for a in new_assignments %}
+        <div class="card-clean p-4 mb-3 border-start border-danger border-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <p class="fw-semibold mb-1" style="font-size: 0.9375rem;">
+                        Snake Sighting #{{ a.sighting.id }} — {{ a.sighting.location_name }}
+                    </p>
+                    <small class="text-muted">
+                        {% if a.sighting.is_venomous %}<span class="badge-venomous me-1">Venomous</span>{% else %}<span class="badge-non-venomous me-1">Non-Venomous</span>{% endif %}
+                        Assigned {{ a.assigned_at|date:"M j, Y H:i" }}
+                        {% if a.distance_km is not None %}· ~{{ a.distance_km }} km from your base{% endif %}
+                    </small>
+                </div>
+                <a href="{% url 'ranger:assignment_detail' pk=a.pk %}" class="btn btn-teal btn-sm">
+                    <i class="fa-solid fa-eye me-1"></i> View Assignment
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+
+    <h5 class="fw-semibold mt-4 mb-3" style="color: var(--text);">Active Work</h5>
+    {% if active_assignments %}
+        {% for a in active_assignments %}
+            {% if not a.is_read or a.status != 'ASSIGNED' %}
+            <div class="card-clean p-4 mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <p class="fw-semibold mb-1" style="font-size: 0.9375rem;">
+                            Sighting #{{ a.sighting.id }} — {{ a.sighting.location_name }}
+                        </p>
+                        <small class="text-muted">Status: <strong>{{ a.get_status_display }}</strong></small>
+                    </div>
+                    <a href="{% url 'ranger:assignment_detail' pk=a.pk %}" class="btn btn-outline-teal btn-sm">Open</a>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color: var(--border-hover);"></i>
+            <p class="mb-0" style="font-size: 0.875rem;">No new or active assignments right now.</p>
+        </div>
+    {% endif %}
+
+    <p class="text-muted mt-4 mb-0" style="font-size: 0.8125rem;">
+        You only see incidents explicitly assigned to you. <a href="{% url 'ranger:assignments' %}">View full assignment history →</a>
+    </p>
+</div>
+{% endblock %}
