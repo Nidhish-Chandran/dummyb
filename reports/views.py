@@ -109,9 +109,13 @@ def list_reports_view(request):
     profile = getattr(user, 'profile', None)
     is_admin = profile is not None and profile.is_admin
     is_ranger_user = profile is not None and profile.is_ranger
-    # Authority console = platform administrators only (rangers use /ranger/)
-    is_authority = is_admin
+    # Authority console = platform admins + authority officers (rangers use /ranger/)
+    is_authority = profile is not None and profile.is_authority
     is_responder = False
+
+    if is_ranger_user:
+        # Rangers must work through their own isolated console.
+        return redirect('ranger:dashboard')
 
     if is_authority:
         reports = SightingReport.objects.all()
@@ -146,7 +150,7 @@ def list_reports_view(request):
         reports = reports.filter(duplicate_flag=True)
 
     # Fetch available responders for authority assignment modal/dropdown
-    responders = User.objects.filter(profile__role__in=['responder', 'authority']) if is_authority else []
+    responders = User.objects.filter(profile__role__in=['ranger', 'authority']) if is_authority else []
 
     return render(request, 'reports/list.html', {
         'reports': reports,
@@ -173,21 +177,19 @@ def report_detail_view(request, pk):
     profile = getattr(user, 'profile', None)
     is_admin = profile is not None and profile.is_admin
     is_ranger_user = profile is not None and profile.is_ranger
-    # Authority console = platform administrators only
-    is_authority = is_admin
+    # Authority console = platform admins + authority officers
+    is_authority = profile is not None and profile.is_authority
     is_assigned_responder = (report.assigned_responder == user)
 
     if is_ranger_user:
         # Rangers may ONLY open reports explicitly assigned to them via RangerAssignment.
-        assigned_here = report.ranger_assignments.filter(ranger=user).exists()
-        if not assigned_here:
-            raise PermissionDenied(
-                "Access Denied: Rangers can only view snake reports that have been "
-                "explicitly assigned to them. Use the Ranger Console (/ranger/).")
+        raise PermissionDenied(
+            "Access Denied: Rangers must handle incidents through the "
+            "Ranger Console (/ranger/assignments/).")
     elif not is_authority and not is_assigned_responder and report.user != user:
         raise PermissionDenied("Access Denied: You are not authorized to view other citizens' detailed report information or coordinates.")
 
-    responders = User.objects.filter(profile__role__in=['responder', 'authority']) if is_authority else []
+    responders = User.objects.filter(profile__role__in=['ranger', 'authority']) if is_authority else []
 
     return render(request, 'reports/detail.html', {
         'report': report,

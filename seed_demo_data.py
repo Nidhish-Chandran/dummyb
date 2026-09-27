@@ -26,16 +26,23 @@ def seed_data():
 
     authority_user, created = User.objects.get_or_create(username='authority_admin', defaults={
         'email': 'admin@forest.gov.in',
-        'is_staff': True,
-        'is_superuser': True
+        'is_staff': False,
+        'is_superuser': False
     })
     if created:
         authority_user.set_password('authority123')
         authority_user.save()
-        authority_user.profile.role = UserProfile.ROLE_ADMIN
+        authority_user.profile.role = UserProfile.ROLE_AUTHORITY
         authority_user.profile.organization = 'State Forest Department - Wildlife Division'
         authority_user.profile.save()
         print("Created Authority console user: authority_admin (see README for demo password)")
+
+    # Ensure the superuser's profile carries the ADMIN role even if it pre-existed
+    admin_profile = admin_user.profile
+    if admin_profile.role != UserProfile.ROLE_ADMIN:
+        admin_profile.role = UserProfile.ROLE_ADMIN
+        admin_profile.full_name = 'Platform Administrator'
+        admin_profile.save()
 
     # 1b. Demo Rangers — different registered operational bases (for location-based dispatch)
     rangers_data = [
@@ -43,6 +50,7 @@ def seed_data():
         {'username': 'meera_ranger',  'first_name': 'Meera Nair',      'last_name': '', 'registered_location': 'Kollam',            'latitude': 8.8805,  'longitude': 76.5980},
         {'username': 'suresh_ranger', 'first_name': 'Suresh Menon',    'last_name': '', 'registered_location': 'Kottarakkara',      'latitude': 8.8853,  'longitude': 76.7904},
         {'username': 'fathima_ranger','first_name': 'Fathima Beevi',   'last_name': '', 'registered_location': 'Thiruvananthapuram','latitude': 8.5241,  'longitude': 76.9366},
+        {'username': 'rajesh_ranger', 'first_name': 'Rajesh Pillai',   'last_name': '', 'registered_location': 'Pathanamthitta',    'latitude': 9.2678,  'longitude': 76.8240},
     ]
     for rd in rangers_data:
         uname = rd.pop('username')
@@ -62,13 +70,24 @@ def seed_data():
         prof.save()
     print("Demo rangers seeded (Kollam x2, Kottarakkara, Thiruvananthapuram).")
 
-    citizen_user, created = User.objects.get_or_create(username='john_citizen', defaults={
-        'email': 'john@gmail.com'
-    })
-    if created:
-        citizen_user.set_password('citizen123')
-        citizen_user.save()
-        print("Created Citizen User: john_citizen / citizen123")
+    citizens_data = [
+        {'username': 'john_citizen', 'email': 'john@gmail.com',   'first_name': 'John',  'last_name': 'Mathew'},
+        {'username': 'priya_citizen','email': 'priya@gmail.com',  'first_name': 'Priya', 'last_name': 'Nair'},
+    ]
+    for cd in citizens_data:
+        c, made = User.objects.get_or_create(username=cd['username'], defaults={'email': cd['email']})
+        if made:
+            c.set_password('citizen123')
+            c.first_name = cd['first_name']
+            c.last_name = cd['last_name']
+            c.save()
+            c.profile.role = UserProfile.ROLE_CITIZEN
+            c.profile.full_name = f"{cd['first_name']} {cd['last_name']}"
+            c.profile.save()
+    print("Citizen users seeded (john_citizen, priya_citizen).")
+
+    # Keep a reference used by the sample-report seeder below
+    citizen_user = User.objects.get(username='john_citizen')
 
     # 2. Seed Emergency Hospitals
     hospitals_data = [
