@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from accounts.models import UserProfile
 from reports.models import SightingReport
 from emergency.models import Hospital
-from ai.services import SNAKE_SPECIES_DATABASE as SNAKE_DATABASE
+SNAKE_DATABASE = {}
 
 def seed_data():
     print("Seeding Venom Watch Demo Data...")
