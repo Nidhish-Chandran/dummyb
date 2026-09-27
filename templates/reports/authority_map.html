@@ -132,12 +132,13 @@
         const COLORS = { red: '#dc2626', amber: '#f59e0b', green: '#16a34a' };
 
         const map = L.map('authorityMap').setView([9.9312, 76.2673], 11); // Kerala default
+        setTimeout(function(){ map.invalidateSize(); }, 150);
         // Canonical single-host OSM tile URL — the old {s}. subdomain form is
         // blocked by the OSM tile CDN ("Access blocked" tiles).
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
             crossOrigin: true,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         }).addTo(map);
 
         const markerLayer = L.layerGroup().addTo(map);
