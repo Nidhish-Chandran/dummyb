@@ -27,8 +27,8 @@ def get_role_landing(user):
         return reverse('reports:list')
     if profile.is_admin:
         return reverse('admin:index')
-    # Ranger currently redirects into the citizen module until the
-    # dedicated ranger console exists.
+    if profile.is_ranger:
+        return reverse('ranger:dashboard')
     return reverse('reports:list')
 
 

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'hotspots',
     'dashboard',
     'emergency',
+    'ranger',
 ]
 
 MIDDLEWARE = [
