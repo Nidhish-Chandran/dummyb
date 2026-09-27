@@ -97,7 +97,6 @@ def logout_view(request):
         request.session.flush()
         logger.info("Session flushed successfully")
 
-    messages.info(request, "You have been successfully logged out.")
     return redirect('accounts:login')
 
 
