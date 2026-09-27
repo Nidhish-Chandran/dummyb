@@ -44,6 +44,13 @@ def seed_data():
         admin_profile.full_name = 'Platform Administrator'
         admin_profile.save()
 
+    # Ensure the superuser's profile carries the ADMIN role even if it pre-existed
+    admin_profile = admin_user.profile
+    if admin_profile.role != UserProfile.ROLE_ADMIN:
+        admin_profile.role = UserProfile.ROLE_ADMIN
+        admin_profile.full_name = 'Platform Administrator'
+        admin_profile.save()
+
     # 1b. Demo Rangers — different registered operational bases (for location-based dispatch)
     RANGER_PASSWORD = 'ranger_demo123'
     rangers_data = [
