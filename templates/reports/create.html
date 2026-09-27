@@ -214,19 +214,39 @@
 
         // Image selection & AI analysis
         if (imageInput) {
+            // Sequence token: only the response for the CURRENTLY selected
+            // image may render. Prevents a slow earlier request from
+            // overwriting a newer result (race condition on rapid changes).
+            let analysisSeq = 0;
+            let currentFileToken = null;
+
             imageInput.addEventListener("change", function() {
                 const file = this.files[0];
                 if (!file) return;
 
-                // Show preview
+                const seq = ++analysisSeq;
+                currentFileToken = [file.name, file.size, file.lastModified].join('|');
+
+                // ---- CLEAR ALL PREVIOUS RESULT STATE (stale-result fix) ----
+                aiStatusDiv.innerHTML = "";           // remove old prediction card
+                reportFormDetails.classList.add("d-none"); // hide old report section
+                const oldBtn = document.getElementById("btnReportSnakeSighting");
+                if (oldBtn) oldBtn.remove();          // remove old report button
+
+                // Reset any previous form fields populated by the last scan
+                const titleField = document.getElementById("id_title");
+                if (titleField) titleField.value = "";
+
+                // Show preview of the NEW image
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    if (seq !== analysisSeq) return;  // superseded selection
                     previewImg.setAttribute("src", e.target.result);
                     previewContainer.classList.remove("d-none");
                 };
                 reader.readAsDataURL(file);
 
-                // Loading state
+                // Loading state (previous result is already cleared above)
                 aiStatusDiv.innerHTML = `
                     <div class="alert alert-secondary d-flex align-items-center gap-3 py-2 px-3 mb-0" style="font-size: 0.875rem;">
                         <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
@@ -250,6 +270,11 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // RACE GUARD: if the user already picked a newer image,
+                    // discard this (stale) response entirely.
+                    const tokenNow = [file.name, file.size, file.lastModified].join('|');
+                    if (seq !== analysisSeq || currentFileToken !== tokenNow) return;
+
                     if (data.error) {
                         aiStatusDiv.innerHTML = `
                             <div class="alert alert-danger py-2 px-3 mb-0" style="font-size: 0.875rem;">
@@ -381,6 +406,8 @@
                     }
                 })
                 .catch(err => {
+                    // RACE GUARD: don't render an error for a superseded request.
+                    if (seq !== analysisSeq) return;
                     aiStatusDiv.innerHTML = `
                         <div class="alert alert-warning py-2 px-3 mb-0" style="font-size: 0.875rem;">
                             <i class="fa-solid fa-circle-exclamation me-2"></i>
