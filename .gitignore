@@ -1,16 +1,6 @@
-# Python bytecode
+# Python
 __pycache__/
 *.pyc
 
-# Model weights and AI artifacts
-*.pt
-ai/models/
-runs/
-dataset/
-dataset_snake.yaml
-
-# Database
+# Django
 db.sqlite3
-
-# Archives
-*.zip
