@@ -1,10 +1,6 @@
-# Python compiled files
+# Python
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
 
-# Database
+# Django
 db.sqlite3
-
-# Temp test files
-_tmp_test_*.py
