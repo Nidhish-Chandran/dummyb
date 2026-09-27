@@ -14,28 +14,35 @@ def seed_data():
     print("Seeding Venom Watch Demo Data...")
 
     # 1. Create Superuser / Admin & Authority Officers
-    admin_user, created = User.objects.get_or_create(username='admin', defaults={
+    admin_user, created = User.objects.get_or_create(username='admin_demo', defaults={
         'email': 'admin@venomwatch.org',
         'is_staff': True,
         'is_superuser': True
     })
     if created:
-        admin_user.set_password('admin123')
+        admin_user.set_password('admin_demo123')
         admin_user.save()
-        print("Created Superuser: admin / admin123")
+        print("Created Superuser: admin_demo / admin_demo123")
 
-    authority_user, created = User.objects.get_or_create(username='authority_admin', defaults={
-        'email': 'admin@forest.gov.in',
+    authority_user, created = User.objects.get_or_create(username='authority_demo', defaults={
+        'email': 'officer@forest.gov.in',
         'is_staff': False,
         'is_superuser': False
     })
     if created:
-        authority_user.set_password('authority123')
+        authority_user.set_password('authority_demo123')
         authority_user.save()
         authority_user.profile.role = UserProfile.ROLE_AUTHORITY
         authority_user.profile.organization = 'State Forest Department - Wildlife Division'
         authority_user.profile.save()
-        print("Created Authority console user: authority_admin (see README for demo password)")
+        print("Created Authority console user: authority_demo / authority_demo123")
+
+    # Ensure the superuser's profile carries the ADMIN role even if it pre-existed
+    admin_profile = admin_user.profile
+    if admin_profile.role != UserProfile.ROLE_ADMIN:
+        admin_profile.role = UserProfile.ROLE_ADMIN
+        admin_profile.full_name = 'Platform Administrator'
+        admin_profile.save()
 
     # Ensure the superuser's profile carries the ADMIN role even if it pre-existed
     admin_profile = admin_user.profile
@@ -45,18 +52,18 @@ def seed_data():
         admin_profile.save()
 
     # 1b. Demo Rangers — different registered operational bases (for location-based dispatch)
+    RANGER_PASSWORD = 'ranger_demo123'
     rangers_data = [
-        {'username': 'arun_ranger',   'first_name': 'Arun Kumar',      'last_name': '', 'registered_location': 'Kollam',            'latitude': 8.8932,  'longitude': 76.6141},
-        {'username': 'meera_ranger',  'first_name': 'Meera Nair',      'last_name': '', 'registered_location': 'Kollam',            'latitude': 8.8805,  'longitude': 76.5980},
-        {'username': 'suresh_ranger', 'first_name': 'Suresh Menon',    'last_name': '', 'registered_location': 'Kottarakkara',      'latitude': 8.8853,  'longitude': 76.7904},
-        {'username': 'fathima_ranger','first_name': 'Fathima Beevi',   'last_name': '', 'registered_location': 'Thiruvananthapuram','latitude': 8.5241,  'longitude': 76.9366},
-        {'username': 'rajesh_ranger', 'first_name': 'Rajesh Pillai',   'last_name': '', 'registered_location': 'Pathanamthitta',    'latitude': 9.2678,  'longitude': 76.8240},
+        {'username': 'ranger_demo',       'first_name': 'Arun Kumar',    'last_name': '', 'registered_location': 'Kollam',             'latitude': 8.8932,  'longitude': 76.6141},
+        {'username': 'ranger_kollam_2',   'first_name': 'Meera Nair',    'last_name': '', 'registered_location': 'Kollam',             'latitude': 8.8805,  'longitude': 76.5980},
+        {'username': 'ranger_kottarakkara','first_name': 'Suresh Menon', 'last_name': '', 'registered_location': 'Kottarakkara',       'latitude': 8.8853,  'longitude': 76.7904},
+        {'username': 'ranger_tvpm',       'first_name': 'Fathima Beevi', 'last_name': '', 'registered_location': 'Thiruvananthapuram', 'latitude': 8.5241,  'longitude': 76.9366},
     ]
     for rd in rangers_data:
         uname = rd.pop('username')
         r, made = User.objects.get_or_create(username=uname, defaults={'email': f'{uname}@forest.gov.in'})
         if made:
-            r.set_password('ranger123')
+            r.set_password(RANGER_PASSWORD)
             r.first_name = rd['first_name']
             r.last_name = rd['last_name']
             r.save()
@@ -68,7 +75,7 @@ def seed_data():
         prof.longitude = rd['longitude']
         prof.availability = UserProfile.AVAILABILITY_AVAILABLE
         prof.save()
-    print("Demo rangers seeded (Kollam x2, Kottarakkara, Thiruvananthapuram).")
+    print("Demo rangers seeded: ranger_demo, ranger_kollam_2 (Kollam), ranger_kottarakkara, ranger_tvpm — password: " + RANGER_PASSWORD)
 
     citizens_data = [
         {'username': 'john_citizen', 'email': 'john@gmail.com',   'first_name': 'John',  'last_name': 'Mathew'},
@@ -77,14 +84,14 @@ def seed_data():
     for cd in citizens_data:
         c, made = User.objects.get_or_create(username=cd['username'], defaults={'email': cd['email']})
         if made:
-            c.set_password('citizen123')
+            c.set_password('citizen_demo123')
             c.first_name = cd['first_name']
             c.last_name = cd['last_name']
             c.save()
             c.profile.role = UserProfile.ROLE_CITIZEN
             c.profile.full_name = f"{cd['first_name']} {cd['last_name']}"
             c.profile.save()
-    print("Citizen users seeded (john_citizen, priya_citizen).")
+    print("Citizen users seeded: john_citizen, priya_citizen — password: citizen_demo123")
 
     # Keep a reference used by the sample-report seeder below
     citizen_user = User.objects.get(username='john_citizen')

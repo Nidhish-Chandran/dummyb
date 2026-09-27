@@ -161,8 +161,19 @@
                         <a href="{% url 'accounts:register' %}" class="btn btn-teal btn-sm">Register</a>
                     {% endif %}
                 </div>
-            </div>
-        </div>
+
+
+                <!-- Standalone Logout button (always visible when signed in) -->
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'accounts:logout' %}" class="d-inline ms-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="End your session and log out">
+                        <i class="fa-solid fa-right-from-bracket me-1"></i>Logout
+                    </button>
+                </form>
+                {% endif %}
+            </div><!-- /.d-flex right-side actions -->
+        </div><!-- /.container -->
     </nav>
 
     <!-- Flash Messages -->

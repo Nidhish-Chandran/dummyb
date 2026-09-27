@@ -78,20 +78,15 @@ def get_candidate_rangers(sighting, only_available=True, radius_km=NEARBY_RADIUS
                 location_relevant = True
 
         if not location_relevant and sighting.location_name:
-            if prof.registered_location and (
-                prof.registered_location.lower() in sighting.location_name.lower()
-                or sighting.location_name.lower().split(',')[0].strip() == prof.registered_location.lower()
-            ):
+            # single-user textual relevance check against this ranger's fields
+            rl = (prof.registered_location or '').lower()
+            ar = (prof.assigned_region or '').lower()
+            loc = sighting.location_name.lower()
+            if rl and (rl in loc or loc.split(',')[0].strip() == rl):
                 location_relevant = True
-            elif _location_match_q(sighting.location_name).isEmpty():
-                pass
-            else:
-                # single-user textual check against this ranger's fields
-                rl = (prof.registered_location or '').lower()
-                ar = (prof.assigned_region or '').lower()
-                loc = sighting.location_name.lower()
+            elif rl or ar:
                 words = [w for w in loc.replace(',', ' ').split() if len(w) >= 4]
-                if rl and (rl in loc or any(w in rl for w in words)):
+                if rl and any(w in rl for w in words):
                     location_relevant = True
                 elif ar and (ar in loc or any(w in ar for w in words)):
                     location_relevant = True
