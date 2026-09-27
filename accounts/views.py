@@ -35,7 +35,20 @@ def get_role_landing(user):
 class CustomLoginView(LoginView):
     template_name = 'accounts/login.html'
     authentication_form = CustomAuthenticationForm
-    redirect_authenticated_user = True
+    # IMPORTANT: do NOT auto-redirect already-authenticated visitors.
+    # The login page must always require fresh credentials so a second
+    # browser tab can sign in as a different user (ranger/citizen/authority)
+    # independently of the session in the first tab.
+    redirect_authenticated_user = False
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            messages.info(
+                request,
+                "You are already signed in as {}. To log in as a different "
+                "user, use the Logout button first.".format(request.user.username))
+            return redirect(get_role_landing(request.user))
+        return super().get(request, *args, **kwargs)
 
     def get_success_url(self):
         user = self.request.user
