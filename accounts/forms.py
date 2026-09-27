@@ -36,12 +36,34 @@ class CustomAuthenticationForm(AuthenticationForm):
         'inactive': ("This account is inactive. Please contact support."),
     }
 
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '')
+        username = re.sub(r'\s+', '', username or '')
+        if not username:
+            raise ValidationError("Username is required.")
+        if len(username) > 150:
+            raise ValidationError("Username is too long.")
+        return username
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password', '')
+        if not password:
+            raise ValidationError("Password is required.")
+        return password
+
     def clean(self):
-        # Override only the message text; keep Django's own flow intact.
+        # Keep Django's authentication flow; error messages stay generic so
+        # the form never reveals whether a username exists.
         return super().clean()
 
 
 class UserRegistrationForm(UserCreationForm):
+    """Registration form for ALL modules (Citizen / Ranger / Authority).
+
+    Role-conditional fields are validated server-side: Rangers must supply a
+    registered location + valid coordinates; Authority officers must supply
+    their department/organisation.
+    """
     email = forms.EmailField(
         required=True,
         label="Email address",
@@ -53,7 +75,7 @@ class UserRegistrationForm(UserCreationForm):
         })
     )
     first_name = forms.CharField(
-        max_length=150, required=False, label="First name (optional)",
+        max_length=150, required=True, label="First name",
         widget=forms.TextInput(attrs={'class': 'auth-form-control', 'placeholder': 'First name'})
     )
     last_name = forms.CharField(
@@ -64,12 +86,12 @@ class UserRegistrationForm(UserCreationForm):
         choices=UserProfile.ROLE_CHOICES,
         initial=UserProfile.ROLE_CITIZEN,
         label="Account type",
-        help_text="Ranger and Administrator accounts are created by an administrator.",
+        help_text="Choose the module you belong to. Ranger/Authority accounts are verified by a platform admin.",
         widget=forms.Select(attrs={"class": "auth-form-control auth-form-select"})
     )
     phone_number = forms.CharField(
         max_length=20, required=False, label="Phone number",
-        help_text="Optional contact number for emergency verification.",
+        help_text="Contact number used for emergency verification (required for Ranger/Authority).",
         widget=forms.TextInput(attrs={
             'class': 'auth-form-control',
             'placeholder': '+91 98765 43210',
@@ -80,6 +102,21 @@ class UserRegistrationForm(UserCreationForm):
         max_length=100, required=False, label="Organization",
         help_text="Department, Hospital, or Agency (if applicable).",
         widget=forms.TextInput(attrs={'class': 'auth-form-control', 'placeholder': 'Organization name'})
+    )
+
+    # --- Role-specific fields (shown/hidden per selected account type) ---
+    registered_location = forms.CharField(
+        max_length=150, required=False, label="Registered operational location",
+        help_text="Town/city where you operate, e.g. Kollam.",
+        widget=forms.TextInput(attrs={'class': 'auth-form-control', 'placeholder': 'e.g. Kollam'})
+    )
+    latitude = forms.DecimalField(
+        max_digits=9, decimal_places=6, required=False, label="Base latitude",
+        widget=forms.NumberInput(attrs={'class': 'auth-form-control', 'placeholder': '8.8932', 'step': 'any'})
+    )
+    longitude = forms.DecimalField(
+        max_digits=9, decimal_places=6, required=False, label="Base longitude",
+        widget=forms.NumberInput(attrs={'class': 'auth-form-control', 'placeholder': '76.6141', 'step': 'any'})
     )
 
     class Meta(UserCreationForm.Meta):
@@ -126,22 +163,87 @@ class UserRegistrationForm(UserCreationForm):
             raise ValidationError("An account with this email already exists. Sign in instead.")
         return email
 
+    def clean_first_name(self):
+        name = self.cleaned_data.get('first_name', '').strip()
+        if len(name) < 2:
+            raise ValidationError("First name must be at least 2 characters.")
+        if not re.match(r"^[A-Za-z][A-Za-z .'-]*$", name):
+            raise ValidationError("First name may only contain letters, spaces, apostrophes and hyphens.")
+        return name
+
+    def clean_last_name(self):
+        name = self.cleaned_data.get('last_name', '').strip()
+        if name and not re.match(r"^[A-Za-z][A-Za-z .'-]*$", name):
+            raise ValidationError("Last name may only contain letters, spaces, apostrophes and hyphens.")
+        return name
+
     def clean_phone_number(self):
         phone = self.cleaned_data.get('phone_number', '').strip()
+        role = self._posted_role()
+        if not phone and role in (UserProfile.ROLE_RANGER, UserProfile.ROLE_AUTHORITY):
+            raise ValidationError("Ranger and Authority accounts must provide a phone number.")
         if phone and not re.match(r'^\+?[0-9][0-9\s\-().]{5,19}$', phone):
             raise ValidationError(
                 "Enter a valid phone number (digits only, optional leading +, 6-20 characters)."
             )
+        digits = re.sub(r'\D', '', phone)
+        if not (6 <= len(digits) <= 14):
+            raise ValidationError("Phone number must contain 6 to 14 digits.")
         return phone
 
     def clean_role(self):
         role = self.cleaned_data.get('role')
         if role not in UserProfile.SELF_SERVICE_ROLES:
             raise ValidationError(
-                "Only Citizen accounts can self-register. Ranger and Administrator "
-                "accounts must be created by a platform administrator."
+                "Please choose Citizen, Ranger or Authority. Platform Administrator "
+                "accounts cannot be self-registered."
             )
         return role
+
+    # --- Role-conditional validation for Ranger / Authority registration ---
+    def _posted_role(self):
+        role = self.cleaned_data.get('role')
+        if not role and hasattr(self, 'data'):
+            role = self.data.get('role')
+        return role or (self.initial.get('role') if isinstance(self.initial, dict) else None)
+
+    def clean_registered_location(self):
+        loc = self.cleaned_data.get('registered_location', '').strip()
+        role = self._posted_role()
+        if role == UserProfile.ROLE_RANGER and not loc:
+            raise ValidationError("Ranger accounts must provide a registered operational location (e.g. Kollam).")
+        if loc and not re.match(r"^[A-Za-z][A-Za-z .'\-]*$", loc):
+            raise ValidationError("Location may only contain letters, spaces, apostrophes and hyphens.")
+        return loc
+
+    def _clean_coord(self, value, field_name, lo, hi):
+        if value is None:
+            return None
+        v = float(value)
+        if not (lo <= v <= hi):
+            raise ValidationError(f"{field_name} must be between {lo} and {hi}.")
+        return round(v, 6)
+
+    def clean_latitude(self):
+        lat = self.cleaned_data.get('latitude')
+        role = self._posted_role()
+        if role == UserProfile.ROLE_RANGER and lat is None:
+            raise ValidationError("Ranger accounts must provide a base latitude (decimal degrees).")
+        return self._clean_coord(lat, "Latitude", -90.0, 90.0)
+
+    def clean_longitude(self):
+        lon = self.cleaned_data.get('longitude')
+        role = self._posted_role()
+        if role == UserProfile.ROLE_RANGER and lon is None:
+            raise ValidationError("Ranger accounts must provide a base longitude (decimal degrees).")
+        return self._clean_coord(lon, "Longitude", -180.0, 180.0)
+
+    def clean_organization(self):
+        org = self.cleaned_data.get('organization', '').strip()
+        role = self._posted_role()
+        if role == UserProfile.ROLE_AUTHORITY and not org:
+            raise ValidationError("Authority officers must provide their department/organisation.")
+        return org
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -152,8 +254,13 @@ class UserRegistrationForm(UserCreationForm):
             user.save()
         profile, _ = UserProfile.objects.get_or_create(user=user)
         profile.role = self.cleaned_data.get('role', UserProfile.ROLE_CITIZEN)
+        profile.full_name = " ".join(n for n in [self.cleaned_data.get('first_name', ''),
+                                                 self.cleaned_data.get('last_name', '')] if n).strip() or None
         profile.phone_number = self.cleaned_data.get('phone_number') or None
         profile.organization = self.cleaned_data.get('organization') or None
+        profile.registered_location = self.cleaned_data.get('registered_location') or None
+        profile.latitude = self.cleaned_data.get('latitude')
+        profile.longitude = self.cleaned_data.get('longitude')
         profile.save()
         return user
 
