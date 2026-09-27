@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
@@ -191,11 +192,24 @@ def report_detail_view(request, pk):
 
     responders = User.objects.filter(profile__role__in=['ranger', 'authority']) if is_authority else []
 
+    # Authority assignment panel data (location-filtered rangers — never the whole DB)
+    active_assignment = None
+    candidate_rangers = []
+    assignment_history = []
+    if is_authority:
+        active_assignment = report.ranger_assignments.filter(
+            status__in=RangerAssignment.ACTIVE_STATUSES).first()
+        candidate_rangers = get_candidate_rangers(report, only_available=True)
+        assignment_history = report.ranger_assignments.all()[:10]
+
     return render(request, 'reports/detail.html', {
         'report': report,
         'is_authority': is_authority,
         'is_assigned_responder': is_assigned_responder,
-        'responders': responders
+        'responders': responders,
+        'active_assignment': active_assignment,
+        'candidate_rangers': candidate_rangers,
+        'assignment_history': assignment_history,
     })
 
 
@@ -345,3 +359,143 @@ def risk_zones_public_view(request):
     """
     risk_data = DBSCANHotspotService.compute_community_risk_zones(hours=24)
     return render(request, 'reports/risk_zones.html', {'risk_data': risk_data})
+
+
+# ---------------------------------------------------------------------------
+# Authority geolocation map APIs (used by the dashboard incident map)
+# ---------------------------------------------------------------------------
+
+def _active_assignment_info(report):
+    """Return (assignment, info-dict) for a report's active ranger assignment."""
+    a = getattr(report, '_prefetched_active', None)
+    if a is None:
+        a = report.ranger_assignments.filter(
+            status__in=RangerAssignment.ACTIVE_STATUSES).first()
+    if not a:
+        return None, {
+            'assigned': False,
+            'ranger': None,
+            'status': 'UNASSIGNED',
+            'status_display': 'Unassigned',
+            'distance_km': None,
+            'assigned_at': None,
+        }
+    return a, {
+        'assigned': True,
+        'assignment_id': a.pk,
+        'ranger': a.ranger.username,
+        'ranger_name': a.ranger.profile.display_name if hasattr(a.ranger, 'profile') else a.ranger.username,
+        'status': a.status,
+        'status_display': a.get_status_display(),
+        'distance_km': a.distance_km,
+        'assigned_at': a.assigned_at.strftime('%b %d, %Y %H:%M'),
+    }
+
+
+@login_required
+@authority_required
+@never_cache
+def authority_map_reports_api(request):
+    """JSON list of individual snake report markers for the Authority map.
+
+    Returns one entry per report that has usable coordinates — never fake or
+    hard-coded data. Includes assignment state so markers can be colour-coded
+    (unassigned / active response / completed). Minimal fields only: no
+    private citizen information beyond what Authority legitimately monitors.
+    """
+    reports = SightingReport.objects.select_related('user').prefetch_related(
+        'ranger_assignments__ranger__profile')
+    reports = [r for r in reports if r.latitude is not None and r.longitude is not None]
+
+    # Group assignments per report once (avoid N queries)
+    active_by_report = {}
+    for a in RangerAssignment.objects.filter(
+            status__in=RangerAssignment.ACTIVE_STATUSES).select_related('ranger__profile'):
+        active_by_report.setdefault(a.sighting_id, a)
+    resolved_ids = set(r.id for r in reports if r.ranger_assignments.filter(
+        status=RangerAssignment.STATUS_COMPLETED).exists())
+
+    data = []
+    for r in reports:
+        a = active_by_report.get(r.id)
+        if a:
+            dispatch_state = 'ACTIVE'
+            assign = {
+                'assigned': True,
+                'ranger': a.ranger.username,
+                'ranger_name': a.ranger.profile.display_name if hasattr(a.ranger, 'profile') else a.ranger.username,
+                'status': a.status,
+                'status_display': a.get_status_display(),
+                'distance_km': a.distance_km,
+                'assigned_at': a.assigned_at.strftime('%b %d, %Y %H:%M'),
+            }
+        elif r.id in resolved_ids or r.response_status == SightingReport.RESPONSE_RESOLVED:
+            dispatch_state = 'COMPLETED'
+            assign = {'assigned': False, 'ranger': None, 'status': 'COMPLETED',
+                      'status_display': 'Completed'}
+        else:
+            dispatch_state = 'UNASSIGNED'
+            assign = {'assigned': False, 'ranger': None, 'status': 'UNASSIGNED',
+                      'status_display': 'Unassigned'}
+        data.append({
+            'id': r.id,
+            'title': r.title,
+            'latitude': r.latitude,
+            'longitude': r.longitude,
+            'location_name': r.location_name,
+            'venom_status': r.venom_category,
+            'is_venomous': r.is_venomous,
+            'species': r.species_predicted or '',
+            'confidence': round((r.venom_confidence or 0) * 100),
+            'created_at': r.created_at.strftime('%b %d, %Y %H:%M'),
+            'report_status': r.status,
+            'dispatch_state': dispatch_state,
+            'assignment': assign,
+        })
+    return JsonResponse({'reports': data})
+
+
+@login_required
+@authority_required
+@never_cache
+def authority_report_panel_api(request, pk):
+    """Full detail payload for the selected report marker + assignable rangers.
+
+    Rangers offered here are location-filtered server-side via
+    get_candidate_rangers() — only RANGER-role, AVAILABLE users registered
+    in/near THIS report's location (Haversine distance when coordinates exist,
+    sorted nearest-first). The whole ranger DB is never exposed.
+    """
+    report = get_object_or_404(SightingReport, pk=pk)
+    _, assign = _active_assignment_info(report)
+
+    candidates = []
+    for c in get_candidate_rangers(report, only_available=True):
+        prof = c['profile']
+        candidates.append({
+            'id': c['user'].pk,
+            'username': c['user'].username,
+            'name': prof.display_name,
+            'location': prof.registered_location or prof.assigned_region or 'Base not set',
+            'distance_km': c['distance_km'],
+            'availability': prof.availability,
+        })
+
+    payload = dict(assign)
+    payload.update({
+        'id': report.id,
+        'title': report.title,
+        'image_url': report.original_image.url if report.original_image else None,
+        'snake_status': report.get_venom_category_display(),
+        'is_venomous': report.is_venomous,
+        'species': report.species_predicted or '',
+        'confidence': round((report.venom_confidence or 0) * 100),
+        'reported_at': report.created_at.strftime('%b %d, %Y, %I:%M %p'),
+        'location_name': report.location_name,
+        'latitude': report.latitude,
+        'longitude': report.longitude,
+        'notes': report.notes or '',
+        'detail_url': f"/reports/{report.id}/",
+        'candidates': candidates,
+    })
+    return JsonResponse(payload)

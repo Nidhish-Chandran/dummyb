@@ -30,7 +30,8 @@ def get_role_landing(user):
     if profile.is_ranger:
         return reverse('ranger:dashboard')
     if profile.is_authority_officer:
-        return reverse('reports:list')
+        # Authority module landing = GIS surveillance dashboard (map-first workflow)
+        return reverse('dashboard:surveillance')
     return reverse('reports:list')
 
 

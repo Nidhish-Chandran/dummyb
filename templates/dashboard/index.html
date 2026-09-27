@@ -129,6 +129,21 @@
                     </span>
                 </div>
                 <div id="mainDashboardMap" class="map-container" style="height: 460px;"></div>
+                <div class="d-flex flex-wrap gap-3 mt-2" style="font-size: 0.72rem; color: var(--muted, #64748b);">
+                    <span><i class="fa-solid fa-circle me-1" style="color:#dc2626;"></i>Venomous · Unassigned</span>
+                    <span><i class="fa-solid fa-circle me-1" style="color:#f59e0b;"></i>Response Active</span>
+                    <span><i class="fa-solid fa-circle me-1" style="color:#16a34a;"></i>Non-Venomous / Completed</span>
+                    <span class="ms-auto"><i class="fa-solid fa-hand-pointer me-1"></i>Click a marker to open the report &amp; assign a ranger</span>
+                </div>
+
+                <!-- Report detail panel (opens when a marker is clicked) -->
+                <div id="reportPanel" class="mt-3 border rounded-3 p-3 d-none" style="background: var(--surface, #fff);">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="fw-bold mb-0" id="panelTitle">Snake Sighting</h6>
+                        <button type="button" class="btn-close" onclick="document.getElementById('reportPanel').classList.add('d-none')"></button>
+                    </div>
+                    <div id="panelBody" class="mt-2" style="font-size: 0.83rem;"></div>
+                </div>
             </div>
         </div>
 
@@ -188,67 +203,146 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    // ===== Authority Geolocation Map: report markers + ranger assignment =====
+    document.addEventListener("DOMContentLoaded", function () {
         const map = L.map('mainDashboardMap').setView([9.9312, 76.2673], 11);
-
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        const bounds = [];
+        const reportsApiUrl = "{% url 'reports:map_reports_api' %}";
+        const panelApiUrlBase = "/reports/api/report-panel/";
+        let markerLayer = L.layerGroup().addTo(map);
+        let selectedReportId = null;
 
-        fetch("{% url 'hotspots:api_clusters' %}")
-            .then(res => res.json())
-            .then(data => {
+        const COLORS = { red: '#dc2626', amber: '#f59e0b', green: '#16a34a' };
 
-                data.clusters.forEach(cluster => {
-                    const latLng = [cluster.center_lat, cluster.center_lng];
-                    bounds.push(latLng);
+        function markerColor(r) {
+            if (r.dispatch_state === 'ACTIVE') return COLORS.amber;
+            if (r.dispatch_state === 'COMPLETED') return COLORS.green;
+            return r.is_venomous ? COLORS.red : COLORS.green;
+        }
 
-                    L.circle(latLng, {
-                        color: '#dc2626',
-                        fillColor: '#dc2626',
-                        fillOpacity: 0.25,
-                        radius: cluster.radius_meters,
-                        weight: 2
-                    }).addTo(map).bindPopup(`
-                        <div>
-                            <strong style="color: #dc2626;">DBSCAN DENSITY CLUSTER</strong><br>
-                            <b>Location:</b> ${cluster.location_name}<br>
-                            <b>Active Sightings:</b> ${cluster.sighting_count}
-                        </div>
-                    `);
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function refreshMarkers() {
+            fetch(reportsApiUrl, { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(data => {
+                    markerLayer.clearLayers();
+                    const bounds = [];
+                    data.reports.forEach(r => {
+                        const latLng = [r.latitude, r.longitude];
+                        bounds.push(latLng);
+                        const m = L.circleMarker(latLng, {
+                            color: markerColor(r), fillColor: markerColor(r),
+                            fillOpacity: 0.85, radius: r.id === selectedReportId ? 11 : 7,
+                            weight: r.id === selectedReportId ? 3 : 2
+                        });
+                        m.bindPopup(
+                            `<div style="min-width:160px">` +
+                            `<strong style="color:${markerColor(r)}">Snake Sighting #${r.id}</strong><br>` +
+                            `<span>${esc(r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS')} · ${esc(r.location_name)}</span><br>` +
+                            `<small>Assignment: <b>${esc(r.assignment.status_display)}</b>` +
+                            (r.assignment.ranger ? ` (${esc(r.assignment.ranger)})` : '') + `</small></div>`
+                        );
+                        m.on('click', () => openPanel(r.id));
+                        m.addTo(markerLayer);
+                    });
+
+                    // DBSCAN density clusters (existing hotspot layer kept intact)
+                    fetch("{% url 'hotspots:api_clusters' %}", { credentials: 'same-origin' })
+                        .then(res => res.json())
+                        .then(hs => {
+                            hs.clusters.forEach(cluster => {
+                                L.circle([cluster.center_lat, cluster.center_lng], {
+                                    color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.10,
+                                    radius: cluster.radius_meters, weight: 1.5, dashArray: '5,5'
+                                }).addTo(map).bindPopup(
+                                    `<strong style="color:#7c3aed;">DBSCAN DENSITY CLUSTER</strong><br>` +
+                                    `<b>Location:</b> ${esc(cluster.location_name)}<br>` +
+                                    `<b>Active Sightings:</b> ${cluster.sighting_count}`
+                                );
+                            });
+                        }).catch(() => {});
+
+                    if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
+                })
+                .catch(err => console.error("Error loading report markers:", err));
+        }
+
+        function badge(status) {
+            const colors = {
+                UNASSIGNED: ['#fee2e2', '#b91c1c'], ASSIGNED: ['#fef3c7', '#92400e'],
+                ACCEPTED: ['#dbeafe', '#1d4ed8'], ON_THE_WAY: ['#dbeafe', '#1d4ed8'],
+                AT_LOCATION: ['#ede9fe', '#6d28d9'], COMPLETED: ['#dcfce7', '#15803d']
+            };
+            const c = colors[status] || ['#f1f5f9', '#475569'];
+            return `<span style="background:${c[0]};color:${c[1]};padding:2px 8px;border-radius:999px;font-weight:600;font-size:0.72rem;">${esc(status.replace(/_/g, ' '))}</span>`;
+        }
+
+        function renderPanel(p) {
+            selectedReportId = p.id;
+            document.getElementById('panelTitle').innerHTML =
+                `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Snake Sighting #${p.id}`;
+            let html = '';
+            html += `<div class="d-flex gap-3 mb-2">`;
+            if (p.image_url) html += `<img src="${esc(p.image_url)}" alt="snake" style="width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;">`;
+            html += `<div>
+                <div><span style="font-weight:700;color:${p.is_venomous ? '#dc2626' : '#16a34a'}">${esc(p.snake_status)}</span>
+                ${p.confidence ? `<span class="text-muted"> · ${p.confidence}% confidence</span>` : ''}</div>
+                ${p.species ? `<div class="text-muted">${esc(p.species)}</div>` : ''}
+                <div>Reported: ${esc(p.reported_at)}</div>
+                <div><i class="fa-solid fa-map-pin me-1" style="color:var(--danger);"></i>${esc(p.location_name)}
+                <span class="text-muted">(${p.latitude}, ${p.longitude})</span></div>
+                <div class="mt-1">Assignment: ${badge(p.status)}${p.ranger ? ` &nbsp;Ranger: <b>${esc(p.ranger_name || p.ranger)}</b>${p.distance_km != null ? ` · ${p.distance_km} km` : ''}${p.assigned_at ? `<br><small class='text-muted'>Assigned at ${esc(p.assigned_at)}</small>` : ''}` : ''}</div>
+                <a href="${esc(p.detail_url)}" class="fw-semibold text-decoration-none" style="color:var(--primary);">Open full report &raquo;</a>
+              </div></div>`;
+
+            if (p.assigned) {
+                html += `<div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span><b>${esc(p.ranger_name || p.ranger)}</b> is handling this incident.</span>
+                    <form method="post" action="/reports/assignments/${p.assignment_id}/cancel/"
+                          onsubmit="return confirm('Cancel this assignment so it can be reassigned?');" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-rotate me-1"></i>Cancel &amp; Reassign</button>
+                    </form>
+                </div>`;
+            } else if (p.candidates && p.candidates.length) {
+                html += `<div class="mt-2 pt-2 border-top">
+                    <div class="fw-semibold mb-1" style="font-size:0.8rem;">
+                        <i class="fa-solid fa-user-plus me-1" style="color:var(--primary);"></i>Available Rangers Near This Location</div>`;
+                p.candidates.forEach(c => {
+                    html += `<form method="post" action="/reports/${p.id}/assign/" class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                        {% csrf_token %}
+                        <input type="hidden" name="ranger_id" value="${c.id}">
+                        <span>${esc(c.name)} <span class="text-muted">· ${esc(c.location)}${c.distance_km != null ? ` · ${c.distance_km} km` : ''} · AVAILABLE</span></span>
+                        <button class="btn btn-teal btn-sm">Assign</button>
+                    </form>`;
                 });
+                html += `</div>`;
+            } else {
+                html += `<div class="mt-2 pt-2 border-top text-muted">No AVAILABLE rangers are registered in or near this location.</div>`;
+            }
 
-                {% for r in reports %}
-                    (function() {
-                        const rLat = {{ r.latitude }};
-                        const rLng = {{ r.longitude }};
-                        bounds.push([rLat, rLng]);
+            document.getElementById('panelBody').innerHTML = html;
+            document.getElementById('reportPanel').classList.remove('d-none');
+        }
 
-                        const isVenom = {% if r.is_venomous %}true{% else %}false{% endif %};
+        function openPanel(reportId) {
+            fetch(panelApiUrlBase + reportId + '/', { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(renderPanel)
+                .catch(err => console.error("Error loading report panel:", err));
+        }
 
-                        L.circleMarker([rLat, rLng], {
-                            color: isVenom ? '#dc2626' : '#16a34a',
-                            fillColor: isVenom ? '#dc2626' : '#16a34a',
-                            fillOpacity: 0.8,
-                            radius: 7
-                        }).addTo(map).bindPopup(`
-                            <div>
-                                <strong style="color: ${isVenom ? '#dc2626' : '#16a34a'};">${"{{ r.species_predicted|escapejs }}" || "Snake"}</strong><br>
-                                <small>${"{{ r.location_name|escapejs }}"}</small><br>
-                                <a href="{% url 'reports:detail' pk=r.pk %}" style="color: #0f766e; font-weight: bold;">View Details &raquo;</a>
-                            </div>
-                        `);
-                    })();
-                {% endfor %}
-
-                if (bounds.length > 0) {
-                    map.fitBounds(bounds, { padding: [50, 50] });
-                }
-            })
-            .catch(err => console.error("Error loading dashboard map data:", err));
+        window.refreshAuthorityMap = refreshMarkers;
+        refreshMarkers();
     });
 </script>
 {% endblock %}
