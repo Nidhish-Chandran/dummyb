@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Authority Operations Map — Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-4">
+
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
+                <i class="fa-solid fa-map-location-dot me-2" style="color: var(--primary);"></i>
+                Authority Operations Map
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Individual snake report markers · click a marker to view the report &amp; assign a nearby ranger
+            </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'dashboard:home' %}" class="btn btn-outline-teal btn-sm">
+                <i class="fa-solid fa-chart-line me-1"></i> Dashboard
+            </a>
+            <a href="{% url 'reports:list' %}" class="btn btn-outline-teal btn-sm">
+                <i class="fa-solid fa-list-check me-1"></i> Reports
+            </a>
+            <a href="{% url 'hotspots:view' %}" class="btn btn-outline-teal btn-sm">
+                <i class="fa-solid fa-fire me-1"></i> Hotspot Radar
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-light border"><i class="fa-solid fa-location-crosshairs" style="color: var(--primary);"></i></div>
+                <div>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ geo_report_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Reports on Map</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-danger-light"><i class="fa-solid fa-skull-crossbones" style="color: var(--danger);"></i></div>
+                <div>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ unassigned_venomous }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Venomous · Unassigned</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning-light"><i class="fa-solid fa-person-running" style="color: var(--warning);"></i></div>
+                <div>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ active_assignments }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Active Responses</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-light border"><i class="fa-solid fa-circle-check" style="color: var(--success, #16a34a);"></i></div>
+                <div>
+                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ completed_assignments }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Completed</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Full operations map -->
+        <div class="col-lg-8">
+            <div class="card-clean p-3">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem; color: var(--text);">
+                        <i class="fa-solid fa-map me-2" style="color: var(--primary);"></i>
+                        Live Incident Markers
+                    </h5>
+                    <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">
+                        <i class="fa-solid fa-lock me-1" style="color: var(--primary);"></i> Authority View
+                    </span>
+                </div>
+                <div id="authorityMap" class="map-container" style="height: 600px;"></div>
+                <div id="mapEmptyState" class="text-center text-muted py-4 d-none">
+                    <i class="fa-solid fa-map-pin fa-2x mb-2 d-block"></i>
+                    No snake sightings with valid locations.
+                </div>
+                <div class="d-flex flex-wrap gap-3 mt-2" style="font-size: 0.72rem; color: var(--muted, #64748b);">
+                    <span><i class="fa-solid fa-circle me-1" style="color:#dc2626;"></i>Venomous · Unassigned</span>
+                    <span><i class="fa-solid fa-circle me-1" style="color:#f59e0b;"></i>Response Active</span>
+                    <span><i class="fa-solid fa-circle me-1" style="color:#16a34a;"></i>Non-Venomous / Completed</span>
+                    <span class="ms-auto"><i class="fa-solid fa-hand-pointer me-1"></i>Click a marker to open the report &amp; assign a ranger</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report detail side panel -->
+        <div class="col-lg-4">
+            <div class="card-clean p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
+                    <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem; color: var(--text);" id="panelTitle">
+                        <i class="fa-solid fa-file-medical me-1" style="color: var(--primary);"></i> Report Details
+                    </h5>
+                    <button type="button" class="btn-close d-none" id="panelClose"
+                            onclick="resetPanel();"></button>
+                </div>
+                <div id="panelHint" class="text-center text-muted py-5">
+                    <i class="fa-solid fa-hand-pointer fa-2x mb-2 d-block"></i>
+                    Select a report marker on the map to view its details and assign a ranger.
+                </div>
+                <div id="reportPanelBody" style="font-size: 0.83rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ===== Authority Operations Map (dedicated page) =====
+    // Loads REAL report markers from the DB via the existing
+    // /reports/api/map-reports/ endpoint. Clicking a marker fetches that
+    // exact report (+ location-filtered AVAILABLE rangers) from
+    // /reports/api/report-panel/<id>/ — no page reload, no fake data.
+    document.addEventListener("DOMContentLoaded", function () {
+        const reportsApiUrl = "{% url 'reports:map_reports_api' %}";
+        const panelApiUrlBase = "{% url 'reports:report_panel_api' pk=0 %}".replace(/0\/$/, '');
+        let selectedReportId = null;
+
+        const COLORS = { red: '#dc2626', amber: '#f59e0b', green: '#16a34a' };
+
+        const map = L.map('authorityMap').setView([9.9312, 76.2673], 11); // Kerala default
+        // Canonical single-host OSM tile URL — the old {s}. subdomain form is
+        // blocked by the OSM tile CDN ("Access blocked" tiles).
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            crossOrigin: true,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const markerLayer = L.layerGroup().addTo(map);
+
+        function markerColor(r) {
+            if (r.dispatch_state === 'ACTIVE') return COLORS.amber;
+            if (r.dispatch_state === 'COMPLETED') return COLORS.green;
+            return r.is_venomous ? COLORS.red : COLORS.green;
+        }
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function badge(status) {
+            const colors = {
+                UNASSIGNED: ['#fee2e2', '#b91c1c'], ASSIGNED: ['#fef3c7', '#92400e'],
+                ACCEPTED: ['#dbeafe', '#1d4ed8'], ON_THE_WAY: ['#dbeafe', '#1d4ed8'],
+                AT_LOCATION: ['#ede9fe', '#6d28d9'], COMPLETED: ['#dcfce7', '#15803d']
+            };
+            const c = colors[status] || ['#f1f5f9', '#475569'];
+            return `<span style="background:${c[0]};color:${c[1]};padding:2px 8px;border-radius:999px;font-weight:600;font-size:0.72rem;">${esc(String(status).replace(/_/g, ' '))}</span>`;
+        }
+
+        window.resetPanel = function () {
+            selectedReportId = null;
+            document.getElementById('reportPanelBody').innerHTML = '';
+            document.getElementById('panelHint').classList.remove('d-none');
+            document.getElementById('panelClose').classList.add('d-none');
+            document.getElementById('panelTitle').innerHTML =
+                '<i class="fa-solid fa-file-medical me-1" style="color:var(--primary);"></i> Report Details';
+            refreshMarkers();
+        };
+
+        function refreshMarkers() {
+            fetch(reportsApiUrl, { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(data => {
+                    markerLayer.clearLayers();
+                    const bounds = [];
+                    (data.reports || []).forEach(r => {
+                        const latLng = [r.latitude, r.longitude];
+                        bounds.push(latLng);
+                        const m = L.circleMarker(latLng, {
+                            color: markerColor(r), fillColor: markerColor(r),
+                            fillOpacity: 0.85, radius: r.id === selectedReportId ? 11 : 7,
+                            weight: r.id === selectedReportId ? 3 : 2
+                        });
+                        m.bindPopup(
+                            `<div style="min-width:170px">` +
+                            `<strong style="color:${markerColor(r)}">Snake Sighting #${r.id}</strong><br>` +
+                            `<span>${esc(r.species || (r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS'))} · ${esc(r.location_name)}</span><br>` +
+                            `<small>(${r.latitude}, ${r.longitude})</small><br>` +
+                            `<small>Status: <b>${esc(r.assignment.status_display)}</b>` +
+                            (r.assignment.ranger ? ` · Ranger ${esc(r.assignment.ranger)}` : '') + `</small></div>`
+                        );
+                        m.on('click', () => openPanel(r.id));
+                        m.addTo(markerLayer);
+                    });
+                    document.getElementById('mapEmptyState').classList.toggle('d-none', bounds.length > 0);
+                    if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
+                })
+                .catch(err => console.error('Error loading report markers:', err));
+        }
+
+        function renderPanel(p) {
+            selectedReportId = p.id;
+            document.getElementById('panelTitle').innerHTML =
+                `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Snake Sighting #${p.id}`;
+            document.getElementById('panelClose').classList.remove('d-none');
+
+            let html = '';
+            if (p.image_url) {
+                html += `<img src="${esc(p.image_url)}" alt="snake report" class="w-100 mb-2 rounded-3"
+                          style="max-height:190px;object-fit:cover;border:1px solid #e2e8f0;">`;
+            }
+            html += `<table class="table table-sm mb-2" style="font-size:0.82rem;">
+                <tr><td class="text-muted" style="width:42%;">Snake Status</td>
+                    <td><b style="color:${p.is_venomous ? '#dc2626' : '#16a34a'}">${esc(p.snake_status)}</b>
+                        ${p.confidence ? `<span class="text-muted">· ${p.confidence}% conf.</span>` : ''}</td></tr>
+                ${p.species ? `<tr><td class="text-muted">Species</td><td>${esc(p.species)}</td></tr>` : ''}
+                <tr><td class="text-muted">Reported</td><td>${esc(p.reported_at)}</td></tr>
+                <tr><td class="text-muted">Location</td><td>${esc(p.location_name)}</td></tr>
+                <tr><td class="text-muted">Coordinates</td><td>${p.latitude}, ${p.longitude}</td></tr>
+                <tr><td class="text-muted">Assignment</td><td>${badge(p.status)}${p.ranger ? ` <b>${esc(p.ranger_name || p.ranger)}</b>${p.distance_km != null ? ` · ${p.distance_km} km` : ''}` : ''}</td></tr>
+              </table>`;
+            html += `<a href="${esc(p.detail_url)}" class="fw-semibold text-decoration-none" style="color:var(--primary);">Open full report &raquo;</a>`;
+
+            if (p.assigned) {
+                html += `<div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span><b>${esc(p.ranger_name || p.ranger)}</b> is handling this incident.<br>
+                    <small class="text-muted">Assigned at ${esc(p.assigned_at || '')}</small></span>
+                    <form method="post" action="/reports/assignments/${p.assignment_id}/cancel/"
+                          onsubmit="return confirm('Cancel this assignment so it can be reassigned?');" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-rotate me-1"></i>Cancel &amp; Reassign</button>
+                    </form>
+                </div>`;
+            } else if (p.candidates && p.candidates.length) {
+                html += `<div class="mt-2 pt-2 border-top">
+                    <div class="fw-semibold mb-1" style="font-size:0.8rem;">
+                        <i class="fa-solid fa-user-plus me-1" style="color:var(--primary);"></i>Available Rangers Near This Location</div>`;
+                p.candidates.forEach(c => {
+                    html += `<form method="post" action="/reports/${p.id}/assign/" class="assign-form d-flex justify-content-between align-items-center py-1 border-bottom">
+                        {% csrf_token %}
+                        <input type="hidden" name="ranger_id" value="${c.id}">
+                        <span>${esc(c.name)} <span class="text-muted">· ${esc(c.location)}${c.distance_km != null ? ` · ${c.distance_km} km` : ''} · AVAILABLE</span></span>
+                        <button class="btn btn-teal btn-sm">Assign</button>
+                    </form>`;
+                });
+                html += `</div>`;
+            } else {
+                html += `<div class="mt-2 pt-2 border-top text-muted">No AVAILABLE rangers are registered in or near this location.</div>`;
+            }
+
+            document.getElementById('panelHint').classList.add('d-none');
+            document.getElementById('reportPanelBody').innerHTML = html;
+
+            // Intercept assign submits -> AJAX so the map stays alive (§12/§17)
+            document.querySelectorAll('#reportPanelBody form.assign-form').forEach(f => {
+                f.addEventListener('submit', function (ev) {
+                    ev.preventDefault();
+                    const fd = new FormData(f);
+                    fetch(f.action, {
+                        method: 'POST', body: fd, credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(res => res.json())
+                    .then(j => {
+                        if (j.success) {
+                            openPanel(p.id);       // panel shows ASSIGNED state
+                            refreshMarkers();      // marker colour updates
+                        } else {
+                            alert(j.error || 'Could not create the assignment.');
+                        }
+                    })
+                    .catch(() => alert('Network error while assigning the ranger.'));
+                });
+            });
+        }
+
+        function openPanel(reportId) {
+            fetch(panelApiUrlBase + reportId + '/', { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(renderPanel)
+                .catch(err => console.error('Error loading report panel:', err));
+        }
+
+        refreshMarkers();
+        setInterval(refreshMarkers, 30000);  // keep statuses fresh without reload
+    });
+</script>
+{% endblock %}

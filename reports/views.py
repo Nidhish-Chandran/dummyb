@@ -247,25 +247,30 @@ def assign_responder_view(request, pk):
     active assignment is CANCELLED and its ranger's availability recomputed.
     """
     report = get_object_or_404(SightingReport, pk=pk)
+    wants_json = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    def _fail(msg):
+        if wants_json:
+            return JsonResponse({'success': False, 'error': msg}, status=400)
+        messages.error(request, msg)
+        return redirect('reports:detail', pk=pk)
+
     if request.method == 'POST':
         ranger_id = request.POST.get('ranger_id') or request.POST.get('responder_id')
         if ranger_id:
             ranger_user = get_object_or_404(User, pk=ranger_id)
             prof = getattr(ranger_user, 'profile', None)
             if prof is None or prof.effective_role != UserProfile.ROLE_RANGER:
-                messages.error(request, "Selected user is not a registered Ranger.")
-                return redirect('reports:detail', pk=pk)
+                return _fail("Selected user is not a registered Ranger.")
 
             # Location guard: the chosen ranger must be relevant to THIS report
             candidates = get_candidate_rangers(report, only_available=False)
             if not any(c['user'].pk == ranger_user.pk for c in candidates):
-                messages.error(request,
+                return _fail(
                     "Access Denied: That ranger is not registered in or near this report's location.")
-                return redirect('reports:detail', pk=pk)
             if prof.availability != UserProfile.AVAILABILITY_AVAILABLE:
-                messages.error(request,
+                return _fail(
                     f"{ranger_user.username} is currently {prof.get_availability_display()} and cannot take a new incident.")
-                return redirect('reports:detail', pk=pk)
 
             # Cancel any existing active assignment for this report
             for prev in report.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES):
@@ -290,6 +295,9 @@ def assign_responder_view(request, pk):
             messages.success(request,
                 f"Incident #{report.pk} assigned to ranger {prof.display_name}"
                 + (f" ({dist} km away)." if dist is not None else "."))
+            if wants_json:
+                return JsonResponse({'success': True,
+                                     'message': f"Incident #{report.pk} assigned to {prof.display_name}."})
         else:
             for prev in report.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES):
                 prev.status = RangerAssignment.STATUS_CANCELLED
@@ -395,6 +403,31 @@ def _active_assignment_info(report):
 @login_required
 @authority_required
 @never_cache
+def authority_map_view(request):
+    """Dedicated Authority Operations Map page (/reports/map/).
+
+    Server-side permission enforced via @authority_required — Citizens and
+    Rangers receive 403/redirect even if they type the URL manually. The map
+    itself loads real DB report markers through the existing
+    api/map-reports/ endpoint (no fake/hard-coded data).
+    """
+    from django.db.models import Count, Max
+    geo_count = SightingReport.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True).count()
+    unassigned_venomous = SightingReport.objects.filter(
+        venomous=True, ranger_assignments__isnull=True
+    ).exclude(latitude__isnull=True).count()
+    active = RangerAssignment.objects.filter(status__in=RangerAssignment.ACTIVE_STATUSES).count()
+    completed = RangerAssignment.objects.filter(status=RangerAssignment.STATUS_COMPLETED).count()
+    context = {
+        'geo_report_count': geo_count,
+        'unassigned_venomous': unassigned_venomous,
+        'active_assignments': active,
+        'completed_assignments': completed,
+        'page_title': 'Authority Operations Map',
+    }
+    return render(request, 'reports/authority_map.html', context)
+
+
 def authority_map_reports_api(request):
     """JSON list of individual snake report markers for the Authority map.
 

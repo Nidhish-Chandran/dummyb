@@ -160,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const lat = {{ report.latitude }};
     const lng = {{ report.longitude }};
     const map = L.map('assignmentMap').setView([lat, lng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
     L.circleMarker([lat, lng], { color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.8, radius: 9 })
