@@ -206,7 +206,9 @@
     // ===== Authority Geolocation Map: report markers + ranger assignment =====
     document.addEventListener("DOMContentLoaded", function () {
         const map = L.map('mainDashboardMap').setView([9.9312, 76.2673], 11);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Canonical single-host OSM tile URL — the old {s}. subdomain form is
+        // blocked by the OSM tile CDN ("Access blocked" tiles).
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
