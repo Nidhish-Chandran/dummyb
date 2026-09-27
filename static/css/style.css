@@ -1,57 +1,62 @@
 /* =============================================================
-   VENOM WATCH — Professional Design System
-   Minimal · Medical-grade · Public-Safety SaaS
+   VENOM WATCH — Vibrant Design System
+   Bright · Modern · Public-Safety SaaS (light theme)
    ============================================================= */
 
 /* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
-    /* Brand */
-    --primary:        #0f766e;
-    --primary-hover:  #115e59;
-    --primary-light:  #f0fdfa;
-    --primary-muted:  #ccfbf1;
+    /* Brand — vivid emerald/teal */
+    --primary:        #059669;
+    --primary-hover:  #047857;
+    --primary-light:  #ecfdf5;
+    --primary-muted:  #a7f3d0;
+    --primary-deep:   #0d9488;
+    --accent:         #0ea5e9;
+    --accent-light:   #e0f2fe;
+    --brand-gradient: linear-gradient(135deg, #059669 0%, #0d9488 55%, #0891b2 100%);
 
     /* Semantic */
-    --success:        #15803d;
+    --success:        #16a34a;
     --success-light:  #f0fdf4;
     --success-muted:  #bbf7d0;
-    --warning:        #b45309;
+    --warning:        #d97706;
     --warning-light:  #fffbeb;
     --warning-muted:  #fde68a;
-    --danger:         #dc2626;
-    --danger-light:   #fef2f2;
-    --danger-muted:   #fecaca;
-    --info:           #2563eb;
-    --info-light:     #eff6ff;
-    --info-muted:     #bfdbfe;
+    --danger:         #e11d48;
+    --danger-light:   #fff1f2;
+    --danger-muted:   #fecdd3;
+    --info:           #0284c7;
+    --info-light:     #f0f9ff;
+    --info-muted:     #bae6fd;
 
     /* Text */
     --text:           #0f172a;
     --text-secondary: #475569;
     --text-muted:     #64748b;
 
-    /* Surface */
-    --background:     #f8fafc;
+    /* Surface — soft tinted background */
+    --background:     #f4f7fb;
     --surface:        #ffffff;
-    --surface-hover:  #f8fafc;
+    --surface-hover:  #f6f9fc;
 
     /* Border */
     --border:         #e2e8f0;
     --border-hover:   #cbd5e1;
 
     /* Radius */
-    --radius-sm:      6px;
-    --radius:         8px;
-    --radius-lg:      10px;
+    --radius-sm:      8px;
+    --radius:         12px;
+    --radius-lg:      16px;
 
     /* Shadow */
-    --shadow-xs:      0 1px 2px rgba(15, 23, 42, 0.04);
-    --shadow-sm:      0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-    --shadow-md:      0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    --shadow-xs:      0 1px 2px rgba(13, 148, 136, 0.05);
+    --shadow-sm:      0 2px 6px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md:      0 8px 20px -6px rgba(5, 150, 105, 0.14), 0 3px 8px -3px rgba(15, 23, 42, 0.08);
+    --shadow-lg:      0 16px 40px -12px rgba(5, 150, 105, 0.22), 0 4px 12px -4px rgba(15, 23, 42, 0.10);
 
     /* Transitions */
     --transition:     150ms ease;
-    --transition-md:  200ms ease;
+    --transition-md:  250ms cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Backward-compat aliases used in templates */
     --bg-main:            var(--background);
@@ -86,6 +91,10 @@
 
 body {
     background-color: var(--background);
+    background-image:
+        radial-gradient(1100px 500px at 100% -10%, rgba(14, 165, 233, 0.07), transparent 60%),
+        radial-gradient(900px 480px at -10% 0%, rgba(5, 150, 105, 0.08), transparent 55%);
+    background-attachment: fixed;
     color: var(--text);
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 15px;
@@ -110,26 +119,29 @@ body {
 
 /* ─── Navbar ─────────────────────────────────────────────────── */
 .navbar-venom {
-    background: var(--surface) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border);
-    box-shadow: var(--shadow-xs);
+    box-shadow: 0 2px 14px rgba(5, 150, 105, 0.07);
     min-height: 64px;
     padding-top: 0;
     padding-bottom: 0;
 }
 
 .navbar-brand {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 800;
     color: var(--text) !important;
-    letter-spacing: -0.3px;
+    letter-spacing: -0.4px;
     padding-top: 0;
     padding-bottom: 0;
 }
 
 .navbar-brand .fa-staff-snake {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     color: var(--primary);
+    filter: drop-shadow(0 2px 4px rgba(5, 150, 105, 0.35));
 }
 
 .navbar-brand span {
@@ -137,6 +149,10 @@ body {
 }
 
 .navbar-brand .text-teal {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     color: var(--primary) !important;
 }
 
@@ -178,7 +194,7 @@ body {
 }
 
 .navbar-toggler:focus {
-    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
 }
 
 /* ─── Buttons ────────────────────────────────────────────────── */
@@ -199,24 +215,28 @@ body {
     font-size: 0.8125rem;
 }
 
-/* Primary / Teal */
+/* Primary / Teal — vibrant gradient */
 .btn-teal,
 .btn-neon {
+    background-image: var(--brand-gradient);
     background-color: var(--primary);
     color: #ffffff;
-    border: 1px solid var(--primary);
+    border: 1px solid transparent;
+    box-shadow: 0 4px 12px -3px rgba(5, 150, 105, 0.45);
 }
 
 .btn-teal:hover,
 .btn-neon:hover {
+    background-image: linear-gradient(135deg, #047857 0%, #0f766e 55%, #0e7490 100%);
     background-color: var(--primary-hover);
-    border-color: var(--primary-hover);
     color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -4px rgba(5, 150, 105, 0.5);
 }
 
 .btn-teal:focus,
 .btn-neon:focus {
-    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3);
     outline: none;
 }
 
@@ -224,35 +244,41 @@ body {
 .btn-outline-teal {
     background-color: transparent;
     color: var(--primary);
-    border: 1px solid var(--primary);
+    border: 1.5px solid var(--primary);
     border-radius: var(--radius-sm);
     font-weight: 600;
 }
 
 .btn-outline-teal:hover {
-    background-color: var(--primary);
+    background-image: var(--brand-gradient);
     color: #ffffff;
     border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -4px rgba(5, 150, 105, 0.45);
 }
 
 .btn-outline-teal:focus {
-    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3);
     outline: none;
 }
 
 /* Danger */
 .btn-danger-venom {
+    background-image: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
     background-color: var(--danger);
     color: #ffffff;
-    border: 1px solid var(--danger);
+    border: 1px solid transparent;
     border-radius: var(--radius-sm);
     font-weight: 600;
+    box-shadow: 0 4px 12px -3px rgba(225, 29, 72, 0.4);
 }
 
 .btn-danger-venom:hover {
-    background-color: #b91c1c;
-    border-color: #b91c1c;
+    background-image: linear-gradient(135deg, #be123c 0%, #9f1239 100%);
+    background-color: #be123c;
     color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -4px rgba(225, 29, 72, 0.45);
 }
 
 /* Bootstrap danger override */
@@ -297,19 +323,30 @@ body {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-md), transform var(--transition-md),
+                border-color var(--transition-md);
+}
+
+.card-clean:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+    border-color: var(--primary-muted);
 }
 
 .card-danger-clean {
-    border-left: 3px solid var(--danger);
+    border-left: 4px solid var(--danger);
+    background-image: linear-gradient(90deg, rgba(225, 29, 72, 0.045), transparent 30%);
 }
 
 .card-warning-clean {
-    border-left: 3px solid var(--warning);
+    border-left: 4px solid var(--warning);
+    background-image: linear-gradient(90deg, rgba(217, 119, 6, 0.05), transparent 30%);
 }
 
 .card-success-clean {
-    border-left: 3px solid var(--success);
+    border-left: 4px solid var(--success);
+    background-image: linear-gradient(90deg, rgba(22, 163, 74, 0.05), transparent 30%);
 }
 
 /* Auth pages: replaces old glass-card dark theme */
@@ -317,14 +354,14 @@ body {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
 }
 
 /* Bootstrap card override */
 .card {
     border-color: var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-sm);
 }
 
 /* ─── Forms ──────────────────────────────────────────────────── */
@@ -357,7 +394,7 @@ body {
 .form-control:focus,
 .form-select:focus {
     border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12) !important;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15) !important;
     outline: none;
 }
 
@@ -383,59 +420,62 @@ textarea.form-control {
 }
 
 /* ─── Badges ─────────────────────────────────────────────────── */
-/* Venom semantic badges */
+/* Venom semantic badges — vivid pills */
 .badge-venomous {
     display: inline-flex;
     align-items: center;
-    background-color: var(--danger-light);
-    color: #991b1b;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25em 0.6em;
-    border-radius: 4px;
-    border: 1px solid rgba(220, 38, 38, 0.18);
+    background-image: linear-gradient(135deg, rgba(225, 29, 72, 0.12), rgba(244, 63, 94, 0.18));
+    color: #be123c;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.3em 0.75em;
+    border-radius: 999px;
+    border: 1px solid rgba(225, 29, 72, 0.3);
     white-space: nowrap;
+    letter-spacing: 0.02em;
 }
 
 .badge-non-venomous {
     display: inline-flex;
     align-items: center;
-    background-color: var(--success-light);
-    color: var(--success);
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25em 0.6em;
-    border-radius: 4px;
-    border: 1px solid rgba(21, 128, 61, 0.18);
+    background-image: linear-gradient(135deg, rgba(22, 163, 74, 0.1), rgba(34, 197, 94, 0.16));
+    color: #15803d;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.3em 0.75em;
+    border-radius: 999px;
+    border: 1px solid rgba(22, 163, 74, 0.3);
     white-space: nowrap;
+    letter-spacing: 0.02em;
 }
 
 .badge-mild {
     display: inline-flex;
     align-items: center;
-    background-color: var(--warning-light);
-    color: #92400e;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25em 0.6em;
-    border-radius: 4px;
-    border: 1px solid rgba(180, 83, 9, 0.18);
+    background-image: linear-gradient(135deg, rgba(217, 119, 6, 0.1), rgba(245, 158, 11, 0.18));
+    color: #b45309;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.3em 0.75em;
+    border-radius: 999px;
+    border: 1px solid rgba(217, 119, 6, 0.3);
     white-space: nowrap;
+    letter-spacing: 0.02em;
 }
 
 .badge-status {
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 4px;
-    padding: 0.25em 0.6em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.3em 0.75em;
 }
 
 /* Bootstrap badge overrides — keep consistent sizing */
 .badge {
     font-size: 0.72rem;
     font-weight: 600;
-    border-radius: 4px;
-    padding: 0.28em 0.58em;
+    border-radius: 999px;
+    padding: 0.3em 0.7em;
     letter-spacing: 0.01em;
 }
 
@@ -525,28 +565,47 @@ textarea.form-control {
 
 /* ─── Stat Boxes (Dashboard Metrics) ────────────────────────── */
 .stat-box {
+    position: relative;
+    overflow: hidden;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 1rem 1.1rem;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-md), box-shadow var(--transition-md);
+}
+
+.stat-box::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--brand-gradient);
+    opacity: 0.85;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .stat-box h4 {
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-size: 1.45rem;
+    font-weight: 800;
     line-height: 1;
+    letter-spacing: -0.5px;
 }
 
 .stat-icon {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: var(--radius);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 1.05rem;
     flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
 }
 
 /* Semantic icon backgrounds */
@@ -559,18 +618,20 @@ textarea.form-control {
     border-radius: var(--radius);
     overflow: hidden;
     border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
 }
 
 .leaflet-container {
-    background: #f1f5f9 !important;
+    background: #eef4f8 !important;
 }
 
 .leaflet-popup-content-wrapper {
     background: var(--surface) !important;
     color: var(--text) !important;
     border-radius: var(--radius) !important;
-    box-shadow: var(--shadow-md) !important;
+    box-shadow: var(--shadow-lg) !important;
     font-size: 0.85rem;
+    border: 1px solid var(--primary-muted);
 }
 
 .leaflet-popup-tip {
@@ -613,14 +674,19 @@ textarea.form-control {
 
 /* ─── Authentication Pages Layout ───────────────────────────── */
 .auth-page {
-    background-color: var(--background);
+    background:
+        radial-gradient(900px 420px at 85% -5%, rgba(14, 165, 233, 0.14), transparent 60%),
+        radial-gradient(800px 420px at 0% 105%, rgba(5, 150, 105, 0.14), transparent 55%),
+        var(--background);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
 .auth-header {
-    background: var(--surface);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--border);
     padding: 0.75rem 0;
 }
@@ -683,7 +749,7 @@ textarea.form-control {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-lg);
     padding: 2rem;
 }
 
@@ -699,19 +765,20 @@ textarea.form-control {
 }
 
 .auth-icon-wrapper {
-    width: 48px;
-    height: 48px;
-    background-color: var(--primary-light);
+    width: 54px;
+    height: 54px;
+    background-image: var(--brand-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 1rem;
+    box-shadow: 0 8px 20px -6px rgba(5, 150, 105, 0.5);
 }
 
 .auth-icon-wrapper i {
-    color: var(--primary);
-    font-size: 1.2rem;
+    color: #ffffff !important;
+    font-size: 1.35rem;
 }
 
 .auth-title {
@@ -752,7 +819,7 @@ textarea.form-control {
 
 .auth-form-control:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
     outline: none;
 }
 
@@ -762,21 +829,25 @@ textarea.form-control {
 
 .auth-btn-primary {
     width: 100%;
+    background-image: var(--brand-gradient);
     background-color: var(--primary);
     color: #ffffff;
-    border: 1px solid var(--primary);
+    border: 1px solid transparent;
     border-radius: var(--radius-sm);
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 700;
     padding: 0.6rem 1rem;
     min-height: 42px;
-    transition: background-color var(--transition-md), border-color var(--transition-md);
+    box-shadow: 0 6px 16px -5px rgba(5, 150, 105, 0.5);
+    transition: transform var(--transition-md), box-shadow var(--transition-md),
+                filter var(--transition-md);
 }
 
 .auth-btn-primary:hover {
-    background-color: var(--primary-hover);
-    border-color: var(--primary-hover);
+    filter: brightness(0.94) saturate(1.1);
     color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px -6px rgba(5, 150, 105, 0.55);
 }
 
 .auth-divider {
@@ -903,7 +974,7 @@ textarea.form-control {
 
 .auth-form-select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
     outline: none;
 }
 
@@ -914,10 +985,11 @@ textarea.form-control {
 
 .page-header h3,
 .page-header h2 {
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-size: 1.45rem;
+    font-weight: 800;
     color: var(--text);
     margin-bottom: 0.25rem;
+    letter-spacing: -0.5px;
 }
 
 .page-header p {
@@ -942,20 +1014,21 @@ textarea.form-control {
 /* ─── AI Result Panel ────────────────────────────────────────── */
 .ai-result-panel {
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
+    box-shadow: var(--shadow-sm);
 }
 
 .ai-result-panel .ai-result-header {
-    padding: 0.6rem 1rem;
+    padding: 0.65rem 1rem;
     border-bottom: 1px solid var(--border);
-    background: #f8fafc;
+    background-image: linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(14, 165, 233, 0.08));
     font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-muted);
+    font-weight: 700;
+    color: var(--primary-hover);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
 }
 
 .ai-result-panel .ai-result-body {
@@ -966,10 +1039,28 @@ textarea.form-control {
 footer {
     margin-top: auto;
     border-top: 1px solid var(--border);
-    background: var(--surface);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     padding: 1rem 0;
     font-size: 0.8125rem;
     color: var(--text-muted);
+}
+
+/* ─── Emergency banner pulse ─────────────────────────────────── */
+.emergency-banner {
+    animation: vw-pulse-danger 2.4s ease-in-out infinite;
+}
+
+@keyframes vw-pulse-danger {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.18); }
+    50%      { box-shadow: 0 0 0 8px rgba(225, 29, 72, 0.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .emergency-banner { animation: none; }
+    .card-clean:hover, .stat-box:hover, .btn-teal:hover, .btn-outline-teal:hover,
+    .btn-danger-venom:hover, .auth-btn-primary:hover { transform: none; }
 }
 
 /* ─── Link styles ────────────────────────────────────────────── */
