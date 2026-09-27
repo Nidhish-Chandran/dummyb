@@ -9,7 +9,7 @@ def _get_profile(user):
 
 def authority_required(view_func):
     """
-    Platform Administrator ONLY (Authority console).
+    Authority console access — Platform Administrators AND Authority officers.
 
     Rangers are deliberately excluded — ranger access lives under /ranger/
     with its own dashboard, assignments and object-level security.
@@ -22,15 +22,32 @@ def authority_required(view_func):
             return redirect_to_login(request.get_full_path(), login_url='accounts:login')
 
         profile = _get_profile(request.user)
-        if profile is not None and profile.is_admin:
+        if profile is not None and (profile.is_admin or profile.is_authority_officer):
             return view_func(request, *args, **kwargs)
 
         if profile is not None and profile.is_ranger:
             raise PermissionDenied(
                 "Access Denied: Rangers must use the Ranger Console (/ranger/). "
-                "The Authority dashboard is restricted to platform administrators.")
+                "The Authority dashboard is restricted to authority officers.")
 
-        raise PermissionDenied("Access Denied: Higher Authority privileges required to access GIS map and surveillance data.")
+        raise PermissionDenied("Access Denied: Authority officer privileges required to access GIS map and surveillance data.")
+
+    return _wrapped_view
+
+
+def citizen_required(view_func):
+    """Citizen module access — any authenticated user that is not a ranger."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path(), login_url='accounts:login')
+
+        profile = _get_profile(request.user)
+        if profile is not None and profile.is_ranger:
+            raise PermissionDenied(
+                "Access Denied: Rangers must use the Ranger Console (/ranger/).")
+
+        return view_func(request, *args, **kwargs)
 
     return _wrapped_view
 

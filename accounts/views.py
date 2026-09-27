@@ -29,6 +29,8 @@ def get_role_landing(user):
         return reverse('admin:index')
     if profile.is_ranger:
         return reverse('ranger:dashboard')
+    if profile.is_authority_officer:
+        return reverse('reports:list')
     return reverse('reports:list')
 
 

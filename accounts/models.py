@@ -7,17 +7,20 @@ from django.dispatch import receiver
 class UserProfile(models.Model):
     ROLE_CITIZEN = 'citizen'
     ROLE_RANGER = 'ranger'
+    ROLE_AUTHORITY = 'authority'
     ROLE_ADMIN = 'admin'
 
     ROLE_CHOICES = [
         (ROLE_CITIZEN, 'Citizen / General Public'),
-        (ROLE_RANGER, 'Forest Ranger / Wildlife Authority'),
+        (ROLE_RANGER, 'Forest Ranger (Field Responder)'),
+        (ROLE_AUTHORITY, 'Authority Officer (Dispatch & Verification)'),
         (ROLE_ADMIN, 'Platform Administrator'),
     ]
 
-    # Roles a visitor may self-register for. Ranger/Admin accounts are
-    # provisioned by an existing administrator (Django admin or seed script).
-    SELF_SERVICE_ROLES = [ROLE_CITIZEN]
+    # Roles a visitor may self-register for. Every module can register —
+    # Ranger/Authority applicants provide operational details which are
+    # verified by a platform administrator.
+    SELF_SERVICE_ROLES = [ROLE_CITIZEN, ROLE_RANGER, ROLE_AUTHORITY]
 
     AVAILABILITY_AVAILABLE = 'AVAILABLE'
     AVAILABILITY_BUSY = 'BUSY'
@@ -31,6 +34,8 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_CITIZEN)
+    full_name = models.CharField(max_length=150, blank=True, null=True,
+                                 help_text="Full name as per official records")
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     organization = models.CharField(max_length=100, blank=True, null=True, help_text="Department, Hospital, or Agency")
     assigned_region = models.CharField(max_length=100, blank=True, null=True, help_text="Operational District/Region")
@@ -45,7 +50,7 @@ class UserProfile(models.Model):
 
     @property
     def display_name(self):
-        full = self.user.get_full_name().strip()
+        full = self.user.get_full_name().strip() or (self.full_name or '').strip()
         return full or self.user.username
 
     def __str__(self):
@@ -68,12 +73,20 @@ class UserProfile(models.Model):
 
     @property
     def is_admin(self):
+        """Platform Administrator (superuser or explicit admin role)."""
         return self.effective_role == self.ROLE_ADMIN
+
+    @property
+    def is_authority_officer(self):
+        """Authority officer role — dispatch & verification console."""
+        return self.effective_role == self.ROLE_AUTHORITY
 
     # --- Backwards-compatible aliases used across reports/hotspots/dashboard ---
     @property
     def is_authority(self):
-        return self.is_ranger or self.is_admin
+        """Anyone allowed on the Authority console: admins + authority officers.
+        Rangers are NOT authority — they have their own isolated console."""
+        return self.is_admin or self.is_authority_officer
 
     @property
     def is_responder(self):

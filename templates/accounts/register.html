@@ -105,6 +105,31 @@
                 </div>
             </div>
 
+            <!-- Ranger-only fields -->
+            <div id="ranger-fields" style="display:none; grid-column: 1 / -1;" class="auth-form-row">
+                <div class="auth-form-group">
+                    <label class="auth-form-label" for="{{ form.registered_location.id_for_label }}">Registered location *</label>
+                    {{ form.registered_location }}
+                    {% for error in form.registered_location.errors %}
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="auth-form-group">
+                    <label class="auth-form-label" for="{{ form.latitude.id_for_label }}">Base latitude *</label>
+                    {{ form.latitude }}
+                    {% for error in form.latitude.errors %}
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="auth-form-group">
+                    <label class="auth-form-label" for="{{ form.longitude.id_for_label }}">Base longitude *</label>
+                    {{ form.longitude }}
+                    {% for error in form.longitude.errors %}
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
             <div class="auth-form-group" style="grid-column: 1 / -1; margin-top: 1.25rem;">
                 <label class="auth-form-label" for="{{ form.organization.id_for_label }}">Organization</label>
                 {{ form.organization }}
@@ -128,4 +153,24 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var roleSelect = document.getElementById('{{ form.role.id_for_label }}');
+    var rangerFields = document.getElementById('ranger-fields');
+    var orgInput = document.getElementById('{{ form.organization.id_for_label }}');
+    var orgLabel = orgInput ? orgInput.previousElementSibling : null;
+    function syncRoleUI() {
+        if (!roleSelect) return;
+        var role = roleSelect.value;
+        rangerFields.style.display = (role === 'ranger') ? '' : 'none';
+        if (orgLabel) {
+            orgLabel.textContent = (role === 'authority') ? 'Organization / Department *' : 'Organization';
+        }
+    }
+    if (roleSelect) { roleSelect.addEventListener('change', syncRoleUI); syncRoleUI(); }
+})();
+</script>
 {% endblock %}
