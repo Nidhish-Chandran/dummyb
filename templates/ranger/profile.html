@@ -26,6 +26,20 @@
                 <i class="fa-solid fa-floppy-disk me-1"></i> Save Profile
             </button>
         </form>
+
+        <!-- Danger zone: session -->
+        <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h6 class="fw-semibold mb-0" style="font-size: 0.95rem; color: var(--text);">End your session</h6>
+                <small class="text-muted">Sign out of your Venom Watch ranger account on this device.</small>
+            </div>
+            <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

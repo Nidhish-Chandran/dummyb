@@ -1,6 +1,6 @@
-# Python
+# Compiled and build artifacts
 __pycache__/
 *.pyc
 
-# Django
+# Database files
 db.sqlite3
