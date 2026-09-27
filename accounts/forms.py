@@ -58,11 +58,12 @@ class CustomAuthenticationForm(AuthenticationForm):
 
 
 class UserRegistrationForm(UserCreationForm):
-    """Registration form for ALL modules (Citizen / Ranger / Authority).
+    """Public registration form — creates CITIZEN accounts only.
 
-    Role-conditional fields are validated server-side: Rangers must supply a
-    registered location + valid coordinates; Authority officers must supply
-    their department/organisation.
+    Authority / Ranger / Admin accounts cannot be self-registered; they are
+    provisioned by the platform administrator (Django admin or the demo seed
+    command).  The role is therefore fixed to CITIZEN on the server side and
+    any attempt to POST a different role is rejected.
     """
     email = forms.EmailField(
         required=True,
@@ -82,13 +83,10 @@ class UserRegistrationForm(UserCreationForm):
         max_length=150, required=False, label="Last name (optional)",
         widget=forms.TextInput(attrs={'class': 'auth-form-control', 'placeholder': 'Last name'})
     )
-    role = forms.ChoiceField(
-        choices=UserProfile.ROLE_CHOICES,
-        initial=UserProfile.ROLE_CITIZEN,
-        label="Account type",
-        help_text="Choose the module you belong to. Ranger/Authority accounts are verified by a platform admin.",
-        widget=forms.Select(attrs={"class": "auth-form-control auth-form-select"})
-    )
+    # Public registration is always CITIZEN.  The role is not a user-editable
+    # choice — any POSTed value other than citizen is rejected in clean_role.
+    role = forms.CharField(
+        widget=forms.HiddenInput(), required=False, initial=UserProfile.ROLE_CITIZEN)
     phone_number = forms.CharField(
         max_length=20, required=False, label="Phone number",
         help_text="Contact number used for emergency verification (required for Ranger/Authority).",
@@ -192,11 +190,12 @@ class UserRegistrationForm(UserCreationForm):
         return phone
 
     def clean_role(self):
-        role = self.cleaned_data.get('role')
+        role = self.cleaned_data.get('role') or UserProfile.ROLE_CITIZEN
         if role not in UserProfile.SELF_SERVICE_ROLES:
             raise ValidationError(
-                "Please choose Citizen, Ranger or Authority. Platform Administrator "
-                "accounts cannot be self-registered."
+                "Public registration is available for Citizen accounts only. "
+                "Ranger, Authority and Administrator accounts are created by "
+                "the platform administrator."
             )
         return role
 

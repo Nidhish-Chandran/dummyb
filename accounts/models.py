@@ -17,10 +17,11 @@ class UserProfile(models.Model):
         (ROLE_ADMIN, 'Platform Administrator'),
     ]
 
-    # Roles a visitor may self-register for. Every module can register —
-    # Ranger/Authority applicants provide operational details which are
-    # verified by a platform administrator.
-    SELF_SERVICE_ROLES = [ROLE_CITIZEN, ROLE_RANGER, ROLE_AUTHORITY]
+    # Roles a visitor may self-register for through the public form.
+    # AUTHORITY / RANGER / ADMIN accounts are provisioned only by the
+    # platform administrator (Django admin or seed command) — never via
+    # public registration.
+    SELF_SERVICE_ROLES = [ROLE_CITIZEN]
 
     AVAILABILITY_AVAILABLE = 'AVAILABLE'
     AVAILABILITY_BUSY = 'BUSY'
