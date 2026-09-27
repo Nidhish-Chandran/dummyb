@@ -62,26 +62,33 @@
 
         .hero-section {
             padding: 5rem 0 4rem;
-            background: linear-gradient(180deg, var(--background) 0%, var(--surface) 100%);
+            background:
+                radial-gradient(800px 400px at 90% -10%, rgba(14, 165, 233, 0.12), transparent 60%),
+                radial-gradient(700px 400px at -5% 20%, rgba(5, 150, 105, 0.12), transparent 55%),
+                linear-gradient(180deg, var(--background) 0%, var(--surface) 100%);
         }
 
         .hero-eyebrow {
             display: inline-block;
             font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--primary);
+            font-weight: 700;
+            color: #ffffff;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 0.75rem;
+            background-image: var(--brand-gradient);
+            padding: 0.35em 0.9em;
+            border-radius: 999px;
+            box-shadow: 0 4px 12px -3px rgba(5, 150, 105, 0.45);
         }
 
         .hero-title {
-            font-size: 2.75rem;
-            font-weight: 700;
+            font-size: 2.9rem;
+            font-weight: 800;
             line-height: 1.15;
             color: var(--text);
             margin-bottom: 1rem;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.025em;
         }
 
         .hero-subtitle {
@@ -108,20 +115,22 @@
             width: 100%;
             max-width: 420px;
             aspect-ratio: 4/3;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--surface) 100%);
-            border: 1px solid var(--border);
+            background-image: linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(14, 165, 233, 0.10) 60%, var(--surface) 100%);
+            border: 1px solid var(--primary-muted);
             border-radius: var(--radius-lg);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 1rem;
+            box-shadow: var(--shadow-lg);
         }
 
         .hero-visual-placeholder i {
-            font-size: 4rem;
+            font-size: 4.25rem;
             color: var(--primary);
-            opacity: 0.8;
+            opacity: 0.9;
+            filter: drop-shadow(0 8px 18px rgba(5, 150, 105, 0.35));
         }
 
         .hero-visual-placeholder span {
@@ -160,27 +169,29 @@
         }
 
         .btn-hero-primary {
+            background-image: var(--brand-gradient);
             background-color: var(--primary);
             color: #ffffff;
-            border: 1px solid var(--primary);
+            border: 1px solid transparent;
             padding: 0.6rem 1.5rem;
             font-size: 0.9375rem;
-            font-weight: 600;
+            font-weight: 700;
             border-radius: var(--radius);
+            box-shadow: 0 6px 16px -5px rgba(5, 150, 105, 0.55);
             transition: all var(--transition-md);
         }
 
         .btn-hero-primary:hover {
-            background-color: var(--primary-hover);
-            border-color: var(--primary-hover);
+            background-image: linear-gradient(135deg, #047857 0%, #0f766e 55%, #0e7490 100%);
             color: #ffffff;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -6px rgba(5, 150, 105, 0.6);
         }
 
         .btn-hero-secondary {
-            background-color: transparent;
-            color: var(--text);
-            border: 1px solid var(--border);
+            background-color: var(--surface);
+            color: var(--primary-hover);
+            border: 1.5px solid var(--primary-muted);
             padding: 0.6rem 1.5rem;
             font-size: 0.9375rem;
             font-weight: 600;
@@ -189,9 +200,10 @@
         }
 
         .btn-hero-secondary:hover {
-            background-color: var(--surface-hover);
-            border-color: var(--border-hover);
-            color: var(--text);
+            background-color: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
         .section-padding {
@@ -219,18 +231,19 @@
             border-radius: var(--radius-lg);
             padding: 1.5rem;
             height: 100%;
-            transition: box-shadow var(--transition-md), border-color var(--transition-md);
+            transition: box-shadow var(--transition-md), border-color var(--transition-md), transform var(--transition-md);
         }
 
         .capability-card:hover {
             border-color: var(--primary-muted);
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
         }
 
         .capability-icon {
-            width: 44px;
-            height: 44px;
-            background-color: var(--primary-light);
+            width: 46px;
+            height: 46px;
+            background-image: linear-gradient(135deg, rgba(5, 150, 105, 0.14), rgba(14, 165, 233, 0.14));
             border-radius: var(--radius);
             display: flex;
             align-items: center;
@@ -240,7 +253,7 @@
 
         .capability-icon i {
             color: var(--primary);
-            font-size: 1.1rem;
+            font-size: 1.2rem;
         }
 
         .capability-title {
@@ -271,17 +284,18 @@
         }
 
         .step-number {
-            width: 36px;
-            height: 36px;
-            background-color: var(--primary);
+            width: 38px;
+            height: 38px;
+            background-image: var(--brand-gradient);
             color: #ffffff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.875rem;
-            font-weight: 600;
+            font-size: 0.9rem;
+            font-weight: 700;
             margin: 0 auto 0.75rem;
+            box-shadow: 0 6px 14px -4px rgba(5, 150, 105, 0.5);
         }
 
         .step-title {
