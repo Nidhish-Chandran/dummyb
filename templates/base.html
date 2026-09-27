@@ -78,15 +78,6 @@
                                 <i class="fa-solid fa-id-card me-1"></i> Profile
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-danger btn-sm nav-link border-0 bg-transparent"
-                                        title="End your session and log out">
-                                    <i class="fa-solid fa-right-from-bracket me-1"></i>Logout
-                                </button>
-                            </form>
-                        </li>
                     {% elif user.is_authenticated and user.profile.is_ranger %}
                         {# ---- RANGER NAV: own console only ---- #}
                         <li class="nav-item">
@@ -170,35 +161,17 @@
                 <!-- Right-side actions -->
                 <div class="d-flex align-items-center gap-2">
                     {% if user.is_authenticated %}
-                        <!-- User dropdown only (no duplicate logout button) -->
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-1"
-                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa-solid fa-circle-user" style="color: var(--primary);"></i>
-                                <span>{{ user.username }}</span>
-                                {% if user.profile.role %}
-                                    <span class="badge bg-light text-dark border ms-1"
-                                          style="font-weight: 500; font-size: 0.68rem;">{{ user.profile.get_role_display }}</span>
-                                {% endif %}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" href="{% if user.profile.is_ranger %}{% url 'ranger:profile' %}{% else %}{% url 'accounts:profile' %}{% endif %}">
-                                        <i class="fa-solid fa-id-card me-2 text-muted"></i> Profile
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form method="post" action="{% url 'accounts:logout' %}">
-                                        {% csrf_token %}
-                                        <button type="submit"
-                                                class="dropdown-item text-danger border-0 bg-transparent w-100 text-start d-flex align-items-center gap-2">
-                                            <i class="fa-solid fa-right-from-bracket"></i> Logout
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                        <!-- User identity: click opens the profile page directly -->
+                        <a href="{% if user.profile.is_ranger %}{% url 'ranger:profile' %}{% else %}{% url 'accounts:profile' %}{% endif %}"
+                           class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 text-decoration-none"
+                           title="View your profile">
+                            <i class="fa-solid fa-circle-user" style="color: var(--primary);"></i>
+                            <span>{{ user.username }}</span>
+                            {% if user.profile.role %}
+                                <span class="badge bg-light text-dark border ms-1"
+                                      style="font-weight: 500; font-size: 0.68rem;">{{ user.profile.get_role_display }}</span>
+                            {% endif %}
+                        </a>
                     {% else %}
                         <a href="{% url 'accounts:login' %}" class="btn btn-outline-secondary btn-sm">Login</a>
                         <a href="{% url 'accounts:register' %}" class="btn btn-teal btn-sm">Register</a>
