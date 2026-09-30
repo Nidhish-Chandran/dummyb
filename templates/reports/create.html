@@ -108,7 +108,20 @@
                                     <span id="geoAlertText">Detecting GPS location…</span>
                                 </div>
 
-                                <div id="pickerMap" class="map-container mb-3" style="height: 240px;"></div>
+                                <!-- Embedded OpenStreetMap iframe (no Leaflet tiles) -->
+                                <div id="pickerMapWrap" class="mb-1 rounded overflow-hidden border" style="position: relative; height: 320px; background: var(--surface-hover);">
+                                    <iframe id="osmEmbed" title="Selected Location Map" loading="lazy"
+                                            style="width: 100%; height: 100%; border: 0; display: block;"
+                                            src=""></iframe>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                                    <small class="text-muted" style="font-size: 0.7rem;">
+                                        Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors
+                                    </small>
+                                    <a id="openOsmLink" href="#" target="_blank" rel="noopener" class="btn btn-outline-teal btn-sm" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open in OpenStreetMap
+                                    </a>
+                                </div>
 
                                 <div class="row g-2">
                                     <div class="col-6">
@@ -147,71 +160,91 @@
         const aiStatusDiv = document.getElementById("aiAnalysisStatus");
         const reportFormDetails = document.getElementById("reportFormDetails");
 
-        let map = null;
-        let marker = null;
+        // ---- Embedded OpenStreetMap location picker (no Leaflet) ----
+        let mapReady = false;
+
+        const osmEmbed = document.getElementById("osmEmbed");
+        const openOsmLink = document.getElementById("openOsmLink");
+        const latInput = document.getElementById("latInput");
+        const lngInput = document.getElementById("lngInput");
+
+        function currentCoords() {
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+            if (!isNaN(lat) && !isNaN(lng)) return { lat, lng };
+            return { lat: 9.9312, lng: 76.2673 }; // VenomWatch default (Kerala)
+        }
+
+        function buildEmbedUrl(lat, lng) {
+            // ~zoom-14 bbox around the coordinates so the marker is clearly visible
+            const dLat = 0.006;
+            const dLng = 0.008;
+            const bbox = [
+                (lng - dLng).toFixed(5),
+                (lat - dLat).toFixed(5),
+                (lng + dLng).toFixed(5),
+                (lat + dLat).toFixed(5)
+            ].join('%2C');
+            return 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox +
+                   '&layer=mapnik&marker=' + lat.toFixed(6) + '%2C' + lng.toFixed(6);
+        }
+
+        function refreshEmbed(lat, lng) {
+            osmEmbed.src = buildEmbedUrl(lat, lng);
+            openOsmLink.href = 'https://www.openstreetmap.org/?mlat=' + lat.toFixed(6) +
+                               '&mlon=' + lng.toFixed(6) + '#map=15/' + lat.toFixed(6) + '/' + lng.toFixed(6);
+        }
 
         function initMap() {
-            if (map) return;
-            const defaultLat = parseFloat(document.getElementById("latInput").value) || 9.9312;
-            const defaultLng = parseFloat(document.getElementById("lngInput").value) || 76.2673;
+            if (mapReady) return;
+            mapReady = true;
+            const c = currentCoords();
+            refreshEmbed(c.lat, c.lng);
 
-            map = L.map('pickerMap').setView([defaultLat, defaultLng], 13);
-        setTimeout(function(){ map.invalidateSize(); }, 150);
-
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            }).addTo(map);
-
-            marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
-
-            function updateMarker(lat, lng) {
-                marker.setLatLng([lat, lng]);
-                document.getElementById("latInput").value = lat.toFixed(6);
-                document.getElementById("lngInput").value = lng.toFixed(6);
-            }
-
-            map.on('click', function(e) {
-                updateMarker(e.latlng.lat, e.latlng.lng);
+            // Manual coordinate entry also updates the embedded map
+            latInput.addEventListener('change', function() {
+                const cc = currentCoords();
+                refreshEmbed(cc.lat, cc.lng);
             });
-
-            marker.on('dragend', function(e) {
-                const position = marker.getLatLng();
-                updateMarker(position.lat, position.lng);
-            });
-
-            // Geolocation button
-            const geoBtn = document.getElementById("btnGeolocate");
-            const geoAlert = document.getElementById("geoAlert");
-            const geoAlertText = document.getElementById("geoAlertText");
-
-            geoBtn.addEventListener("click", function() {
-                if ("geolocation" in navigator) {
-                    geoAlert.classList.remove("d-none", "alert-warning", "alert-success");
-                    geoAlert.classList.add("alert-info");
-                    geoAlertText.innerText = "Attempting device GPS detection…";
-
-                    navigator.geolocation.getCurrentPosition(function(pos) {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-                        map.setView([lat, lng], 15);
-                        updateMarker(lat, lng);
-
-                        geoAlert.classList.remove("alert-info");
-                        geoAlert.classList.add("alert-success");
-                        geoAlertText.innerText = "GPS location captured successfully!";
-                    }, function(err) {
-                        geoAlert.classList.remove("alert-info");
-                        geoAlert.classList.add("alert-warning");
-                        geoAlertText.innerText = "GPS unavailable (" + err.message + "). Pick location on map.";
-                    }, { timeout: 8000 });
-                } else {
-                    geoAlert.classList.remove("d-none", "alert-info");
-                    geoAlert.classList.add("alert-warning");
-                    geoAlertText.innerText = "Geolocation not supported by your browser.";
-                }
+            lngInput.addEventListener('change', function() {
+                const cc = currentCoords();
+                refreshEmbed(cc.lat, cc.lng);
             });
         }
+
+        // Geolocation button — native browser API only
+        const geoBtn = document.getElementById("btnGeolocate");
+        const geoAlert = document.getElementById("geoAlert");
+        const geoAlertText = document.getElementById("geoAlertText");
+
+        geoBtn.addEventListener("click", function() {
+            if ("geolocation" in navigator) {
+                geoAlert.classList.remove("d-none", "alert-warning", "alert-success");
+                geoAlert.classList.add("alert-info");
+                geoAlertText.innerText = "Attempting device GPS detection…";
+
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    latInput.value = lat.toFixed(6);
+                    lngInput.value = lng.toFixed(6);
+                    initMap();
+                    refreshEmbed(lat, lng);
+
+                    geoAlert.classList.remove("alert-info");
+                    geoAlert.classList.add("alert-success");
+                    geoAlertText.innerText = "GPS location captured successfully!";
+                }, function(err) {
+                    geoAlert.classList.remove("alert-info");
+                    geoAlert.classList.add("alert-warning");
+                    geoAlertText.innerText = "GPS unavailable (" + err.message + "). Enter coordinates manually.";
+                }, { timeout: 8000 });
+            } else {
+                geoAlert.classList.remove("d-none", "alert-info");
+                geoAlert.classList.add("alert-warning");
+                geoAlertText.innerText = "Geolocation not supported by your browser.";
+            }
+        });
 
         // Image selection & AI analysis
         if (imageInput) {

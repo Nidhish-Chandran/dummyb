@@ -1,6 +1,2 @@
-# Python cache
-__pycache__/
-*.pyc
-
-# Database
+# Database files
 db.sqlite3
