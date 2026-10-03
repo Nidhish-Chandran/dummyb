@@ -428,6 +428,9 @@ def authority_map_view(request):
     return render(request, 'reports/authority_map.html', context)
 
 
+@login_required
+@authority_required
+@never_cache
 def authority_map_reports_api(request):
     """JSON list of individual snake report markers for the Authority map.
 

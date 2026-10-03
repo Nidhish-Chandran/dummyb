@@ -161,9 +161,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const lng = {{ report.longitude }};
     const map = L.map('assignmentMap').setView([lat, lng], 14);
         setTimeout(function(){ map.invalidateSize(); }, 150);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
+    L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        {
+            maxZoom: 19,
+            attribution: '© Esri'
+        }
+    ).addTo(map);
     L.circleMarker([lat, lng], { color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.8, radius: 9 })
         .addTo(map).bindPopup('<strong>Sighting #{{ report.id }}</strong><br>{{ report.location_name|escapejs }}').openPopup();
 });

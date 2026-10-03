@@ -367,14 +367,13 @@
         const map = L.map('detailMap').setView([lat, lng], 14);
         setTimeout(function(){ map.invalidateSize(); }, 150);
 
-        // NOTE: the multi-subdomain form ({s}.tile.openstreetmap.org) is blocked
-        // by tile CDN policy from many browsers/networks ("Access to tile access
-        // has been blocked"). Use the canonical single-host OSM tile URL instead.
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            crossOrigin: true,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+            {
+                maxZoom: 19,
+                attribution: '© Esri'
+            }
+        ).addTo(map);
 
         const isVenom = {% if report.is_venomous %}true{% else %}false{% endif %};
 

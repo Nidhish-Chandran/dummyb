@@ -151,10 +151,13 @@
         const map = L.map('hotspotMap').setView([9.9312, 76.2673], 12);
         setTimeout(function(){ map.invalidateSize(); }, 150);
 
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+            {
+                maxZoom: 19,
+                attribution: '© Esri'
+            }
+        ).addTo(map);
 
         fetch("{% url 'hotspots:api_clusters' %}")
             .then(res => res.json())

@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'accounts.middleware.AuthenticatedNoCacheMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -136,7 +137,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Authentication URLs & Session Security
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:home'
-LOGOUT_REDIRECT_URL = 'dashboard:home'
+LOGOUT_REDIRECT_URL = 'accounts:login'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_HTTPONLY = True
@@ -145,6 +146,7 @@ SESSION_COOKIE_SECURE = False  # Set True in production with HTTPS
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session after browser close
 SESSION_COOKIE_AGE = 1209600  # 2 weeks (default Django value)
+SESSION_SAVE_EVERY_REQUEST = True  # Refresh session on each request to keep active during use
 
 CSRF_COOKIE_HTTPONLY = False  # Must be False for CSRF to work
 CSRF_COOKIE_SECURE = False  # Set True in production with HTTPS

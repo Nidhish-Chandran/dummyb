@@ -10,12 +10,11 @@ from django.views.decorators.cache import never_cache
 def landing_page_view(request):
     """
     Public landing page for unauthenticated visitors.
-    If user is authenticated, redirect to appropriate dashboard.
+    If user is authenticated, redirect to appropriate role dashboard.
     """
     if request.user.is_authenticated:
-        if hasattr(request.user, 'profile') and request.user.profile.is_authority:
-            return redirect('dashboard:home')
-        return redirect('reports:list')
+        from accounts.views import get_role_landing
+        return redirect(get_role_landing(request.user))
     
     return render(request, 'landing.html')
 

@@ -207,12 +207,13 @@
     document.addEventListener("DOMContentLoaded", function () {
         const map = L.map('mainDashboardMap').setView([9.9312, 76.2673], 11);
         setTimeout(function(){ map.invalidateSize(); }, 150);
-        // Canonical single-host OSM tile URL — the old {s}. subdomain form is
-        // blocked by the OSM tile CDN ("Access blocked" tiles).
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+            {
+                maxZoom: 19,
+                attribution: '© Esri'
+            }
+        ).addTo(map);
 
         const reportsApiUrl = "{% url 'reports:map_reports_api' %}";
         const panelApiUrlBase = "/reports/api/report-panel/";

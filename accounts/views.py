@@ -12,6 +12,9 @@ from .forms import UserRegistrationForm, UserProfileForm, CustomAuthenticationFo
 logger = logging.getLogger(__name__)
 
 
+from django.utils.decorators import method_decorator
+
+
 def get_role_landing(user):
     """Module landing page per account type.
 
@@ -30,11 +33,12 @@ def get_role_landing(user):
     if profile.is_ranger:
         return reverse('ranger:dashboard')
     if profile.is_authority_officer:
-        # Authority module landing = GIS surveillance dashboard (map-first workflow)
-        return reverse('dashboard:surveillance')
+        # Authority module landing = Authority Map primary screen (/authority/map/)
+        return reverse('dashboard:authority_map_alias')
     return reverse('reports:list')
 
 
+@method_decorator(never_cache, name='dispatch')
 class CustomLoginView(LoginView):
     template_name = 'accounts/login.html'
     authentication_form = CustomAuthenticationForm
