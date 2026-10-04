@@ -7,10 +7,10 @@
     <title>Venom Watch — AI-Powered Snake Safety Platform</title>
     <meta name="description" content="Venom Watch combines AI-assisted snake detection, venom classification, location intelligence and community reporting to support safer snake-sighting response.">
 
-    <!-- Google Fonts Inter -->
+    <!-- Google Fonts: Plus Jakarta Sans, Outfit, Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,12 +23,15 @@
     <style>
         /* Landing Page Specific Styles */
         .landing-navbar {
-            background: var(--surface) !important;
-            border-bottom: 1px solid var(--border);
-            box-shadow: none;
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
             min-height: 68px;
             padding-top: 0;
             padding-bottom: 0;
+            transition: all var(--transition-smooth);
         }
 
         .landing-nav-brand {
@@ -516,9 +519,15 @@
     <nav class="navbar navbar-expand-lg landing-navbar sticky-top">
         <div class="container">
             <!-- Brand -->
-            <a class="landing-nav-brand d-flex align-items-center gap-2" href="#">
-                <i class="fa-solid fa-staff-snake"></i>
-                <span>VENOM<span style="color: var(--primary);">WATCH</span></span>
+            <a class="landing-nav-brand d-flex align-items-center gap-2 text-decoration-none" href="#">
+                <div class="brand-symbol-wrapper">
+                    <i class="fa-solid fa-staff-snake"></i>
+                    <span class="live-sentinel-dot" title="Sentinel Active"></span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span>VENOM<span style="color: var(--primary);">WATCH</span></span>
+                    <span class="brand-badge-sentinel d-none d-sm-inline">LIVE AI</span>
+                </div>
             </a>
 
             <!-- Mobile toggle -->

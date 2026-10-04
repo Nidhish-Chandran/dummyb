@@ -7,10 +7,10 @@
     <title>{% block title %}Venom Watch — AI Snake Surveillance & Emergency Support{% endblock %}</title>
     <meta name="description" content="Venom Watch — Professional AI-powered snake surveillance, public safety alerts, and emergency response platform.">
 
-    <!-- Google Fonts Inter -->
+    <!-- Modern Typography: Plus Jakarta Sans & Outfit & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,110 +26,115 @@
 </head>
 <body>
 
-    <!-- Navigation -->
+    <!-- Ultra-Smooth Glassmorphic Navigation -->
     <nav class="navbar navbar-expand-lg navbar-venom sticky-top" id="mainNav">
         <div class="container">
-            <!-- Brand -->
-            <a class="navbar-brand d-flex align-items-center gap-2"
+            <!-- Brand Identity -->
+            <a class="navbar-brand"
                href="{% if user.is_authenticated and user.profile.is_ranger %}{% url 'ranger:dashboard' %}{% elif user.is_authenticated and user.profile.is_authority %}{% url 'dashboard:authority_map_alias' %}{% elif user.is_authenticated and user.profile.is_admin %}{% url 'dashboard:home' %}{% else %}{% url 'reports:list' %}{% endif %}">
-                <i class="fa-solid fa-staff-snake" style="color: var(--primary); font-size: 1.15rem;"></i>
-                <span style="font-weight: 700; letter-spacing: -0.3px;">VENOM<span style="color: var(--primary);">WATCH</span></span>
+                <div class="brand-symbol-wrapper">
+                    <i class="fa-solid fa-staff-snake"></i>
+                    <span class="live-sentinel-dot" title="Sentinel Active"></span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span>VENOM<span style="color: var(--primary);">WATCH</span></span>
+                    <span class="brand-badge-sentinel d-none d-sm-inline">LIVE AI</span>
+                </div>
             </a>
 
-            <!-- Mobile toggle -->
+            <!-- Mobile Toggle Hamburger -->
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#venomNavbar"
                     aria-controls="venomNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
+                <i class="fa-solid fa-bars-staggered"></i>
             </button>
 
             <div class="collapse navbar-collapse" id="venomNavbar">
-                <!-- Primary nav links -->
+                <!-- Primary Navigation Links -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
                     {% if user.is_authenticated and user.profile.is_authority %}
-                        {# ---- AUTHORITY / ADMIN NAV (required order) ---- #}
-                        {# Map | Risk Zones | Wound Checker | Emergency SOS | Profile | Logout #}
+                        {# ---- AUTHORITY / ADMIN NAV ---- #}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'map' or request.resolver_match.url_name == 'authority_map_alias' or request.resolver_match.url_name == 'surveillance' %}active{% endif %}"
                                href="{% url 'dashboard:authority_map_alias' %}">
-                                <i class="fa-solid fa-map-location-dot me-1"></i> Map
+                                <i class="fa-solid fa-map-location-dot"></i> Map
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'risk_zones' %}active{% endif %}"
                                href="{% url 'reports:risk_zones' %}">
-                                <i class="fa-solid fa-shield-halved me-1"></i> Risk Zones
+                                <i class="fa-solid fa-shield-halved"></i> Risk Zones
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.app_name == 'ai' and request.resolver_match.url_name == 'wound_check' %}active{% endif %}"
                                href="{% url 'ai:wound_check' %}">
-                                <i class="fa-solid fa-bandage me-1"></i> Wound Checker
+                                <i class="fa-solid fa-bandage"></i> Wound Checker
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link fw-semibold text-danger {% if request.resolver_match.app_name == 'emergency' %}active{% endif %}"
+                            <a class="nav-link nav-link-emergency {% if request.resolver_match.app_name == 'emergency' %}active{% endif %}"
                                href="{% url 'emergency:assistance' %}">
-                                <i class="fa-solid fa-kit-medical me-1"></i> Emergency SOS
+                                <i class="fa-solid fa-kit-medical"></i> Emergency SOS
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
                                href="{% url 'accounts:profile' %}">
-                                <i class="fa-solid fa-id-card me-1"></i> Profile
+                                <i class="fa-solid fa-id-card"></i> Profile
                             </a>
                         </li>
                     {% elif user.is_authenticated and user.profile.is_ranger %}
-                        {# ---- RANGER NAV: own console only ---- #}
+                        {# ---- RANGER NAV: dedicated console ---- #}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
                                href="{% url 'ranger:dashboard' %}">
-                                <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+                                <i class="fa-solid fa-gauge-high"></i> Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if 'assignments' in request.path %}active{% endif %}"
                                href="{% url 'ranger:assignments' %}">
-                                <i class="fa-solid fa-clipboard-list me-1"></i> My Assignments
+                                <i class="fa-solid fa-clipboard-list"></i> My Assignments
                                 {% if ranger_unread_count %}<span class="badge rounded-pill bg-danger ms-1">{{ ranger_unread_count }}</span>{% endif %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
                                href="{% url 'ranger:profile' %}">
-                                <i class="fa-solid fa-id-card me-1"></i> Profile
+                                <i class="fa-solid fa-id-card"></i> Profile
                             </a>
                         </li>
                     {% elif user.is_authenticated and user.profile.is_admin %}
-                        {# Admin-only extras (authority/admin main nav handled above) #}
+                        {# Admin extras #}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}"
                                href="{% url 'dashboard:home' %}">
-                                <i class="fa-solid fa-chart-line me-1"></i> Dashboard & GIS
+                                <i class="fa-solid fa-chart-line"></i> Dashboard & GIS
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}"
                                href="{% url 'reports:list' %}">
-                                <i class="fa-solid fa-list-check me-1"></i> Reports
+                                <i class="fa-solid fa-list-check"></i> Reports
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.app_name == 'hotspots' %}active{% endif %}"
                                href="{% url 'hotspots:view' %}">
-                                <i class="fa-solid fa-fire me-1"></i> Hotspot Radar
+                                <i class="fa-solid fa-fire"></i> Hotspot Radar
                             </a>
                         </li>
                     {% elif not user.is_authenticated or user.profile.is_citizen %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'list' %}active{% endif %}"
                                href="{% url 'reports:list' %}">
-                                <i class="fa-solid fa-list-check me-1"></i> My Sightings
+                                <i class="fa-solid fa-list-check"></i> My Sightings
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'create' %}active{% endif %}"
                                href="{% url 'reports:create' %}">
-                                <i class="fa-solid fa-plus-circle me-1"></i> Report Sighting
+                                <i class="fa-solid fa-plus-circle"></i> Report Sighting
                             </a>
                         </li>
                     {% endif %}
@@ -138,50 +143,63 @@
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name == 'risk_zones' %}active{% endif %}"
                            href="{% url 'reports:risk_zones' %}">
-                            <i class="fa-solid fa-shield-halved me-1"></i> Risk Zones
+                            <i class="fa-solid fa-shield-halved"></i> Risk Zones
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.app_name == 'ai' and request.resolver_match.url_name == 'wound_check' %}active{% endif %}"
                            href="{% url 'ai:wound_check' %}">
-                            <i class="fa-solid fa-bandage me-1"></i> Wound Checker
+                            <i class="fa-solid fa-bandage"></i> Wound Checker
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link fw-semibold text-danger {% if request.resolver_match.app_name == 'emergency' %}active{% endif %}"
+                        <a class="nav-link nav-link-emergency {% if request.resolver_match.app_name == 'emergency' %}active{% endif %}"
                            href="{% url 'emergency:assistance' %}">
-                            <i class="fa-solid fa-kit-medical me-1"></i> Emergency SOS
+                            <i class="fa-solid fa-kit-medical"></i> Emergency SOS
                         </a>
                     </li>
                     {% endif %}
                 </ul>
 
                 <!-- Right-side actions -->
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
                     {% if user.is_authenticated %}
-                        <!-- User identity: click opens the profile page directly -->
+                        <!-- User Identity Card -->
                         <a href="{% url 'accounts:profile' %}"
-                           class="user-pill-btn d-flex align-items-center gap-1 text-decoration-none"
-                           title="View your profile">
-                            <i class="fa-solid fa-circle-user" style="color: var(--primary);"></i>
+                           class="user-identity-card"
+                           title="View profile">
+                            <div class="user-avatar-circle">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
                             <span>{{ user.username }}</span>
-                            {% if user.profile.role %}
-                                <span class="badge bg-light text-dark border ms-1"
-                                      style="font-weight: 500; font-size: 0.68rem;">{{ user.profile.get_role_display }}</span>
+                            {% if user.profile.role == 'citizen' %}
+                                <span class="badge-role-citizen">Citizen</span>
+                            {% elif user.profile.role == 'ranger' %}
+                                <span class="badge-role-ranger"><i class="fa-solid fa-tree me-1"></i>Ranger</span>
+                            {% elif user.profile.role == 'authority' %}
+                                <span class="badge-role-authority"><i class="fa-solid fa-shield me-1"></i>Authority</span>
+                            {% elif user.profile.role == 'admin' %}
+                                <span class="badge-role-admin"><i class="fa-solid fa-crown me-1"></i>Admin</span>
                             {% endif %}
                         </a>
-                        <!-- Standalone Logout button -->
+
+                        <!-- Logout Button -->
                         <form method="post" action="{% url 'accounts:logout' %}" class="d-inline ms-1">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger btn-sm" title="End your session and log out">
-                                <i class="fa-solid fa-right-from-bracket me-1"></i>Logout
+                            <button type="submit" class="btn btn-glass btn-sm" title="End your session and log out">
+                                <i class="fa-solid fa-right-from-bracket text-danger"></i>
+                                <span class="d-none d-xl-inline ms-1">Logout</span>
                             </button>
                         </form>
                     {% else %}
-                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-secondary btn-sm">Login</a>
-                        <a href="{% url 'accounts:register' %}" class="btn btn-teal btn-sm">Register</a>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-glass btn-sm">
+                            <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Login
+                        </a>
+                        <a href="{% url 'accounts:register' %}" class="btn btn-teal btn-sm">
+                            <i class="fa-solid fa-user-plus me-1"></i> Register
+                        </a>
                     {% endif %}
                 </div>
             </div><!-- /.collapse -->
@@ -191,13 +209,13 @@
     <!-- Floating Toast Feedback Container -->
     <div id="vwToastContainer" class="vw-toast-container" aria-live="polite" aria-atomic="true"></div>
 
-    <!-- Server Flash Messages (Fallback / In-page) -->
+    <!-- Server Flash Messages -->
     {% if messages %}
         <div class="container mt-3">
             {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show"
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show card-clean p-3"
                      role="alert">
-                    <i class="fa-solid {% if message.tags == 'danger' or message.tags == 'error' %}fa-triangle-exclamation{% else %}fa-circle-check{% endif %} me-2"></i>
+                    <i class="fa-solid {% if message.tags == 'danger' or message.tags == 'error' %}fa-triangle-exclamation text-danger{% else %}fa-circle-check text-success{% endif %} me-2"></i>
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -210,17 +228,36 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="py-3 mt-4 text-center border-top">
+    <!-- Floating Back to Top Button -->
+    <button type="button" class="back-to-top-btn" id="backToTopBtn" aria-label="Back to top" title="Scroll to top">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <!-- Modern Elevated Footer -->
+    <footer class="py-4 mt-5 border-top" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px);">
         <div class="container">
-            <p class="mb-1 text-muted" style="font-size: 0.8125rem;">
-                <i class="fa-solid fa-staff-snake me-1" style="color: var(--primary);"></i>
-                <strong style="color: var(--text-secondary);">Venom Watch Surveillance Network</strong>
-                &copy; 2026 &mdash; AI Snake Identification & Community Safety
-            </p>
-            <small class="text-muted" style="font-size: 0.75rem;">
-                Public safety, wildlife monitoring & medical emergency response support
-            </small>
+            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 text-center text-md-start">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="brand-symbol-wrapper" style="width: 30px; height: 30px; font-size: 0.85rem;">
+                        <i class="fa-solid fa-staff-snake"></i>
+                    </div>
+                    <div>
+                        <strong style="font-family: var(--font-heading); color: var(--text-primary); font-size: 0.95rem;">Venom Watch AI Surveillance Network</strong>
+                        <div class="text-muted" style="font-size: 0.75rem;">Deep Learning Snake Detection · DBSCAN Geolocation Radar · Emergency Hospital Logistics</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3" style="font-size: 0.8125rem;">
+                    <a href="tel:108" class="text-danger fw-bold text-decoration-none">
+                        <i class="fa-solid fa-phone me-1"></i> SOS: 108
+                    </a>
+                    <span class="text-muted">&bull;</span>
+                    <a href="tel:1926" class="text-muted text-decoration-none">
+                        <i class="fa-solid fa-tree me-1"></i> Forest: 1926
+                    </a>
+                    <span class="text-muted">&bull;</span>
+                    <span class="text-muted">&copy; 2026 Community Safety</span>
+                </div>
+            </div>
         </div>
     </footer>
 

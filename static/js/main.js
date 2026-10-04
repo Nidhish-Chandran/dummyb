@@ -1,6 +1,7 @@
 /**
  * VenomWatch — Core UI/UX Interactive Utilities
- * Smooth micro-interactions, accessible toast feedback, button states, and dashboard stats.
+ * Smooth micro-interactions, accessible toast feedback, glassmorphic navbar effects,
+ * button states, back-to-top handler, and animated dashboard stats.
  */
 
 (function () {
@@ -25,12 +26,12 @@
     }
 
     /**
-     * Show a modern non-blocking toast notification.
+     * Show a modern non-blocking glass toast notification.
      * @param {string} message - Message text to display
      * @param {string} type - 'success' | 'error' | 'warning' | 'info'
-     * @param {number} duration - Auto-dismiss delay in ms (default 4000)
+     * @param {number} duration - Auto-dismiss delay in ms (default 4500)
      */
-    window.showToast = function (message, type = 'info', duration = 4000) {
+    window.showToast = function (message, type = 'info', duration = 4500) {
         const container = getToastContainer();
 
         const toast = document.createElement('div');
@@ -38,7 +39,7 @@
 
         const icons = {
             success: 'fa-circle-check',
-            error: 'fa-circle-exclamation',
+            error: 'fa-triangle-exclamation',
             warning: 'fa-triangle-exclamation',
             info: 'fa-circle-info'
         };
@@ -58,20 +59,15 @@
 
         const closeBtn = toast.querySelector('.vw-toast-close');
         function removeToast() {
-            if (toast.classList.contains('vw-toast-leaving')) return;
-            toast.classList.add('vw-toast-leaving');
+            if (toast.classList.contains('toast-dismissing')) return;
+            toast.classList.add('toast-dismissing');
             setTimeout(() => {
                 if (toast.parentNode) toast.parentNode.removeChild(toast);
-            }, 250);
+            }, 260);
         }
 
         closeBtn.addEventListener('click', removeToast);
-
         container.appendChild(toast);
-
-        // Force reflow for CSS enter animation
-        void toast.offsetWidth;
-        toast.classList.add('vw-toast-visible');
 
         if (duration > 0) {
             setTimeout(removeToast, duration);
@@ -108,7 +104,7 @@
     function animateCounters() {
         if (prefersReducedMotion) return;
 
-        const counters = document.querySelectorAll('.stat-box h4, .stat-counter');
+        const counters = document.querySelectorAll('.stat-box h4, .stat-counter, .stat-number');
         counters.forEach(counter => {
             const rawText = counter.innerText.trim();
             const target = parseInt(rawText, 10);
@@ -117,15 +113,14 @@
             // Only animate if it's purely a number
             if (!/^\d+$/.test(rawText)) return;
 
-            let start = 0;
-            const duration = 400; // ms
+            const duration = 500; // ms
             const startTime = performance.now();
 
             function updateCounter(currentTime) {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                // Ease out quad
-                const easeProgress = 1 - (1 - progress) * (1 - progress);
+                // Ease out cubic
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
                 const current = Math.floor(easeProgress * target);
                 counter.innerText = current;
 
@@ -142,13 +137,82 @@
     }
 
     // =========================================================================
-    // 4. GLOBAL DOM INITIALIZATION
+    // 4. NAVBAR SCROLL & BACK TO TOP BEHAVIOR
+    // =========================================================================
+    function initNavigationEffects() {
+        const navbar = document.getElementById('mainNav');
+        const backToTopBtn = document.getElementById('backToTopBtn');
+
+        let lastScrollY = window.scrollY;
+
+        function handleScroll() {
+            const currentScrollY = window.scrollY;
+
+            // Navbar shrink & enhanced blur
+            if (navbar) {
+                if (currentScrollY > 20) {
+                    navbar.classList.add('navbar-scrolled');
+                } else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            }
+
+            // Back to top visibility
+            if (backToTopBtn) {
+                if (currentScrollY > 320) {
+                    backToTopBtn.classList.add('visible');
+                } else {
+                    backToTopBtn.classList.remove('visible');
+                }
+            }
+
+            lastScrollY = currentScrollY;
+        }
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll(); // Initial check
+
+        if (backToTopBtn) {
+            backToTopBtn.addEventListener('click', function () {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    }
+
+    // =========================================================================
+    // 5. MOBILE DRAWER AUTO-CLOSE & INTERACTIVITY
+    // =========================================================================
+    function initMobileNav() {
+        const navbarCollapse = document.getElementById('venomNavbar');
+        if (!navbarCollapse) return;
+
+        // Auto close when clicking any navigation link on mobile
+        const navLinks = navbarCollapse.querySelectorAll('.nav-link, .btn');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function () {
+                if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
+                    const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+                    if (bsCollapse) bsCollapse.hide();
+                }
+            });
+        });
+    }
+
+    // =========================================================================
+    // 6. GLOBAL DOM INITIALIZATION
     // =========================================================================
     document.addEventListener('DOMContentLoaded', function () {
-        // Run counter animations
+        // Initialize Navigation Enhancements
+        initNavigationEffects();
+        initMobileNav();
+
+        // Run metric counters
         animateCounters();
 
-        // Convert existing server flash messages into unified toasts if present
+        // Convert existing server flash messages into toasts
         const serverAlerts = document.querySelectorAll('.container > .alert[role="alert"]');
         if (serverAlerts.length > 0) {
             serverAlerts.forEach(alert => {
@@ -157,7 +221,6 @@
                 else if (alert.classList.contains('alert-success')) type = 'success';
                 else if (alert.classList.contains('alert-warning')) type = 'warning';
 
-                // Extract text excluding the close button
                 const clone = alert.cloneNode(true);
                 const btn = clone.querySelector('.btn-close');
                 if (btn) btn.remove();
@@ -167,12 +230,12 @@
 
                 if (text) {
                     window.showToast(text, type, 5000);
-                    alert.style.display = 'none'; // hide in-place alert so toast handles it
+                    alert.style.display = 'none';
                 }
             });
         }
 
-        // Keyboard Escape closes active overlays or detail panels
+        // Global Escape key dismisses overlays
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 if (typeof window.resetPanel === 'function') {
