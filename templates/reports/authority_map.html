@@ -184,85 +184,144 @@
                     (data.reports || []).forEach(r => {
                         const latLng = [r.latitude, r.longitude];
                         bounds.push(latLng);
+                        const isSelected = (r.id === selectedReportId);
+                        const color = markerColor(r);
+
+                        // If selected, add an outer pulsing accent ring
+                        if (isSelected) {
+                            const halo = L.circleMarker(latLng, {
+                                color: color,
+                                fillColor: color,
+                                fillOpacity: 0.2,
+                                radius: 16,
+                                weight: 2,
+                                dashArray: '3, 4'
+                            });
+                            halo.addTo(markerLayer);
+                        }
+
                         const m = L.circleMarker(latLng, {
-                            color: markerColor(r), fillColor: markerColor(r),
-                            fillOpacity: 0.85, radius: r.id === selectedReportId ? 11 : 7,
-                            weight: r.id === selectedReportId ? 3 : 2
+                            color: isSelected ? '#0f172a' : color,
+                            fillColor: color,
+                            fillOpacity: 0.9,
+                            radius: isSelected ? 10 : 7,
+                            weight: isSelected ? 3 : 2
                         });
                         m.bindPopup(
-                            `<div style="min-width:170px">` +
-                            `<strong style="color:${markerColor(r)}">Snake Sighting #${r.id}</strong><br>` +
-                            `<span>${esc(r.species || (r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS'))} · ${esc(r.location_name)}</span><br>` +
-                            `<small>(${r.latitude}, ${r.longitude})</small><br>` +
-                            `<small>Status: <b>${esc(r.assignment.status_display)}</b>` +
-                            (r.assignment.ranger ? ` · Ranger ${esc(r.assignment.ranger)}` : '') + `</small></div>`
+                            `<div style="min-width:180px; font-family:var(--font-sans, sans-serif);">` +
+                            `<strong style="color:${color}">Snake Sighting #${r.id}</strong><br>` +
+                            `<span class="fw-semibold">${esc(r.species || (r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS'))}</span> · <span class="text-muted">${esc(r.location_name)}</span><br>` +
+                            `<small class="text-muted">(${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)})</small><br>` +
+                            `<div class="mt-1"><small>Status: <b>${esc(r.assignment.status_display)}</b>` +
+                            (r.assignment.ranger ? `<br><i class="fa-solid fa-user-shield me-1"></i>Ranger: ${esc(r.assignment.ranger)}` : '') + `</small></div>` +
+                            `</div>`
                         );
-                        m.on('click', () => openPanel(r.id));
+                        m.on('click', () => {
+                            map.panTo(latLng, { animate: true, duration: 0.4 });
+                            openPanel(r.id);
+                        });
                         m.addTo(markerLayer);
                     });
                     document.getElementById('mapEmptyState').classList.toggle('d-none', bounds.length > 0);
-                    if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
+                    if (bounds.length > 0 && !selectedReportId) {
+                        map.fitBounds(bounds, { padding: [40, 40] });
+                    }
                 })
                 .catch(err => console.error('Error loading report markers:', err));
         }
 
         function renderPanel(p) {
             selectedReportId = p.id;
+            refreshMarkers(); // updates marker highlight
+
             document.getElementById('panelTitle').innerHTML =
                 `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Snake Sighting #${p.id}`;
             document.getElementById('panelClose').classList.remove('d-none');
 
             let html = '';
             if (p.image_url) {
-                html += `<img src="${esc(p.image_url)}" alt="snake report" class="w-100 mb-2 rounded-3"
-                          style="max-height:190px;object-fit:cover;border:1px solid #e2e8f0;">`;
+                html += `<div class="mb-3 text-center bg-light rounded-3 overflow-hidden border">
+                            <img src="${esc(p.image_url)}" alt="snake report" class="w-100"
+                                 style="max-height:190px;object-fit:cover;">
+                         </div>`;
             }
-            html += `<table class="table table-sm mb-2" style="font-size:0.82rem;">
-                <tr><td class="text-muted" style="width:42%;">Snake Status</td>
+            html += `<table class="table table-sm mb-3" style="font-size:0.82rem;">
+                <tr><td class="text-muted" style="width:38%;">Status</td>
                     <td><b style="color:${p.is_venomous ? '#dc2626' : '#16a34a'}">${esc(p.snake_status)}</b>
                         ${p.confidence ? `<span class="text-muted">· ${p.confidence}% conf.</span>` : ''}</td></tr>
-                ${p.species ? `<tr><td class="text-muted">Species</td><td>${esc(p.species)}</td></tr>` : ''}
+                ${p.species ? `<tr><td class="text-muted">Species</td><td><b>${esc(p.species)}</b></td></tr>` : ''}
                 <tr><td class="text-muted">Reported</td><td>${esc(p.reported_at)}</td></tr>
                 <tr><td class="text-muted">Location</td><td>${esc(p.location_name)}</td></tr>
-                <tr><td class="text-muted">Coordinates</td><td>${p.latitude}, ${p.longitude}</td></tr>
-                <tr><td class="text-muted">Assignment</td><td>${badge(p.status)}${p.ranger ? ` <b>${esc(p.ranger_name || p.ranger)}</b>${p.distance_km != null ? ` · ${p.distance_km} km` : ''}` : ''}</td></tr>
+                <tr><td class="text-muted">Coordinates</td><td>${p.latitude.toFixed(4)}, ${p.longitude.toFixed(4)}</td></tr>
+                <tr><td class="text-muted">Assignment</td><td>${badge(p.status)}${p.ranger ? ` <div class="mt-1"><b>${esc(p.ranger_name || p.ranger)}</b>${p.distance_km != null ? ` · <span class="badge bg-light text-dark border">${p.distance_km} km away</span>` : ''}</div>` : ''}</td></tr>
               </table>`;
-            html += `<a href="${esc(p.detail_url)}" class="fw-semibold text-decoration-none" style="color:var(--primary);">Open full report &raquo;</a>`;
+            html += `<div class="mb-3"><a href="${esc(p.detail_url)}" class="fw-semibold text-decoration-none" style="color:var(--primary); font-size:0.82rem;">
+                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open full incident file &raquo;
+                     </a></div>`;
 
             if (p.assigned) {
-                html += `<div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <span><b>${esc(p.ranger_name || p.ranger)}</b> is handling this incident.<br>
-                    <small class="text-muted">Assigned at ${esc(p.assigned_at || '')}</small></span>
+                html += `<div class="p-3 bg-light rounded-3 border">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa-solid fa-user-shield text-primary" style="font-size:1.1rem;"></i>
+                        <div>
+                            <div class="fw-semibold" style="font-size:0.875rem;">${esc(p.ranger_name || p.ranger)}</div>
+                            <small class="text-muted">Assigned ${esc(p.assigned_at || '')}</small>
+                        </div>
+                    </div>
                     <form method="post" action="/reports/assignments/${p.assignment_id}/cancel/"
                           onsubmit="return confirm('Cancel this assignment so it can be reassigned?');" class="d-inline">
                         {% csrf_token %}
-                        <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-rotate me-1"></i>Cancel &amp; Reassign</button>
+                        <button class="btn btn-sm btn-outline-danger w-100"><i class="fa-solid fa-rotate me-1"></i>Cancel &amp; Reassign Ranger</button>
                     </form>
                 </div>`;
             } else if (p.candidates && p.candidates.length) {
-                html += `<div class="mt-2 pt-2 border-top">
-                    <div class="fw-semibold mb-1" style="font-size:0.8rem;">
-                        <i class="fa-solid fa-user-plus me-1" style="color:var(--primary);"></i>Available Rangers Near This Location</div>`;
+                html += `<div class="mt-3 pt-3 border-top">
+                    <div class="fw-semibold mb-2" style="font-size:0.8125rem; color:var(--text);">
+                        <i class="fa-solid fa-user-plus me-1" style="color:var(--primary);"></i> Available Rangers Nearby
+                    </div>
+                    <div class="d-flex flex-column gap-2">`;
                 p.candidates.forEach(c => {
-                    html += `<form method="post" action="/reports/${p.id}/assign/" class="assign-form d-flex justify-content-between align-items-center py-1 border-bottom">
+                    html += `<form method="post" action="/reports/${p.id}/assign/" class="assign-form p-2 rounded-2 border bg-white d-flex justify-content-between align-items-center gap-2">
                         {% csrf_token %}
                         <input type="hidden" name="ranger_id" value="${c.id}">
-                        <span>${esc(c.name)} <span class="text-muted">· ${esc(c.location)}${c.distance_km != null ? ` · ${c.distance_km} km` : ''} · AVAILABLE</span></span>
-                        <button class="btn btn-teal btn-sm">Assign</button>
+                        <div>
+                            <div class="fw-semibold" style="font-size:0.82rem;">${esc(c.name)}</div>
+                            <small class="text-muted d-block" style="font-size:0.73rem;">
+                                <i class="fa-solid fa-location-dot me-1"></i>${esc(c.location)}
+                                ${c.distance_km != null ? ` · <span class="fw-medium text-dark">${c.distance_km} km</span>` : ''}
+                            </small>
+                        </div>
+                        <button type="submit" class="btn btn-teal btn-sm px-3 flex-shrink-0" style="font-size:0.78rem;">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Assign
+                        </button>
                     </form>`;
                 });
-                html += `</div>`;
+                html += `</div></div>`;
             } else {
-                html += `<div class="mt-2 pt-2 border-top text-muted">No AVAILABLE rangers are registered in or near this location.</div>`;
+                html += `<div class="mt-3 pt-3 border-top text-muted text-center py-3 bg-light rounded-2" style="font-size:0.8rem;">
+                            <i class="fa-solid fa-user-slash d-block mb-1 text-muted" style="font-size:1.3rem;"></i>
+                            No AVAILABLE rangers currently registered in or near this location.
+                         </div>`;
             }
 
             document.getElementById('panelHint').classList.add('d-none');
-            document.getElementById('reportPanelBody').innerHTML = html;
+            const panelBody = document.getElementById('reportPanelBody');
+            panelBody.innerHTML = html;
+
+            // Smooth scroll on mobile/tablet viewports
+            if (window.innerWidth < 992) {
+                document.getElementById('panelTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
 
             // Intercept assign submits -> AJAX so the map stays alive (§12/§17)
             document.querySelectorAll('#reportPanelBody form.assign-form').forEach(f => {
                 f.addEventListener('submit', function (ev) {
                     ev.preventDefault();
+                    const submitBtn = f.querySelector('button[type="submit"]');
+                    if (window.setButtonLoading) {
+                        window.setButtonLoading(submitBtn, true, 'Assigning...');
+                    }
+
                     const fd = new FormData(f);
                     fetch(f.action, {
                         method: 'POST', body: fd, credentials: 'same-origin',
@@ -271,13 +330,28 @@
                     .then(res => res.json())
                     .then(j => {
                         if (j.success) {
+                            if (window.showToast) {
+                                window.showToast('Ranger assigned successfully!', 'success');
+                            }
                             openPanel(p.id);       // panel shows ASSIGNED state
                             refreshMarkers();      // marker colour updates
                         } else {
-                            alert(j.error || 'Could not create the assignment.');
+                            if (window.setButtonLoading) window.setButtonLoading(submitBtn, false);
+                            if (window.showToast) {
+                                window.showToast(j.error || 'Could not create the assignment.', 'error');
+                            } else {
+                                alert(j.error || 'Could not create the assignment.');
+                            }
                         }
                     })
-                    .catch(() => alert('Network error while assigning the ranger.'));
+                    .catch(() => {
+                        if (window.setButtonLoading) window.setButtonLoading(submitBtn, false);
+                        if (window.showToast) {
+                            window.showToast('Network error while assigning the ranger.', 'error');
+                        } else {
+                            alert('Network error while assigning the ranger.');
+                        }
+                    });
                 });
             });
         }
@@ -286,7 +360,10 @@
             fetch(panelApiUrlBase + reportId + '/', { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(renderPanel)
-                .catch(err => console.error('Error loading report panel:', err));
+                .catch(err => {
+                    console.error('Error loading report panel:', err);
+                    if (window.showToast) window.showToast('Failed to load report details.', 'error');
+                });
         }
 
         refreshMarkers();

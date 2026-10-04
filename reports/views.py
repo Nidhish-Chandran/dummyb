@@ -61,12 +61,14 @@ def create_report_view(request):
                 report.venomous = ai_results.get('venomous')
                 report.venom_confidence = ai_results.get('venom_confidence')
                 
-                report.ai_detected = report.snake_detected
-                report.species_predicted = ai_results.get('species', 'Snake')
-                report.venom_category = ai_results.get('venom_category', 'NON_VENOMOUS')
+                species_name = ai_results.get('species')
+                if not species_name:
+                    species_name = 'Snake' if report.snake_detected else 'Not a Snake'
+                report.species_predicted = species_name
+                report.venom_category = ai_results.get('venom_category') or 'NON_VENOMOUS'
                 report.ai_confidence = report.venom_confidence if report.venom_confidence is not None else report.snake_confidence
-                report.model_1_name = ai_results.get('model_1', 'venomwatch_cnn2_final (CNN)')
-                report.model_2_name = ai_results.get('model_2', 'venom_watch_cnn2_keras')
+                report.model_1_name = ai_results.get('model_1', 'Snake Detector (MobileNetV2 ImageNet Gate)')
+                report.model_2_name = ai_results.get('model_2', 'venomwatch_cnn2_final (CNN)')
                 
                 report.save()
             except Exception as e:
@@ -82,7 +84,10 @@ def create_report_view(request):
             except Exception as e:
                 pass
 
-            messages.success(request, f"Sighting reported successfully! AI Result: {report.species_predicted} ({report.get_venom_category_display()}).")
+            if report.snake_detected:
+                messages.success(request, f"Sighting reported successfully! AI Result: {report.species_predicted} ({report.get_venom_category_display()}).")
+            else:
+                messages.info(request, "Report logged. Note: AI snake detector did not confirm a snake in the uploaded image.")
             return redirect('reports:detail', pk=report.pk)
         else:
             messages.error(request, "Error creating report. Please check the required form fields.")

@@ -17,9 +17,9 @@ class VenomWatchAccessControlTestCase(TestCase):
         self.other_citizen.profile.save()
 
         # Create Higher Authority User
-        self.ranger = User.objects.create_user(username='ranger_officer', password='password123')
-        self.ranger.profile.role = UserProfile.ROLE_RANGER
-        self.ranger.profile.save()
+        self.authority = User.objects.create_user(username='authority_officer', password='password123')
+        self.authority.profile.role = UserProfile.ROLE_AUTHORITY
+        self.authority.profile.save()
 
         # Create Citizen 1 Sighting Report
         self.citizen_report = SightingReport.objects.create(
@@ -59,7 +59,7 @@ class VenomWatchAccessControlTestCase(TestCase):
         self.client.login(username='john_citizen', password='password123')
 
         # Citizen cannot access Authority Dashboard (403 Forbidden)
-        response_dash = self.client.get('/')
+        response_dash = self.client.get('/authority/')
         self.assertEqual(response_dash.status_code, 403)
 
         # Citizen cannot access Hotspot Radar (403 Forbidden)
@@ -87,10 +87,10 @@ class VenomWatchAccessControlTestCase(TestCase):
         self.assertEqual(reports_in_context[0].pk, self.citizen_report.pk)
 
     def test_authority_access_control_allowed(self):
-        self.client.login(username='ranger_officer', password='password123')
+        self.client.login(username='authority_officer', password='password123')
 
         # Higher Authority CAN access Dashboard (200 OK)
-        response_dash = self.client.get('/')
+        response_dash = self.client.get('/authority/')
         self.assertEqual(response_dash.status_code, 200)
 
         # Higher Authority CAN access Hotspot Radar (200 OK)

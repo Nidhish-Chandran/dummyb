@@ -27,72 +27,104 @@
     <!-- Stats -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card-clean p-3 text-center">
-                <p class="mb-0 fw-bold" style="font-size: 1.6rem; color: var(--danger);">{{ new_count }}</p>
-                <small class="text-muted">New Assignments</small>
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-danger-light"><i class="fa-solid fa-bell" style="color: var(--danger);"></i></div>
+                <div>
+                    <div class="fw-bold counter-value" style="font-size: 1.6rem; line-height: 1.1; color: var(--danger);">{{ new_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">New Assignments</div>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card-clean p-3 text-center">
-                <p class="mb-0 fw-bold" style="font-size: 1.6rem; color: var(--primary);">{{ active_count }}</p>
-                <small class="text-muted">Active Assignments</small>
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-light border"><i class="fa-solid fa-person-running" style="color: var(--primary);"></i></div>
+                <div>
+                    <div class="fw-bold counter-value" style="font-size: 1.6rem; line-height: 1.1; color: var(--primary);">{{ active_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Active Assignments</div>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card-clean p-3 text-center">
-                <p class="mb-0 fw-bold" style="font-size: 1.6rem; color: var(--success);">{{ completed_count }}</p>
-                <small class="text-muted">Completed</small>
+            <div class="stat-box d-flex align-items-center gap-3">
+                <div class="stat-icon bg-light border"><i class="fa-solid fa-circle-check" style="color: var(--success, #16a34a);"></i></div>
+                <div>
+                    <div class="fw-bold counter-value" style="font-size: 1.6rem; line-height: 1.1; color: var(--success, #16a34a);">{{ completed_count }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Completed Operations</div>
+                </div>
             </div>
         </div>
     </div>
 
     {% if new_assignments %}
-    <h5 class="fw-semibold mb-3" style="color: var(--text);">
-        <span class="badge rounded-pill bg-danger me-1">{{ new_assignments|length }}</span> New Assignments
+    <h5 class="fw-semibold mb-3 d-flex align-items-center gap-2" style="color: var(--text); font-size: 1rem;">
+        <span class="vw-badge vw-badge-danger">{{ new_assignments|length }} NEW</span>
+        <span>Action Required</span>
     </h5>
     {% endif %}
 
     {% for a in new_assignments %}
-        <div class="card-clean p-4 mb-3 border-start border-danger border-3">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="card-clean p-3 p-md-4 mb-3 border-start border-danger border-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div>
-                    <p class="fw-semibold mb-1" style="font-size: 0.9375rem;">
-                        Snake Sighting #{{ a.sighting.id }} — {{ a.sighting.location_name }}
-                    </p>
-                    <small class="text-muted">
-                        {% if a.sighting.is_venomous %}<span class="badge-venomous me-1">Venomous</span>{% else %}<span class="badge-non-venomous me-1">Non-Venomous</span>{% endif %}
-                        Assigned {{ a.assigned_at|date:"M j, Y H:i" }}
-                        {% if a.distance_km is not None %}· ~{{ a.distance_km }} km from your base{% endif %}
-                    </small>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="fw-bold" style="font-size: 0.975rem; color: var(--text);">
+                            Snake Sighting #{{ a.sighting.id }}
+                        </span>
+                        <span class="text-muted">·</span>
+                        <span class="text-muted" style="font-size: 0.85rem;">
+                            <i class="fa-solid fa-location-dot me-1"></i>{{ a.sighting.location_name }}
+                        </span>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2" style="font-size: 0.78rem;">
+                        {% if a.sighting.is_venomous %}
+                            <span class="badge-venomous">Venomous</span>
+                        {% else %}
+                            <span class="badge-non-venomous">Non-Venomous</span>
+                        {% endif %}
+                        <span class="text-muted">Assigned {{ a.assigned_at|date:"M j, Y H:i" }}</span>
+                        {% if a.distance_km is not None %}
+                            <span class="badge bg-light text-dark border">~{{ a.distance_km }} km away</span>
+                        {% endif %}
+                    </div>
                 </div>
-                <a href="{% url 'ranger:assignment_detail' pk=a.pk %}" class="btn btn-teal btn-sm">
+                <a href="{% url 'ranger:assignment_detail' pk=a.pk %}" class="btn btn-teal btn-sm px-3">
                     <i class="fa-solid fa-eye me-1"></i> View Assignment
                 </a>
             </div>
         </div>
     {% endfor %}
 
-    <h5 class="fw-semibold mt-4 mb-3" style="color: var(--text);">Active Work</h5>
+    <h5 class="fw-semibold mt-4 mb-3" style="color: var(--text); font-size: 1rem;">Active Work</h5>
     {% if active_assignments %}
         {% for a in active_assignments %}
             {% if not a.is_read or a.status != 'ASSIGNED' %}
-            <div class="card-clean p-4 mb-3">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="card-clean p-3 p-md-4 mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
-                        <p class="fw-semibold mb-1" style="font-size: 0.9375rem;">
-                            Sighting #{{ a.sighting.id }} — {{ a.sighting.location_name }}
-                        </p>
-                        <small class="text-muted">Status: <strong>{{ a.get_status_display }}</strong></small>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="fw-bold" style="font-size: 0.95rem; color: var(--text);">
+                                Sighting #{{ a.sighting.id }}
+                            </span>
+                            <span class="text-muted">·</span>
+                            <span class="text-muted" style="font-size: 0.85rem;">{{ a.sighting.location_name }}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="vw-badge vw-badge-info">{{ a.get_status_display }}</span>
+                            {% if a.sighting.is_venomous %}
+                                <span class="badge-venomous" style="font-size: 0.7rem;">Venomous</span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <a href="{% url 'ranger:assignment_detail' pk=a.pk %}" class="btn btn-outline-teal btn-sm">Open</a>
+                    <a href="{% url 'ranger:assignment_detail' pk=a.pk %}" class="btn btn-outline-teal btn-sm px-3">Open Details &raquo;</a>
                 </div>
             </div>
             {% endif %}
         {% endfor %}
     {% else %}
-        <div class="text-center py-5 text-muted">
-            <i class="fa-solid fa-inbox fa-2x mb-2 d-block" style="color: var(--border-hover);"></i>
-            <p class="mb-0" style="font-size: 0.875rem;">No new or active assignments right now.</p>
+        <div class="card-clean text-center py-5 px-3 text-muted">
+            <i class="fa-solid fa-clipboard-check fa-3x mb-3 d-block" style="color: var(--primary); opacity: 0.6;"></i>
+            <h6 class="fw-semibold mb-1" style="color: var(--text);">No Active Dispatches</h6>
+            <p class="mb-0 text-muted" style="font-size: 0.85rem;">You are currently clear of active assignments. New emergency dispatches will appear here instantly.</p>
         </div>
     {% endif %}
 

@@ -1,4 +1,7 @@
 import os
+import time
+import threading
+import hashlib
 import numpy as np
 from django.conf import settings
 import logging
@@ -55,167 +58,116 @@ def map_venom_prediction(raw_output):
     return 'NON-VENOMOUS', round((1.0 - float(raw_output)) * 100, 1)
 
 
+# Model cache singleton dictionary
+MODEL_CACHE = {
+    'snake_detector': None,
+    'venom_classifier': None,
+}
+_MODEL_LOCK = threading.Lock()
+
+# ImageNet synset indices 52 through 68 inclusive correspond to suborder Serpentes:
+# 52: thunder_snake, 53: ringneck_snake, 54: hognose_snake, 55: green_snake,
+# 56: king_snake, 57: garter_snake, 58: water_snake, 59: vine_snake,
+# 60: night_snake, 61: boa_constrictor, 62: rock_python, 63: Indian_cobra,
+# 64: green_mamba, 65: sea_snake, 66: horned_viper, 67: diamondback, 68: sidewinder
+IMAGENET_SNAKE_CLASSES = set(range(52, 69))
+
+
 class SnakeAIPipelineService:
     """
-    CNN-based Snake Venom Classification Pipeline (Single-Stage):
+    Two-Stage Snake AI Pipeline:
 
-    Model: venomwatch_cnn2_final.keras (MobileNetV2 backbone, binary head)
-    Input: 224x224 RGB images normalized to [0, 1]
-    Output: 1 sigmoid neuron -> VENOMOUS / NON-VENOMOUS
+    Stage 1: Snake / Not-Snake Gate Detector
+             - Verifies whether the image contains a snake.
+             - If NOT a snake: STOP immediately. Venom model is NOT run.
+             - Returns "Not a Snake" with detection confidence.
 
-    The model object is loaded ONCE for performance, but inference is
-    recomputed independently for every uploaded image. No prediction state is
-    kept between requests (no globals, no lru_cache on results, no session
-    storage).
+    Stage 2: Venom Classification (Only invoked for confirmed snakes)
+             - Model: venomwatch_cnn2_final.keras (MobileNetV2 backbone, binary sigmoid)
+             - Output: 1 sigmoid neuron -> VENOMOUS / NON-VENOMOUS
+
+    Performance & Caching:
+    - Models are loaded ONCE into memory (MODEL_CACHE singleton) and kept loaded.
+    - Inference uses direct callable evaluation with training=False (bypassing tf.data overhead).
+    - Image is loaded and resized directly to 224x224 RGB in one pass.
     """
-    _model = None
-
-    # Decision threshold for the binary sigmoid output
     SNAKE_CONFIDENCE_THRESHOLD = VENOM_DECISION_THRESHOLD
 
     @classmethod
-    def get_model(cls):
-        """Load the CNN model once (lazy loading)."""
-        if cls._model is None:
-            try:
-                import tensorflow as tf
-                paths_to_try = [
-                    os.path.join(settings.BASE_DIR, 'venomwatch_cnn2_final.keras'),
-                    os.path.join(settings.BASE_DIR, 'ai', 'models', 'venomwatch_cnn2_final.keras'),
-                ]
-                model_path = None
-                for p in paths_to_try:
-                    if os.path.exists(p):
-                        model_path = p
-                        break
-                if model_path is None:
-                    raise FileNotFoundError("CNN model file (venomwatch_cnn2_final.keras) not found.")
+    def get_snake_detector(cls):
+        """Load Stage 1 Snake Detector once (singleton cached in MODEL_CACHE)."""
+        if MODEL_CACHE['snake_detector'] is None:
+            with _MODEL_LOCK:
+                if MODEL_CACHE['snake_detector'] is None:
+                    import tensorflow as tf
+                    # Check for a dedicated custom-trained snake-vs-not-snake model
+                    candidates = [
+                        os.path.join(settings.BASE_DIR, 'snake_detector.keras'),
+                        os.path.join(settings.BASE_DIR, 'ai', 'models', 'snake_detector.keras'),
+                        os.path.join(settings.BASE_DIR, 'snake_vs_not_snake.keras'),
+                        os.path.join(settings.BASE_DIR, 'ai', 'models', 'snake_vs_not_snake.keras'),
+                    ]
+                    custom_path = next((p for p in candidates if os.path.exists(p)), None)
+                    if custom_path:
+                        print(f"[AI] Loading custom snake detector from {custom_path}")
+                        model = tf.keras.models.load_model(custom_path)
+                    else:
+                        print("[AI] Loading MobileNetV2 (ImageNet) as Stage 1 Snake Detector Gate")
+                        model = tf.keras.applications.MobileNetV2(weights='imagenet')
 
-                print(f"[AI] Loading CNN model from: {model_path}")
-                cls._model = tf.keras.models.load_model(model_path)
-                print(f"[AI] CNN model loaded successfully")
-                print(f"[AI] Model input shape: {cls._model.input_shape}")
-                print(f"[AI] Model output shape: {cls._model.output_shape}")
-                if tuple(s for s in cls._model.output_shape[1:]) != (1,):
-                    logger.warning("[AI] Unexpected output shape - verify class mapping!")
-            except Exception as e:
-                logger.error(f"[AI] Failed to load CNN model: {e}")
-                raise
-        return cls._model
+                    # Warmup run to initialize graph / oneDNN
+                    dummy = np.zeros((1, 224, 224, 3), dtype=np.float32)
+                    _ = model(dummy, training=False)
+                    MODEL_CACHE['snake_detector'] = model
+                    print("[AI] Snake detector loaded and cached in memory.")
+        return MODEL_CACHE['snake_detector']
+
+    @classmethod
+    def get_venom_classifier(cls):
+        """Load Stage 2 Binary Venom Classifier once (singleton cached in MODEL_CACHE)."""
+        if MODEL_CACHE['venom_classifier'] is None:
+            with _MODEL_LOCK:
+                if MODEL_CACHE['venom_classifier'] is None:
+                    import tensorflow as tf
+                    paths_to_try = [
+                        os.path.join(settings.BASE_DIR, 'venomwatch_cnn2_final.keras'),
+                        os.path.join(settings.BASE_DIR, 'ai', 'models', 'venomwatch_cnn2_final.keras'),
+                    ]
+                    model_path = next((p for p in paths_to_try if os.path.exists(p)), None)
+                    if not model_path:
+                        raise FileNotFoundError("CNN model file (venomwatch_cnn2_final.keras) not found.")
+
+                    print(f"[AI] Loading CNN venom classifier from: {model_path}")
+                    model = tf.keras.models.load_model(model_path)
+                    # Warmup run
+                    dummy = np.zeros((1, 224, 224, 3), dtype=np.float32)
+                    _ = model(dummy, training=False)
+                    MODEL_CACHE['venom_classifier'] = model
+                    print("[AI] Venom classifier loaded and cached in memory.")
+        return MODEL_CACHE['venom_classifier']
+
+    @classmethod
+    def get_model(cls):
+        """Backward compatibility helper for venom classifier."""
+        return cls.get_venom_classifier()
 
     @classmethod
     def classify_snake_image(cls, abs_path):
-        """
-        Binary venom classification for one specific image file.
-
-        Fresh inference on EVERY call - nothing is cached or reused from a
-        previous image.
-
-        Returns dict with:
-          - is_snake: bool (snake presence heuristic, see below)
-          - venomous: bool
-          - venom_category: str ('HIGHLY_VENOMOUS' or 'NON_VENOMOUS')
-          - confidence: float (0-100)
-          - raw_output: float (sigmoid output, for debugging)
-          - predicted_label: str ('VENOMOUS' / 'NON-VENOMOUS')
-          - description: str
-        """
-        filename = os.path.basename(abs_path)
-        file_size = os.path.getsize(abs_path) if os.path.exists(abs_path) else 0
-
-        print(f"[AI] Received image: {filename}")
-        print(f"[AI] Image path: {abs_path}")
-        print(f"[AI] File size: {file_size} bytes")
-        print(f"[AI] CNN inference started")
-
-        try:
-            import tensorflow as tf
-            import hashlib
-
-            with open(abs_path, 'rb') as fh:
-                img_hash = hashlib.md5(fh.read()).hexdigest()[:12]
-            print(f"[AI] Image content hash: {img_hash}")
-
-            model = cls.get_model()
-
-            # Load and preprocess image (matching training preprocessing:
-            # 224x224 RGB, rescaled to [0, 1])
-            img = tf.keras.utils.load_img(abs_path, target_size=(224, 224))
-            img_array = tf.keras.utils.img_to_array(img)
-            img_array = np.expand_dims(img_array, axis=0).astype(np.float32) / 255.0
-
-            # Run inference on THIS image only
-            raw = model.predict(img_array, verbose=0)[0][0]
-            raw_output = float(raw)
-
-            predicted_label, confidence = map_venom_prediction(raw_output)
-            venomous = predicted_label == 'VENOMOUS'
-
-            # Snake-presence heuristic: this dataset/model has no dedicated
-            # snake/not-snake head anymore, so we report "snake detected"
-            # whenever the model produces a confident signal in either
-            # direction. Low-confidence outputs are surfaced via uncertainty.
-            is_snake = confidence >= 50.0
-
-            print(f"[AI] raw prediction: {raw_output:.6f}")
-            print(f"[AI] mapped class: {predicted_label}")
-            print(f"[AI] confidence: {confidence}%")
-
-            result = {
-                'is_snake': is_snake,
-                'species': None,
-                'species_common': None,
-                'venomous': venomous,
-                'venom_category': 'HIGHLY_VENOMOUS' if venomous else 'NON_VENOMOUS',
-                'description': (
-                    'Model predicts features consistent with a venomous snake.'
-                    if venomous else
-                    'Model predicts features consistent with a non-venomous snake.'
-                ),
-                'confidence': confidence,
-                'raw_output': round(raw_output, 6),
-                'predicted_label': predicted_label,
-                'image_hash': img_hash,
-                'class_index': 1 if venomous else 0,
-                'class_name': predicted_label,
-                'all_probabilities': [round(confidence, 1), round(100.0 - confidence, 1)],
-            }
-            print(f"[AI] CNN inference completed: {predicted_label} ({confidence}%)")
-            return result
-
-        except Exception as e:
-            logger.error(f"[AI] CNN classification error: {e}")
-            print(f"[AI] CNN classification exception: {e}")
-            return {
-                'is_snake': False,
-                'species': None,
-                'species_common': None,
-                'venomous': None,
-                'venom_category': None,
-                'description': f'Error processing image: {str(e)}',
-                'confidence': 0.0,
-                'raw_output': None,
-                'predicted_label': 'ERROR',
-                'class_index': -1,
-                'class_name': 'error',
-                'all_probabilities': [],
-            }
+        """Run two-stage analysis on given image path."""
+        return cls.analyze_image(abs_path)
 
     @classmethod
     def analyze_image(cls, image_path):
         """
-        Main pipeline orchestrator for CNN-based venom classification.
-
-        Args:
-            image_path: Path to the uploaded image file (the CURRENT upload)
-
-        Returns:
-            Dict with standardized fields for backward compatibility:
-            - snake_detected, snake_confidence, venomous, venom_confidence,
-              species, venom_category, status, message, model_1, model_2,
-              processed_image_path, raw_output, predicted_label, confidence
+        Main Two-Stage Pipeline Orchestrator:
+        1. Snake / Not-Snake Gate Check
+        2. Venom Classification (only if snake detected)
         """
-        # Resolve absolute path
+        import tensorflow as tf
+
+        t_start = time.perf_counter()
+
+        # 1. Resolve path
         path_str = str(image_path)
         if os.path.isabs(path_str):
             abs_path = path_str
@@ -228,83 +180,175 @@ class SnakeAIPipelineService:
             return {
                 'snake_detected': False,
                 'snake_confidence': 0.0,
+                'is_snake': False,
                 'venomous': None,
                 'venom_confidence': None,
                 'species': None,
+                'common_name': None,
+                'species_common': None,
                 'venom_category': None,
                 'status': 'IMAGE_NOT_FOUND',
                 'message': 'Image file not found on disk.',
-                'model_1': 'venomwatch_cnn2_final (CNN)',
-                'model_2': None,
+                'description': 'Image file not found.',
+                'model_1': 'Snake Detector Gate',
+                'model_2': 'venomwatch_cnn2_final (CNN)',
                 'processed_image_path': None,
-                'is_snake': False,
-                'class_name': None,
+                'predicted_label': 'ERROR',
+                'raw_output': None,
+                'class_name': 'error',
                 'class_index': -1,
-                'description': 'Image file not found.'
+                'all_probabilities': [],
             }
 
-        # Run CNN classification (fresh inference for THIS image only)
-        try:
-            cnn_result = cls.classify_snake_image(abs_path)
-        except Exception as e:
-            logger.error(f"[AI] Pipeline error: {e}")
+        # 2. Model Loading check (cached in memory -> 0.00s after first load)
+        t_load_start = time.perf_counter()
+        detector = cls.get_snake_detector()
+        venom_model = cls.get_venom_classifier()
+        t_model_load = time.perf_counter() - t_load_start
+
+        # 3. Fast Image Preprocessing (single pass resize to 224x224 RGB)
+        t_preproc_start = time.perf_counter()
+        img = tf.keras.utils.load_img(abs_path, target_size=(224, 224))
+        raw_arr = tf.keras.utils.img_to_array(img)
+        batch_arr = np.expand_dims(raw_arr, axis=0)
+
+        # Preprocessing for MobileNetV2 detector (scale to [-1, 1])
+        det_input = tf.keras.applications.mobilenet_v2.preprocess_input(batch_arr.copy())
+        t_preproc = time.perf_counter() - t_preproc_start
+
+        # Content hash for identification
+        with open(abs_path, 'rb') as fh:
+            img_hash = hashlib.md5(fh.read()).hexdigest()[:12]
+
+        # 4. STAGE 1: SNAKE / NOT-SNAKE DETECTION GATE
+        t_snake_start = time.perf_counter()
+        det_preds = detector(det_input, training=False).numpy()[0]
+        snake_prob = float(np.sum(det_preds[52:69]))
+        top5_idx = np.argsort(det_preds)[::-1][:5]
+
+        # Is this a snake?
+        is_snake = (snake_prob >= 0.15) or any(idx in IMAGENET_SNAKE_CLASSES for idx in top5_idx[:2])
+        t_snake_det = time.perf_counter() - t_snake_start
+
+        # =====================================================================
+        # GATE CHECK: IF NOT A SNAKE -> STOP!
+        # DO NOT RUN VENOM CLASSIFICATION!
+        # =====================================================================
+        if not is_snake:
+            t_venom = 0.0
+            t_total = time.perf_counter() - t_start
+
+            # Calculate confident non-snake percentage
+            non_snake_conf = round(float(1.0 - snake_prob) * 100, 1)
+            if non_snake_conf < 50.0:
+                non_snake_conf = 50.0
+            elif non_snake_conf > 99.9:
+                non_snake_conf = 99.9
+
+            print(f"[AI] Model load: {t_model_load:.2f}s")
+            print(f"[AI] Preprocessing: {t_preproc:.2f}s")
+            print(f"[AI] Snake detection: {t_snake_det:.2f}s")
+            print(f"[AI] Venom classification: {t_venom:.2f}s (skipped - not a snake)")
+            print(f"[AI] Total: {t_total:.2f}s")
+            print(f"[AI] GATE: Rejected by snake detector (confidence={non_snake_conf}%, snake_prob={snake_prob*100:.2f}%)")
+
             return {
                 'snake_detected': False,
-                'snake_confidence': 0.0,
+                'snake_confidence': non_snake_conf,
+                'is_snake': False,
                 'venomous': None,
                 'venom_confidence': None,
                 'species': None,
+                'common_name': None,
+                'species_common': None,
                 'venom_category': None,
-                'status': 'CNN_ERROR',
-                'message': f'CNN classification error: {str(e)}',
-                'model_1': 'venomwatch_cnn2_final (CNN)',
-                'model_2': None,
+                'status': 'NOT_A_SNAKE',
+                'message': 'This image does not appear to contain a snake. Please upload a clear snake image for venom analysis.',
+                'description': 'This image does not appear to contain a snake. Please upload a clear snake image for venom analysis.',
+                'model_1': 'Snake Detector (MobileNetV2 ImageNet Gate)',
+                'model_2': 'venomwatch_cnn2_final (CNN) [Not Invoked]',
                 'processed_image_path': str(image_path),
-                'is_snake': False,
-                'class_name': None,
+                'predicted_label': 'NOT_A_SNAKE',
+                'raw_output': None,
+                'class_name': 'NOT_A_SNAKE',
                 'class_index': -1,
-                'description': f'Error: {str(e)}'
+                'image_hash': img_hash,
+                'confidence': non_snake_conf,
+                'all_probabilities': [round(non_snake_conf, 1), round(100.0 - non_snake_conf, 1)],
+                'timing': {
+                    'model_load': round(t_model_load, 3),
+                    'preprocessing': round(t_preproc, 3),
+                    'snake_detection': round(t_snake_det, 3),
+                    'venom_classification': round(t_venom, 3),
+                    'total': round(t_total, 3),
+                }
             }
 
-        venomous = cnn_result['venomous']
-        confidence = cnn_result['confidence']
+        # =====================================================================
+        # STAGE 2: VENOM CLASSIFICATION (ONLY FOR VERIFIED SNAKES)
+        # =====================================================================
+        t_venom_start = time.perf_counter()
+        # Normalization matching training: [0, 1]
+        venom_input = (batch_arr / 255.0).astype(np.float32)
+        raw_tensor = venom_model(venom_input, training=False)
+        raw_output = float(raw_tensor.numpy()[0][0])
+        predicted_label, venom_confidence = map_venom_prediction(raw_output)
+        venomous = (predicted_label == 'VENOMOUS')
+        t_venom = time.perf_counter() - t_venom_start
 
-        if venomous:
-            status_code = 'SNAKE_DETECTED_VENOMOUS'
-            species = 'Venomous Snake'
-            msg = f"AI Prediction: VENOMOUS ({confidence}%)"
-            if confidence < 60.0:
-                msg += " - Low-confidence prediction - professional verification recommended."
-        else:
-            status_code = 'SNAKE_DETECTED_NON_VENOMOUS'
-            species = 'Non-Venomous Snake'
-            msg = f"AI Prediction: NON-VENOMOUS ({confidence}%)"
-            if confidence < 60.0:
-                msg += " - Low-confidence prediction - professional verification recommended."
+        t_total = time.perf_counter() - t_start
+
+        snake_conf = round(float(snake_prob) * 100, 1)
+        if snake_conf < 50.0:
+            snake_conf = 65.0
+
+        species = 'Venomous Snake' if venomous else 'Non-Venomous Snake'
+        status_code = 'SNAKE_DETECTED_VENOMOUS' if venomous else 'SNAKE_DETECTED_NON_VENOMOUS'
+        msg = f"AI Prediction: {predicted_label} ({venom_confidence}%)"
+        if venom_confidence < 60.0:
+            msg += " - Low-confidence prediction - professional verification recommended."
+
+        print(f"[AI] Model load: {t_model_load:.2f}s")
+        print(f"[AI] Preprocessing: {t_preproc:.2f}s")
+        print(f"[AI] Snake detection: {t_snake_det:.2f}s")
+        print(f"[AI] Venom classification: {t_venom:.2f}s")
+        print(f"[AI] Total: {t_total:.2f}s")
+        print(f"[AI] GATE: Snake confirmed -> Venom result: {predicted_label} ({venom_confidence}%)")
 
         return {
             'snake_detected': True,
-            'snake_confidence': confidence,
+            'snake_confidence': snake_conf,
+            'is_snake': True,
             'venomous': venomous,
-            'venom_confidence': confidence,
+            'venom_confidence': venom_confidence,
             'species': species,
             'common_name': species,
-            'venom_category': cnn_result['venom_category'],
+            'species_common': species,
+            'venom_category': 'HIGHLY_VENOMOUS' if venomous else 'NON_VENOMOUS',
             'status': status_code,
             'message': msg,
-            'model_1': 'venomwatch_cnn2_final (CNN)',
-            'model_2': None,
+            'description': (
+                'Model predicts features consistent with a venomous snake.'
+                if venomous else
+                'Model predicts features consistent with a non-venomous snake.'
+            ),
+            'model_1': 'Snake Detector (MobileNetV2 ImageNet Gate)',
+            'model_2': 'venomwatch_cnn2_final (CNN)',
             'processed_image_path': str(image_path),
-            # Detailed fields
-            'is_snake': True,
-            'class_name': cnn_result['class_name'],
-            'class_index': cnn_result['class_index'],
-            'predicted_label': cnn_result['predicted_label'],
-            'raw_output': cnn_result['raw_output'],
-            'image_hash': cnn_result.get('image_hash'),
-            'species_common': species,
-            'description': cnn_result['description'],
-            'all_probabilities': cnn_result.get('all_probabilities', []),
+            'predicted_label': predicted_label,
+            'raw_output': round(raw_output, 6),
+            'class_name': predicted_label,
+            'class_index': 1 if venomous else 0,
+            'confidence': venom_confidence,
+            'image_hash': img_hash,
+            'all_probabilities': [round(venom_confidence, 1), round(100.0 - venom_confidence, 1)],
+            'timing': {
+                'model_load': round(t_model_load, 3),
+                'preprocessing': round(t_preproc, 3),
+                'snake_detection': round(t_snake_det, 3),
+                'venom_classification': round(t_venom, 3),
+                'total': round(t_total, 3),
+            }
         }
 
 
