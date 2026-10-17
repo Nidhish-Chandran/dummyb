@@ -277,3 +277,86 @@ class UserProfileForm(forms.ModelForm):
         if phone and not re.match(r'^\+?[0-9][0-9\s\-().]{5,19}$', phone):
             raise ValidationError("Enter a valid phone number (digits, optional leading +).")
         return phone
+
+
+class AdminAccountProvisionForm(forms.ModelForm):
+    """Platform Admin form to provision Authority Officers and Field Rangers."""
+    username = forms.CharField(
+        max_length=150, required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'e.g. ranger_kollam_01'})
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'officer@venomwatch.gov'})
+    )
+    first_name = forms.CharField(
+        max_length=150, required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'First Name'})
+    )
+    last_name = forms.CharField(
+        max_length=150, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Last Name'})
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Temporary Password'}),
+        required=True
+    )
+    role = forms.ChoiceField(
+        choices=[
+            (UserProfile.ROLE_AUTHORITY, 'Authority Officer (Surveillance & Dispatch Console)'),
+            (UserProfile.ROLE_RANGER, 'Forest Ranger / Field Responder (Ranger Console)'),
+        ],
+        widget=forms.Select(attrs={'class': 'form-select form-select-sm'})
+    )
+    phone_number = forms.CharField(
+        max_length=20, required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': '+91 98765 43210'})
+    )
+    organization = forms.CharField(
+        max_length=100, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'e.g. Kerala Forest & Wildlife Dept'})
+    )
+    registered_location = forms.CharField(
+        max_length=150, required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'e.g. Kollam Forest Division'})
+    )
+    latitude = forms.FloatField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': '8.8932', 'step': 'any'})
+    )
+    longitude = forms.FloatField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': '76.6141', 'step': 'any'})
+    )
+    availability = forms.ChoiceField(
+        choices=UserProfile.AVAILABILITY_CHOICES,
+        initial=UserProfile.AVAILABILITY_AVAILABLE,
+        widget=forms.Select(attrs={'class': 'form-select form-select-sm'})
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'password']
+
+    def clean_username(self):
+        username = self.cleaned_data['username'].strip()
+        if User.objects.filter(username=username).exists():
+            raise ValidationError(f"A user with username '{username}' already exists.")
+        return username
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.role = self.cleaned_data['role']
+        profile.phone_number = self.cleaned_data['phone_number']
+        profile.organization = self.cleaned_data.get('organization') or None
+        profile.registered_location = self.cleaned_data['registered_location']
+        profile.assigned_region = self.cleaned_data['registered_location']
+        profile.latitude = self.cleaned_data.get('latitude')
+        profile.longitude = self.cleaned_data.get('longitude')
+        profile.availability = self.cleaned_data['availability']
+        profile.save()
+        return user

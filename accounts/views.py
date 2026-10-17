@@ -123,3 +123,35 @@ def profile_view(request):
         'form': form,
         'profile': profile
     })
+
+
+@login_required
+@never_cache
+def admin_provision_account_view(request):
+    """Platform Admin Console: Provision official Authority Officer and Ranger accounts."""
+    # Enforce admin permission
+    prof = getattr(request.user, 'profile', None)
+    if not (request.user.is_superuser or (prof and prof.is_admin)):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("Access Denied: Platform Administrator privileges required.")
+
+    from .forms import AdminAccountProvisionForm
+    from django.contrib.auth.models import User
+
+    if request.method == 'POST':
+        form = AdminAccountProvisionForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f"Successfully provisioned {user.profile.get_role_display()} account for '{user.username}'.")
+            return redirect('accounts:admin_provision')
+        else:
+            messages.error(request, "Failed to provision account. Please check the form errors below.")
+    else:
+        form = AdminAccountProvisionForm()
+
+    provisioned_users = User.objects.filter(profile__role__in=['authority', 'ranger']).select_related('profile').order_by('-date_joined')
+
+    return render(request, 'accounts/admin_provision.html', {
+        'form': form,
+        'provisioned_users': provisioned_users,
+    })

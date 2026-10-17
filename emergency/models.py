@@ -27,3 +27,42 @@ class Hospital(models.Model):
         
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return round(R * c, 2)
+
+
+class EmergencySOSEvent(models.Model):
+    """Real-time Emergency SOS distress event log.
+
+    Persists citizen distress signals with GPS coordinates, contact details,
+    and status tracking for Authority operations and emergency logistics.
+    """
+    STATUS_ACTIVE = 'ACTIVE'
+    STATUS_ACKNOWLEDGED = 'ACKNOWLEDGED'
+    STATUS_RESOLVED = 'RESOLVED'
+
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, 'Active Distress'),
+        (STATUS_ACKNOWLEDGED, 'Acknowledged by Authority'),
+        (STATUS_RESOLVED, 'Resolved / Assistance Provided'),
+    ]
+
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sos_events')
+    phone_number = models.CharField(max_length=50, blank=True, null=True, help_text="Contact number for emergency callbacks")
+    latitude = models.FloatField(help_text="Distress incident latitude")
+    longitude = models.FloatField(help_text="Distress incident longitude")
+    location_name = models.CharField(max_length=255, default='Unknown Location', help_text="Reported landmark or district")
+    emergency_type = models.CharField(max_length=50, default='SNAKEBITE_DISTRESS', help_text="Type of emergency")
+    description = models.TextField(blank=True, null=True, help_text="Victim condition or encounter notes")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+    acknowledged_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='acknowledged_sos_events')
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolution_notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"SOS #{self.pk} - {self.location_name} ({self.get_status_display()}) at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+

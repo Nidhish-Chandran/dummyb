@@ -3,8 +3,8 @@
 {% block title %}Create Account — Venom Watch{% endblock %}
 
 {% block content %}
-<div class="auth-container" style="max-width: 560px;">
-    <div class="auth-card">
+<div class="auth-container">
+    <div class="auth-card auth-card-wide">
 
         <!-- Header -->
         <div class="auth-card-header">
@@ -17,14 +17,27 @@
 
         <form method="post" action="{% url 'accounts:register' %}" novalidate autocomplete="off">
             {% csrf_token %}
+            {{ form.role }}
 
             {% if form.non_field_errors %}
-                <div class="alert alert-danger py-2" style="font-size: 0.8125rem;">
+                <div class="alert alert-danger py-2 mb-3" style="font-size: 0.8125rem;">
                     {% for error in form.non_field_errors %}
                         <div><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ error }}</div>
                     {% endfor %}
                 </div>
             {% endif %}
+
+            <!-- Informational Registration Notice -->
+            <div class="auth-info-banner">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>
+                    You are registering a <strong>Citizen</strong> account. Ranger, Authority, and Administrator accounts are provisioned administratively by the department.
+                </div>
+            </div>
+
+            {% for error in form.role.errors %}
+                <div class="auth-form-error mb-2"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+            {% endfor %}
 
             <div class="auth-form-row">
                 <div class="auth-form-group">
@@ -36,7 +49,7 @@
                 </div>
 
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.email.id_for_label }}">Email *</label>
+                    <label class="auth-form-label" for="{{ form.email.id_for_label }}">Email address *</label>
                     {{ form.email }}
                     {% for error in form.email.errors %}
                         <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
@@ -46,12 +59,35 @@
 
             <div class="auth-form-row">
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.first_name.id_for_label }}">First name</label>
+                    <label class="auth-form-label" for="{{ form.first_name.id_for_label }}">First name *</label>
                     {{ form.first_name }}
+                    {% for error in form.first_name.errors %}
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div class="auth-form-group">
                     <label class="auth-form-label" for="{{ form.last_name.id_for_label }}">Last name</label>
                     {{ form.last_name }}
+                    {% for error in form.last_name.errors %}
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="auth-form-row">
+                <div class="auth-form-group">
+                    <label class="auth-form-label" for="{{ form.phone_number.id_for_label }}">Phone number</label>
+                    {{ form.phone_number }}
+                    {% for error in form.phone_number.errors %}
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="auth-form-group">
+                    <label class="auth-form-label" for="{{ form.organization.id_for_label }}">Organization (optional)</label>
+                    {{ form.organization }}
+                    {% for error in form.organization.errors %}
+                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                    {% endfor %}
                 </div>
             </div>
 
@@ -84,30 +120,8 @@
                 </ul>
             </div>
 
-            <div class="auth-form-row" style="margin-top: 1rem;">
-                {{ form.role }}
-            <div class="auth-form-group" style="grid-column: 1 / -1;">
-                <div class="auth-form-hint" style="font-size:0.8rem; color: var(--text-muted, #6b7280); background: rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:0.6rem 0.8rem;">
-                    <i class="fa-solid fa-circle-info me-1"></i>
-                    You are registering a <strong>Citizen</strong> account. Ranger, Authority and
-                    Administrator accounts are created by the platform administrator.
-                </div>
-                {% for error in form.role.errors %}
-                    <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-                {% endfor %}
-            </div>
-
-            <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.phone_number.id_for_label }}">Phone number</label>
-                    {{ form.phone_number }}
-                    {% for error in form.phone_number.errors %}
-                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Ranger-only fields -->
-            <div id="ranger-fields" style="display:none; grid-column: 1 / -1;" class="auth-form-row">
+            <!-- Ranger-only fields (hidden for public registration) -->
+            <div id="ranger-fields" style="display:none;" class="auth-form-row">
                 <div class="auth-form-group">
                     <label class="auth-form-label" for="{{ form.registered_location.id_for_label }}">Registered location *</label>
                     {{ form.registered_location }}
@@ -131,16 +145,8 @@
                 </div>
             </div>
 
-            <div class="auth-form-group" style="grid-column: 1 / -1; margin-top: 1.25rem;">
-                <label class="auth-form-label" for="{{ form.organization.id_for_label }}">Organization</label>
-                {{ form.organization }}
-                {% for error in form.organization.errors %}
-                    <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-                {% endfor %}
-            </div>
-
-            <button type="submit" class="auth-btn-primary" style="margin-top: 1.25rem; width: 100%;">
-                <i class="fa-solid fa-check-circle me-2"></i> Create Account
+            <button type="submit" class="auth-btn-primary">
+                <i class="fa-solid fa-user-plus me-2"></i> Create Account
             </button>
         </form>
 
@@ -155,5 +161,3 @@
     </div>
 </div>
 {% endblock %}
-
-

@@ -77,6 +77,14 @@
                                 <i class="fa-solid fa-kit-medical"></i> Emergency SOS
                             </a>
                         </li>
+                        {% if user.profile.is_admin %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'admin_provision' %}active{% endif %}"
+                               href="{% url 'accounts:admin_provision' %}">
+                                <i class="fa-solid fa-user-plus"></i> Provision Accounts
+                            </a>
+                        </li>
+                        {% endif %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
                                href="{% url 'accounts:profile' %}">
@@ -137,6 +145,14 @@
                                 <i class="fa-solid fa-plus-circle"></i> Report Sighting
                             </a>
                         </li>
+                        {% if user.is_authenticated and user.profile.is_citizen %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
+                               href="{% url 'accounts:profile' %}">
+                                <i class="fa-solid fa-id-card"></i> Profile
+                            </a>
+                        </li>
+                        {% endif %}
                     {% endif %}
 
                     {% if not user.is_authenticated or not user.profile.is_ranger and not user.profile.is_authority %}
@@ -166,10 +182,9 @@
                 <!-- Right-side actions -->
                 <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
                     {% if user.is_authenticated %}
-                        <!-- User Identity Card -->
-                        <a href="{% url 'accounts:profile' %}"
-                           class="user-identity-card"
-                           title="View profile">
+                        <!-- User Identity Badge (Display-only; not clickable) -->
+                        <div class="user-identity-card user-identity-badge"
+                             title="{{ user.username }} ({{ user.profile.get_role_display }})">
                             <div class="user-avatar-circle">
                                 <i class="fa-solid fa-user"></i>
                             </div>
@@ -183,9 +198,10 @@
                             {% elif user.profile.role == 'admin' %}
                                 <span class="badge-role-admin"><i class="fa-solid fa-crown me-1"></i>Admin</span>
                             {% endif %}
-                        </a>
+                        </div>
 
-                        <!-- Logout Button -->
+                        <!-- Logout Button (Omitted for Citizen role as requested; preserved for Ranger, Authority, Admin) -->
+                        {% if not user.profile.is_citizen %}
                         <form method="post" action="{% url 'accounts:logout' %}" class="d-inline ms-1">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-glass btn-sm" title="End your session and log out">
@@ -193,6 +209,7 @@
                                 <span class="d-none d-xl-inline ms-1">Logout</span>
                             </button>
                         </form>
+                        {% endif %}
                     {% else %}
                         <a href="{% url 'accounts:login' %}" class="btn btn-glass btn-sm">
                             <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Login

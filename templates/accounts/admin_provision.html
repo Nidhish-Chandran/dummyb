@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Provisioning — Venom Watch Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.25rem; color: var(--text);">
+                <i class="fa-solid fa-user-shield me-2" style="color: var(--primary);"></i>
+                Platform Account Provisioning
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Provision official Authority Officers and Field Forest Rangers with operational location and dispatch coordinates.
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                <i class="fa-solid fa-gear me-1"></i> Open Django Admin Console
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Provisioning Form -->
+        <div class="col-lg-5">
+            <div class="card-clean p-4 border-start border-teal border-4 shadow-sm">
+                <h5 class="fw-semibold mb-3" style="font-size: 0.95rem; color: var(--text);">
+                    <i class="fa-solid fa-user-plus me-1" style="color: var(--primary);"></i> Provision New Officer / Ranger
+                </h5>
+
+                <form method="post" action="{% url 'accounts:admin_provision' %}" class="action-feedback-form">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Account Role <span class="text-danger">*</span></label>
+                        {{ form.role }}
+                        {% if form.role.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.role.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Username <span class="text-danger">*</span></label>
+                            {{ form.username }}
+                            {% if form.username.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.username.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Email Address <span class="text-danger">*</span></label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.email.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">First Name <span class="text-danger">*</span></label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Last Name</label>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Temporary Password <span class="text-danger">*</span></label>
+                        {{ form.password }}
+                        {% if form.password.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.password.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Phone Number <span class="text-danger">*</span></label>
+                            {{ form.phone_number }}
+                            {% if form.phone_number.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.phone_number.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Department / Org</label>
+                            {{ form.organization }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Operational Region / District <span class="text-danger">*</span></label>
+                        {{ form.registered_location }}
+                        {% if form.registered_location.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.registered_location.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Base Latitude</label>
+                            {{ form.latitude }}
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Base Longitude</label>
+                            {{ form.longitude }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Initial Availability Status</label>
+                        {{ form.availability }}
+                    </div>
+
+                    <button type="submit" class="btn btn-teal btn-sm w-100 py-2">
+                        <i class="fa-solid fa-check me-1"></i> Provision Account &amp; Activate Access
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Provisioned Accounts Directory -->
+        <div class="col-lg-7">
+            <div class="card-clean p-4 shadow-sm">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-semibold mb-0" style="font-size: 0.95rem; color: var(--text);">
+                        <i class="fa-solid fa-id-badge me-1" style="color: var(--info);"></i>
+                        Provisioned Operational Roster
+                    </h5>
+                    <span class="badge" style="background: var(--info-light); color: var(--info);">
+                        {{ provisioned_users.count }} Officers &amp; Responders
+                    </span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.82rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Region / Base</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in provisioned_users %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ u.username }}</strong><br>
+                                        <small class="text-muted">{{ u.email }}</small>
+                                    </td>
+                                    <td>
+                                        {% if u.profile.role == 'authority' %}
+                                            <span class="badge" style="background: var(--teal-light, #ccfbf1); color: var(--teal, #0d9488);">Authority</span>
+                                        {% elif u.profile.role == 'ranger' %}
+                                            <span class="badge" style="background: var(--emerald-light, #d1fae5); color: var(--emerald, #059669);">Ranger</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ u.profile.get_role_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ u.profile.registered_location|default:u.profile.assigned_region|default:"—" }}<br>
+                                        {% if u.profile.latitude and u.profile.longitude %}
+                                            <small class="text-muted">({{ u.profile.latitude|floatformat:4 }}, {{ u.profile.longitude|floatformat:4 }})</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ u.profile.phone|default:u.profile.phone_number|default:"—" }}</td>
+                                    <td>
+                                        {% if u.profile.availability == 'AVAILABLE' %}
+                                            <span class="badge" style="background: var(--success-light); color: var(--success);">Available</span>
+                                        {% elif u.profile.availability == 'BUSY' %}
+                                            <span class="badge" style="background: var(--warning-light); color: var(--warning);">On Mission</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Offline</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        No provisioned authority or ranger accounts found.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -19,7 +19,7 @@
             {% csrf_token %}
 
             {% if form.non_field_errors %}
-                <div class="alert alert-danger py-2" style="font-size: 0.8125rem;">
+                <div class="alert alert-danger py-2 mb-3" style="font-size: 0.8125rem;">
                     {% for error in form.non_field_errors %}
                         <div><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ error }}</div>
                     {% endfor %}

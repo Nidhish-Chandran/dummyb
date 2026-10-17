@@ -30,6 +30,27 @@
         </div>
     </div>
 
+    <!-- Interactive Emergency SOS Trigger -->
+    <div class="card-clean p-4 mb-4 border-start border-danger border-4 shadow-sm" style="background: #fff5f5;">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <h5 class="fw-bold mb-1 text-danger">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Log Emergency SOS Distress Signal
+                </h5>
+                <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                    Broadcasts your GPS coordinates directly to the VenomWatch Operations Desk for priority tracking.
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="tel" id="sosContactPhone" class="form-control form-control-sm" placeholder="Callback Phone #" style="max-width: 190px;" value="{{ request.user.profile.phone|default:'' }}">
+                <button type="button" id="btnTriggerSOS" class="btn btn-danger-venom btn-sm text-nowrap px-3 py-2">
+                    <i class="fa-solid fa-bullhorn me-1"></i> Trigger SOS Signal
+                </button>
+            </div>
+        </div>
+        <div id="sosAlertBox" class="mt-3 d-none"></div>
+    </div>
+
     <!-- First Aid Protocol -->
     <div class="card-clean p-4 mb-4 card-warning-clean">
         <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
@@ -191,6 +212,70 @@
                     });
                 } else {
                     alert("Geolocation is not supported by your browser.");
+                }
+            });
+        }
+
+        const sosBtn = document.getElementById("btnTriggerSOS");
+        const alertBox = document.getElementById("sosAlertBox");
+        if (sosBtn && alertBox) {
+            sosBtn.addEventListener("click", function() {
+                sosBtn.disabled = true;
+                sosBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Broadcasting...';
+
+                function sendSOS(lat, lng) {
+                    const phone = document.getElementById("sosContactPhone").value;
+                    const formData = new FormData();
+                    formData.append("latitude", lat);
+                    formData.append("longitude", lng);
+                    formData.append("phone_number", phone);
+                    formData.append("location", `GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+                    formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+                    fetch("{% url 'emergency:api_sos' %}", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        sosBtn.disabled = false;
+                        sosBtn.innerHTML = '<i class="fa-solid fa-bullhorn me-1"></i> Trigger SOS Signal';
+                        alertBox.classList.remove("d-none");
+                        if (data.status === "SUCCESS") {
+                            alertBox.innerHTML = `
+                                <div class="alert alert-success d-flex align-items-start gap-2 mb-0" style="font-size: 0.85rem;">
+                                    <i class="fa-solid fa-circle-check mt-1"></i>
+                                    <div>
+                                        <strong>Distress Logged (Event #${data.event_id || 'Active'}):</strong> ${data.message}
+                                        <div class="mt-2 fw-bold">Emergency Hotlines: ${data.emergency_contacts ? data.emergency_contacts.join(' | ') : 'Call 108'}</div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            alertBox.innerHTML = `
+                                <div class="alert alert-danger mb-0" style="font-size: 0.85rem;">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> ${data.message || 'Error broadcasting distress signal.'}
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(err => {
+                        sosBtn.disabled = false;
+                        sosBtn.innerHTML = '<i class="fa-solid fa-bullhorn me-1"></i> Trigger SOS Signal';
+                        alertBox.classList.remove("d-none");
+                        alertBox.innerHTML = `<div class="alert alert-danger mb-0">Network error: ${err}</div>`;
+                    });
+                }
+
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        sendSOS(pos.coords.latitude, pos.coords.longitude);
+                    }, function() {
+                        // Fallback to page coordinates
+                        sendSOS({{ user_lat }}, {{ user_lng }});
+                    }, {timeout: 6000});
+                } else {
+                    sendSOS({{ user_lat }}, {{ user_lng }});
                 }
             });
         }

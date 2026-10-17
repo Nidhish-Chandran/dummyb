@@ -64,6 +64,8 @@ class SightingReport(models.Model):
     # Duplicate & Spam Detection Flags
     duplicate_flag = models.BooleanField(default=False, help_text="Flagged as potential duplicate sighting")
     duplicate_of = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='duplicates')
+    duplicate_score = models.IntegerField(default=0, help_text="Calculated duplicate likelihood score (0-100)")
+    duplicate_reason = models.CharField(max_length=255, blank=True, null=True, help_text="Explanation for duplicate classification")
     spam_flag = models.BooleanField(default=False, help_text="Flagged as suspicious/spam submission")
     spam_reason = models.CharField(max_length=255, blank=True, null=True)
 
@@ -111,6 +113,7 @@ class RangerAssignment(models.Model):
     STATUS_ACCEPTED = 'ACCEPTED'
     STATUS_ON_THE_WAY = 'ON_THE_WAY'
     STATUS_AT_LOCATION = 'AT_LOCATION'
+    STATUS_OUTCOME_SUBMITTED = 'OUTCOME_SUBMITTED'
     STATUS_COMPLETED = 'COMPLETED'
     STATUS_DECLINED = 'DECLINED'
     STATUS_CANCELLED = 'CANCELLED'
@@ -120,27 +123,38 @@ class RangerAssignment(models.Model):
         (STATUS_ACCEPTED, 'Accepted'),
         (STATUS_ON_THE_WAY, 'On the way'),
         (STATUS_AT_LOCATION, 'At location'),
-        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_OUTCOME_SUBMITTED, 'Outcome Submitted (Under Review)'),
+        (STATUS_COMPLETED, 'Completed / Verified'),
         (STATUS_DECLINED, 'Declined'),
         (STATUS_CANCELLED, 'Cancelled'),
     ]
 
-    ACTIVE_STATUSES = [STATUS_ASSIGNED, STATUS_ACCEPTED, STATUS_ON_THE_WAY, STATUS_AT_LOCATION]
+    ACTIVE_STATUSES = [STATUS_ASSIGNED, STATUS_ACCEPTED, STATUS_ON_THE_WAY, STATUS_AT_LOCATION, STATUS_OUTCOME_SUBMITTED]
 
     OUTCOME_CHOICES = [
-        ('SNAKE_CAPTURED', 'Snake Captured'),
-        ('SNAKE_ESCAPED', 'Snake Escaped'),
-        ('SNAKE_NOT_FOUND', 'Snake Not Found'),
-        ('FALSE_REPORT', 'False Report'),
-        ('OTHER', 'Other'),
+        ('SNAKE_CAPTURED', 'Snake Safely Captured'),
+        ('SNAKE_RELOCATED', 'Snake Safely Relocated'),
+        ('SNAKE_ESCAPED', 'Snake Escaped / Not Located'),
+        ('REFERRED_OTHER_TEAM', 'Incident Referred to Another Response Team'),
+        ('UNRESOLVED', 'Incident Unresolved'),
+        ('REPORT_UNVERIFIED', 'Report Could Not Be Verified'),
+        ('OTHER', 'Other Justified Outcome'),
     ]
 
-    # Allowed ranger-driven status transitions (lifecycle is strictly linear)
+    REVIEW_CHOICES = [
+        ('PENDING_REVIEW', 'Pending Authority Review'),
+        ('APPROVED', 'Outcome Approved'),
+        ('REJECTED', 'Outcome Rejected'),
+        ('CLARIFICATION_REQUESTED', 'Clarification Requested'),
+    ]
+
+    # Allowed status transitions
     ALLOWED_TRANSITIONS = {
         STATUS_ASSIGNED: {STATUS_ACCEPTED, STATUS_DECLINED},
         STATUS_ACCEPTED: {STATUS_ON_THE_WAY},
         STATUS_ON_THE_WAY: {STATUS_AT_LOCATION},
-        STATUS_AT_LOCATION: {STATUS_COMPLETED},
+        STATUS_AT_LOCATION: {STATUS_OUTCOME_SUBMITTED, STATUS_COMPLETED},
+        STATUS_OUTCOME_SUBMITTED: {STATUS_COMPLETED, STATUS_AT_LOCATION, STATUS_CANCELLED},
     }
 
     sighting = models.ForeignKey(SightingReport, on_delete=models.CASCADE, related_name='ranger_assignments')
@@ -151,6 +165,8 @@ class RangerAssignment(models.Model):
     assigned_at = models.DateTimeField(auto_now_add=True)
     responded_at = models.DateTimeField(null=True, blank=True,
                                         help_text="When the ranger accepted or declined")
+    outcome_submitted_at = models.DateTimeField(null=True, blank=True,
+                                                help_text="When ranger submitted response outcome for review")
     completed_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ASSIGNED)
     distance_km = models.FloatField(null=True, blank=True,
@@ -160,6 +176,13 @@ class RangerAssignment(models.Model):
     outcome_image = models.ImageField(upload_to='assignment_outcomes/', blank=True, null=True)
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
+
+    # Authority outcome verification & audit trail
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='assignments_reviewed')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_decision = models.CharField(max_length=30, choices=REVIEW_CHOICES, blank=True, null=True)
+    review_notes = models.TextField(blank=True, null=True, help_text="Authority review comments or rejection rationale")
 
     class Meta:
         ordering = ['-assigned_at']
@@ -181,6 +204,7 @@ class RangerAssignment(models.Model):
             self.STATUS_ASSIGNED: self.STATUS_ACCEPTED,
             self.STATUS_ACCEPTED: self.STATUS_ON_THE_WAY,
             self.STATUS_ON_THE_WAY: self.STATUS_AT_LOCATION,
-            self.STATUS_AT_LOCATION: None,
+            self.STATUS_AT_LOCATION: self.STATUS_OUTCOME_SUBMITTED,
+            self.STATUS_OUTCOME_SUBMITTED: None,
         }
         return nxt.get(self.status)

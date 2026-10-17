@@ -51,10 +51,14 @@
             <div class="alert alert-warning d-flex align-items-center justify-content-between mb-4">
                 <div>
                     <i class="fa-solid fa-copy me-2"></i>
-                    <strong>Potential Duplicate:</strong> Geographically and temporally close to an existing report.
+                    <strong>Automated Duplicate Match:</strong>
+                    {{ report.duplicate_reason|default:"Geographically and temporally close to an existing sighting." }}
+                    {% if report.duplicate_score %}
+                        <span class="badge bg-warning text-dark ms-1">Confidence Score: {{ report.duplicate_score }}/100</span>
+                    {% endif %}
                     {% if report.duplicate_of %}
-                        <a href="{% url 'reports:detail' pk=report.duplicate_of.pk %}" class="fw-semibold ms-1"
-                           style="color: var(--warning);">View Original #{{ report.duplicate_of.id }} &raquo;</a>
+                        <a href="{% url 'reports:detail' pk=report.duplicate_of.pk %}" class="fw-semibold ms-2"
+                           style="color: var(--warning);">View Canonical Sighting #{{ report.duplicate_of.id }} &raquo;</a>
                     {% endif %}
                 </div>
             </div>
@@ -230,6 +234,47 @@
                     </p>
 
                     {% if active_assignment %}
+                        {% if active_assignment.status == 'OUTCOME_SUBMITTED' %}
+                            <div class="p-3 rounded border border-warning mb-3 shadow-sm" style="background: #fffbeb;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <h6 class="fw-bold mb-0 text-warning-emphasis" style="font-size: 0.9rem;">
+                                        <i class="fa-solid fa-clipboard-check me-1"></i> Ranger Field Outcome Submitted
+                                    </h6>
+                                    <span class="badge bg-warning text-dark">Under Review</span>
+                                </div>
+                                <p class="mb-1" style="font-size: 0.85rem;">
+                                    <strong>Reported Outcome:</strong> {{ active_assignment.get_outcome_display }}
+                                </p>
+                                {% if active_assignment.notes %}
+                                    <p class="mb-1 text-muted" style="font-size: 0.82rem;"><strong>Field Notes:</strong> {{ active_assignment.notes }}</p>
+                                {% endif %}
+                                {% if active_assignment.outcome_image %}
+                                    <div class="my-2">
+                                        <span class="text-muted d-block mb-1" style="font-size: 0.75rem;">Supporting Evidence Photo:</span>
+                                        <img src="{{ active_assignment.outcome_image.url }}" alt="Outcome Evidence" class="img-fluid rounded border" style="max-height: 220px;">
+                                    </div>
+                                {% endif %}
+                                <form method="post" action="{% url 'reports:review_assignment' pk=active_assignment.pk %}" class="mt-3">
+                                    {% csrf_token %}
+                                    <div class="mb-2">
+                                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Authority Review Decision &amp; Notes:</label>
+                                        <textarea name="review_notes" rows="2" class="form-control form-control-sm" placeholder="Review notes or rejection rationale…"></textarea>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="submit" name="decision" value="APPROVED" class="btn btn-teal btn-sm flex-grow-1">
+                                            <i class="fa-solid fa-check me-1"></i> Approve &amp; Resolve Incident
+                                        </button>
+                                        <button type="submit" name="decision" value="REJECTED" class="btn btn-outline-danger btn-sm">
+                                            <i class="fa-solid fa-xmark me-1"></i> Reject
+                                        </button>
+                                        <button type="submit" name="decision" value="CLARIFICATION_REQUESTED" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fa-solid fa-question me-1"></i> Request Clarification
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
+
                         <div class="p-3 rounded border mb-3" style="background: var(--surface-hover); font-size: 0.85rem;">
                             <p class="fw-semibold mb-1">
                                 <i class="fa-solid fa-user-check me-1" style="color: var(--primary);"></i>
@@ -246,7 +291,7 @@
                                 {% if active_assignment.responded_at %}· Responded {{ active_assignment.responded_at|date:"M j H:i" }}{% endif %}
                             </p>
                             <small class="text-muted d-block mb-2">
-                                Lifecycle: ASSIGNED → ACCEPTED → ON THE WAY → AT LOCATION → COMPLETED
+                                Lifecycle: ASSIGNED → ACCEPTED → ON THE WAY → AT LOCATION → OUTCOME SUBMITTED → COMPLETED
                             </small>
                             <form method="post" action="{% url 'reports:cancel_assignment' pk=active_assignment.pk %}"
                                   onsubmit="return confirm('Cancel this assignment so it can be reassigned?');">

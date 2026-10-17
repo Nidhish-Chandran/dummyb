@@ -166,41 +166,82 @@
 
             {% if assignment.status == 'AT_LOCATION' %}
             <div class="card-clean p-4 mb-4 border-start border-success border-4">
-                <h5 class="fw-semibold mb-2" style="font-size: 0.9375rem; color: var(--text);">Complete Assignment</h5>
-                <p class="text-muted mb-3" style="font-size: 0.8125rem;">Record the outcome to successfully conclude this operation.</p>
+                <h5 class="fw-semibold mb-2" style="font-size: 0.9375rem; color: var(--text);">Submit Field Outcome</h5>
+                <p class="text-muted mb-3" style="font-size: 0.8125rem;">Record the outcome and upload supporting photo evidence for Authority review and verification.</p>
+                {% if assignment.review_decision == 'REJECTED' %}
+                    <div class="alert alert-danger py-2 mb-3" style="font-size: 0.8125rem;">
+                        <strong><i class="fa-solid fa-triangle-exclamation me-1"></i> Authority Rejection Feedback:</strong>
+                        <p class="mb-0 mt-1">{{ assignment.review_notes|default:"Please verify the area again or provide further documentation." }}</p>
+                    </div>
+                {% elif assignment.review_decision == 'CLARIFICATION_REQUESTED' %}
+                    <div class="alert alert-warning py-2 mb-3" style="font-size: 0.8125rem;">
+                        <strong><i class="fa-solid fa-circle-question me-1"></i> Authority Clarification Request:</strong>
+                        <p class="mb-0 mt-1">{{ assignment.review_notes }}</p>
+                    </div>
+                {% endif %}
                 <form method="post" enctype="multipart/form-data" action="{% url 'ranger:assignment_update' pk=assignment.pk %}" class="action-feedback-form">
                     {% csrf_token %}
-                    <input type="hidden" name="action" value="COMPLETE">
+                    <input type="hidden" name="action" value="SUBMIT_OUTCOME">
                     <div class="mb-3">
                         <label class="form-label" style="font-size:0.8125rem;">Outcome <span class="text-danger">*</span></label>
                         <select name="outcome" class="form-select form-select-sm" required>
                             <option value="">— Select outcome —</option>
                             {% for val, label in assignment.OUTCOME_CHOICES %}
-                                <option value="{{ val }}">{{ label }}</option>
+                                <option value="{{ val }}" {% if assignment.outcome == val %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" style="font-size:0.8125rem;">Field Notes</label>
-                        <textarea name="notes" rows="3" class="form-control form-control-sm" placeholder="Details of capture, relocation, or release…"></textarea>
+                        <label class="form-label" style="font-size:0.8125rem;">Field Notes <span class="text-danger">*</span></label>
+                        <textarea name="notes" rows="3" class="form-control form-control-sm" placeholder="Details of capture, relocation, search radius, or release…" required>{{ assignment.notes|default:"" }}</textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" style="font-size:0.8125rem;">Outcome Photo (optional)</label>
+                        <label class="form-label" style="font-size:0.8125rem;">Outcome Photo / Evidence</label>
                         <input type="file" name="outcome_image" accept="image/png,image/jpeg,image/webp" class="form-control form-control-sm">
+                        <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Optional supporting photo of containment bag, release site, or clear scene.</small>
                     </div>
                     <button type="submit" class="btn btn-teal btn-sm w-100 py-2">
-                        <i class="fa-solid fa-flag-checkered me-1"></i> Conclude &amp; Close Incident
+                        <i class="fa-solid fa-paper-plane me-1"></i> Submit Outcome for Authority Verification
                     </button>
                 </form>
+            </div>
+            {% endif %}
+
+            {% if assignment.status == 'OUTCOME_SUBMITTED' %}
+            <div class="card-clean p-4 mb-4 border-start border-info border-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem;">
+                        <i class="fa-solid fa-hourglass-half me-1" style="color: var(--info, #0284c7);"></i> Under Authority Review
+                    </h5>
+                    <span class="badge" style="background: var(--info-light, #e0f2fe); color: var(--info, #0284c7);">Pending Verification</span>
+                </div>
+                <p class="text-muted mb-2" style="font-size: 0.8125rem;">
+                    Your response outcome was submitted at {{ assignment.outcome_submitted_at|date:"M j, Y H:i" }}. The operations desk is verifying the documentation.
+                </p>
+                <div class="p-3 rounded border mb-2" style="background: var(--surface-hover);">
+                    <p class="mb-1" style="font-size: 0.82rem;"><strong>Reported Outcome:</strong> {{ assignment.get_outcome_display }}</p>
+                    {% if assignment.notes %}<p class="mb-1 text-muted" style="font-size: 0.8rem;"><strong>Notes:</strong> {{ assignment.notes }}</p>{% endif %}
+                    {% if assignment.outcome_image %}
+                        <div class="mt-2">
+                            <span class="text-muted d-block mb-1" style="font-size: 0.75rem;">Submitted Evidence:</span>
+                            <img src="{{ assignment.outcome_image.url }}" class="img-fluid rounded border" style="max-height: 180px;" alt="Evidence">
+                        </div>
+                    {% endif %}
+                </div>
             </div>
             {% endif %}
 
             {% if assignment.status == 'COMPLETED' %}
             <div class="card-clean p-4 mb-4 border-start border-success border-4">
                 <h5 class="fw-semibold mb-2" style="font-size: 0.9375rem;">
-                    <i class="fa-solid fa-circle-check me-1" style="color: var(--success, #16a34a);"></i> Incident Resolved
+                    <i class="fa-solid fa-circle-check me-1" style="color: var(--success, #16a34a);"></i> Incident Verified &amp; Resolved
                 </h5>
-                <p class="mb-1" style="font-size: 0.85rem;"><strong>{{ assignment.get_outcome_display }}</strong> · {{ assignment.completed_at|date:"M j, Y H:i" }}</p>
+                <p class="mb-1" style="font-size: 0.85rem;"><strong>{{ assignment.get_outcome_display }}</strong> · Completed {{ assignment.completed_at|date:"M j, Y H:i" }}</p>
+                {% if assignment.reviewed_by %}
+                    <small class="text-muted d-block mb-2" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-user-check me-1"></i> Verified by Authority Officer: {{ assignment.reviewed_by.username }}
+                    </small>
+                {% endif %}
                 {% if assignment.notes %}<p class="text-muted mb-2" style="font-size: 0.8125rem;">{{ assignment.notes }}</p>{% endif %}
                 {% if assignment.outcome_image %}<img src="{{ assignment.outcome_image.url }}" class="img-fluid rounded border mt-2" alt="Outcome">{% endif %}
             </div>

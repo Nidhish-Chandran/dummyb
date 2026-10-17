@@ -49,7 +49,7 @@
     <!-- Main Content -->
     <main class="auth-main">
         {% if messages %}
-            <div class="container">
+            <div class="container" style="max-width: 540px;">
                 {% for message in messages %}
                     {% if "logged out" not in message.message|lower and "logout" not in message.message|lower %}
                     <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show"

@@ -15,4 +15,5 @@ urlpatterns = [
     path('<int:pk>/assign/', views.assign_responder_view, name='assign_responder'),
     path('<int:pk>/response-status/', views.update_response_status_view, name='update_response_status'),
     path('assignments/<int:pk>/cancel/', views.cancel_assignment_view, name='cancel_assignment'),
+    path('assignments/<int:pk>/review/', views.review_assignment_outcome_view, name='review_assignment'),
 ]

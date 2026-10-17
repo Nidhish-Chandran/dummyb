@@ -15,6 +15,8 @@ from accounts.decorators import authority_required
 from .models import RangerAssignment
 from .dispatch import get_candidate_rangers, haversine_km
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 
 def _refresh_ranger_availability(ranger_user):
@@ -336,6 +338,62 @@ def cancel_assignment_view(request, pk):
                 rep.response_status = SightingReport.RESPONSE_UNASSIGNED
                 rep.save(update_fields=['assigned_responder', 'response_status'])
             messages.success(request, f"Assignment #{assignment.pk} cancelled.")
+    return redirect('reports:detail', pk=assignment.sighting_id)
+
+
+@login_required
+@authority_required
+@never_cache
+@require_POST
+def review_assignment_outcome_view(request, pk):
+    """Authority reviews and verifies the outcome reported by a Ranger.
+
+    Actions:
+    - APPROVE: Marks assignment COMPLETED, records reviewer, timestamp, and marks report RESOLVED.
+    - REJECT: Returns assignment to AT_LOCATION with rejection rationale notes so the Ranger can follow up or rectify.
+    - CLARIFY: Keeps status at OUTCOME_SUBMITTED but sets review_decision to CLARIFICATION_REQUESTED with notes.
+    """
+    assignment = get_object_or_404(RangerAssignment, pk=pk)
+    decision = request.POST.get('decision', '').strip()
+    review_notes = request.POST.get('review_notes', '').strip()
+
+    if decision not in ['APPROVED', 'REJECTED', 'CLARIFICATION_REQUESTED']:
+        messages.error(request, "Invalid outcome review decision.")
+        return redirect('reports:detail', pk=assignment.sighting_id)
+
+    if decision in ['REJECTED', 'CLARIFICATION_REQUESTED'] and not review_notes:
+        messages.error(request, "Please provide review comments or rationale when rejecting or requesting clarification.")
+        return redirect('reports:detail', pk=assignment.sighting_id)
+
+    assignment.review_decision = decision
+    assignment.review_notes = review_notes
+    assignment.reviewed_by = request.user
+    assignment.reviewed_at = timezone.now()
+
+    if decision == 'APPROVED':
+        assignment.status = RangerAssignment.STATUS_COMPLETED
+        assignment.completed_at = timezone.now()
+        assignment.save(update_fields=['status', 'review_decision', 'review_notes', 'reviewed_by', 'reviewed_at', 'completed_at'])
+        
+        # Free ranger availability
+        _refresh_ranger_availability(assignment.ranger)
+
+        # Mark sighting report resolved
+        rep = assignment.sighting
+        rep.status = SightingReport.STATUS_RESOLVED
+        rep.response_status = SightingReport.RESPONSE_RESOLVED
+        rep.save(update_fields=['status', 'response_status'])
+
+        messages.success(request, f"Outcome for Incident #{rep.pk} approved. Incident marked resolved.")
+    elif decision == 'REJECTED':
+        # Revert to AT_LOCATION so ranger can re-inspect or re-submit
+        assignment.status = RangerAssignment.STATUS_AT_LOCATION
+        assignment.save(update_fields=['status', 'review_decision', 'review_notes', 'reviewed_by', 'reviewed_at'])
+        messages.warning(request, f"Outcome rejected. Ranger {assignment.ranger.username} has been instructed to remain at location.")
+    elif decision == 'CLARIFICATION_REQUESTED':
+        assignment.save(update_fields=['review_decision', 'review_notes', 'reviewed_by', 'reviewed_at'])
+        messages.info(request, f"Clarification requested from ranger {assignment.ranger.username}.")
+
     return redirect('reports:detail', pk=assignment.sighting_id)
 
 

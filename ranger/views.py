@@ -108,6 +108,7 @@ def assignment_update_view(request, pk):
         'DECLINE': RangerAssignment.STATUS_DECLINED,
         'ON_THE_WAY': RangerAssignment.STATUS_ON_THE_WAY,
         'AT_LOCATION': RangerAssignment.STATUS_AT_LOCATION,
+        'SUBMIT_OUTCOME': RangerAssignment.STATUS_OUTCOME_SUBMITTED,
         'COMPLETE': RangerAssignment.STATUS_COMPLETED,
     }
     target = valid_actions.get(action)
@@ -125,7 +126,24 @@ def assignment_update_view(request, pk):
 
     profile = request.user.profile
 
-    if target == RangerAssignment.STATUS_COMPLETED:
+    if target == RangerAssignment.STATUS_OUTCOME_SUBMITTED:
+        outcome = request.POST.get('outcome', '')
+        outcome_keys = dict(RangerAssignment.OUTCOME_CHOICES)
+        if outcome not in outcome_keys:
+            messages.error(request, "Please select a valid outcome before submitting for review.")
+            return redirect('ranger:assignment_detail', pk=assignment.pk)
+        assignment.outcome = outcome
+        assignment.notes = request.POST.get('notes', '').strip() or None
+        img = request.FILES.get('outcome_image')
+        if img:
+            assignment.outcome_image = img
+        assignment.outcome_submitted_at = timezone.now()
+        assignment.review_decision = 'PENDING_REVIEW'
+        assignment.status = target
+        assignment.save(update_fields=['status', 'outcome_submitted_at', 'review_decision', 'outcome', 'notes', 'outcome_image'])
+        messages.success(request, f"Outcome report for Incident #{assignment.sighting_id} submitted. Awaiting Authority review & verification.")
+        return redirect('ranger:assignment_detail', pk=assignment.pk)
+    elif target == RangerAssignment.STATUS_COMPLETED:
         outcome = request.POST.get('outcome', '')
         outcome_keys = dict(RangerAssignment.OUTCOME_CHOICES)
         if outcome not in outcome_keys:
@@ -137,6 +155,7 @@ def assignment_update_view(request, pk):
         if img:
             assignment.outcome_image = img
         assignment.completed_at = timezone.now()
+        assignment.review_decision = 'APPROVED'
         # Free the ranger back to AVAILABLE once work is done
         if profile.availability == UserProfile.AVAILABILITY_BUSY:
             profile.availability = UserProfile.AVAILABILITY_AVAILABLE
