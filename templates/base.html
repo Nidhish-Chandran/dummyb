@@ -43,9 +43,10 @@
             </a>
 
             <!-- Mobile Toggle Hamburger -->
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#venomNavbar"
-                    aria-controls="venomNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                <i class="fa-solid fa-bars-staggered"></i>
+            <button class="navbar-toggler border-0" type="button" id="venomNavbarToggler"
+                    aria-controls="venomNavbar" aria-expanded="false" aria-label="Toggle navigation"
+                    onclick="var n=document.getElementById('venomNavbar'); if(n){ n.classList.toggle('show'); this.setAttribute('aria-expanded', n.classList.contains('show') ? 'true' : 'false'); } return false;">
+                <i class="fa-solid fa-bars"></i>
             </button>
 
             <div class="collapse navbar-collapse" id="venomNavbar">
@@ -85,12 +86,6 @@
                             </a>
                         </li>
                         {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
-                               href="{% url 'accounts:profile' %}">
-                                <i class="fa-solid fa-id-card"></i> Profile
-                            </a>
-                        </li>
                     {% elif user.is_authenticated and user.profile.is_ranger %}
                         {# ---- RANGER NAV: dedicated console ---- #}
                         <li class="nav-item">
@@ -104,12 +99,6 @@
                                href="{% url 'ranger:assignments' %}">
                                 <i class="fa-solid fa-clipboard-list"></i> My Assignments
                                 {% if ranger_unread_count %}<span class="badge rounded-pill bg-danger ms-1">{{ ranger_unread_count }}</span>{% endif %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
-                               href="{% url 'ranger:profile' %}">
-                                <i class="fa-solid fa-id-card"></i> Profile
                             </a>
                         </li>
                     {% elif user.is_authenticated and user.profile.is_admin %}
@@ -145,14 +134,6 @@
                                 <i class="fa-solid fa-plus-circle"></i> Report Sighting
                             </a>
                         </li>
-                        {% if user.is_authenticated and user.profile.is_citizen %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
-                               href="{% url 'accounts:profile' %}">
-                                <i class="fa-solid fa-id-card"></i> Profile
-                            </a>
-                        </li>
-                        {% endif %}
                     {% endif %}
 
                     {% if not user.is_authenticated or not user.profile.is_ranger and not user.profile.is_authority %}
@@ -182,9 +163,11 @@
                 <!-- Right-side actions -->
                 <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
                     {% if user.is_authenticated %}
-                        <!-- User Identity Badge (Display-only; not clickable) -->
-                        <div class="user-identity-card user-identity-badge"
-                             title="{{ user.username }} ({{ user.profile.get_role_display }})">
+                        <!-- User Identity Badge (Clickable link to user's profile) -->
+                        <a href="{% if user.profile.is_ranger %}{% url 'ranger:profile' %}{% else %}{% url 'accounts:profile' %}{% endif %}"
+                           class="user-identity-card user-identity-badge text-decoration-none"
+                           title="View Profile — {{ user.username }} ({{ user.profile.get_role_display }})"
+                           aria-label="View Profile for {{ user.username }}">
                             <div class="user-avatar-circle">
                                 <i class="fa-solid fa-user"></i>
                             </div>
@@ -198,10 +181,10 @@
                             {% elif user.profile.role == 'admin' %}
                                 <span class="badge-role-admin"><i class="fa-solid fa-crown me-1"></i>Admin</span>
                             {% endif %}
-                        </div>
+                        </a>
 
-                        <!-- Logout Button (Omitted for Citizen role as requested; preserved for Ranger, Authority, Admin) -->
-                        {% if not user.profile.is_citizen %}
+                        <!-- Logout Button (Available on profile page for Citizen, Authority, Ranger; preserved in navbar for Admin) -->
+                        {% if user.profile.is_admin %}
                         <form method="post" action="{% url 'accounts:logout' %}" class="d-inline ms-1">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-glass btn-sm" title="End your session and log out">

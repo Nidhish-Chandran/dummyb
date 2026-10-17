@@ -93,6 +93,10 @@ class UserProfile(models.Model):
     def is_responder(self):
         return self.is_ranger or self.is_admin
 
+    @property
+    def phone(self):
+        return self.phone_number or ''
+
 
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):

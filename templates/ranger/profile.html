@@ -3,29 +3,177 @@
 {% block title %}Ranger Profile — Venom Watch{% endblock %}
 
 {% block content %}
-<div class="container py-4" style="max-width: 640px;">
-    <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
-        <i class="fa-solid fa-id-card me-2" style="color: var(--primary);"></i> Ranger Profile
-    </h2>
-    <p class="text-muted mb-4" style="font-size: 0.8125rem;">
-        Your registered operational location is used by the Authority to dispatch nearby incidents to you.
-    </p>
+<div class="container py-4" style="max-width: 760px;">
 
-    <div class="card-clean p-4">
-        <form method="post">
+    <!-- Breadcrumb / Header Title -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text);">
+                <i class="fa-solid fa-tree me-2" style="color: var(--primary);"></i>
+                Forest Ranger Profile
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Your registered operational location and availability are used for automated incident dispatch.
+            </p>
+        </div>
+        <!-- Logout Form on Profile Page -->
+        <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
             {% csrf_token %}
-            {% for field in form %}
-                <div class="mb-3">
-                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
-                    {% for error in field.errors %}<div class="text-danger" style="font-size: 0.8rem;">{{ error }}</div>{% endfor %}
-                </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-teal btn-sm w-100">
-                <i class="fa-solid fa-floppy-disk me-1"></i> Save Profile
+            <button type="submit" class="btn btn-outline-danger btn-sm px-3" title="End your session and log out">
+                <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
             </button>
         </form>
     </div>
+
+    <!-- Main Profile Card -->
+    <div class="card-clean p-4 p-md-5 mb-4 shadow-sm">
+
+        <!-- Identity Banner -->
+        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                 style="width: 52px; height: 52px; background: rgba(5, 150, 105, 0.12); color: var(--primary); font-size: 1.3rem;">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold mb-1" style="font-size: 1.2rem; color: var(--text);">{{ user.username }}</h3>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge-role-ranger"><i class="fa-solid fa-tree me-1"></i>Field Forest Ranger</span>
+                    {% if profile.availability == 'AVAILABLE' %}
+                        <span class="badge" style="background: var(--success-light); color: var(--success);">
+                            <i class="fa-solid fa-circle-dot me-1"></i> Available for Dispatch
+                        </span>
+                    {% elif profile.availability == 'BUSY' %}
+                        <span class="badge" style="background: var(--warning-light); color: var(--warning);">
+                            <i class="fa-solid fa-person-running me-1"></i> On Mission
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary">
+                            <i class="fa-solid fa-moon me-1"></i> Offline
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Overview (Read-Only) -->
+        <h5 class="fw-semibold mb-3" style="font-size: 0.95rem; color: var(--text);">
+            <i class="fa-solid fa-circle-info me-2" style="color: var(--info);"></i> Official Account Details
+        </h5>
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-user-tag me-1"></i> Officer Name
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ user.get_full_name|default:profile.full_name|default:user.username }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-envelope me-1"></i> Official Email
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ user.email|default:"Not provided" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-building me-1"></i> Unit / Division
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ profile.organization|default:"Kerala Forest & Wildlife Department" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-location-crosshairs me-1"></i> Base Station
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ profile.registered_location|default:profile.assigned_region|default:"Not set" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editable Ranger Operational Settings Form -->
+        <h5 class="fw-semibold mb-3" style="font-size: 0.95rem; color: var(--text);">
+            <i class="fa-solid fa-sliders me-2" style="color: var(--primary);"></i> Operational Settings &amp; Availability
+        </h5>
+
+        <form method="post" action="{% url 'ranger:profile' %}" class="action-feedback-form">
+            {% csrf_token %}
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_phone_number" style="font-size: 0.8125rem;">Contact Phone Number</label>
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}<div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.phone_number.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_organization" style="font-size: 0.8125rem;">Department / Organization</label>
+                    {{ form.organization }}
+                    {% if form.organization.errors %}<div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.organization.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_registered_location" style="font-size: 0.8125rem;">Registered Operational Location (e.g. Kollam)</label>
+                    {{ form.registered_location }}
+                    {% if form.registered_location.errors %}<div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.registered_location.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_assigned_region" style="font-size: 0.8125rem;">Assigned Region / District</label>
+                    {{ form.assigned_region }}
+                    {% if form.assigned_region.errors %}<div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.assigned_region.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_latitude" style="font-size: 0.8125rem;">Base Latitude</label>
+                    {{ form.latitude }}
+                    {% if form.latitude.errors %}<div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.latitude.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_longitude" style="font-size: 0.8125rem;">Base Longitude</label>
+                    {{ form.longitude }}
+                    {% if form.longitude.errors %}<div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.longitude.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_availability" style="font-size: 0.8125rem;">
+                    Availability Status <span class="text-muted fw-normal">(Set to 'Available' to receive incident dispatch alerts)</span>
+                </label>
+                {{ form.availability }}
+                {% if form.availability.errors %}<div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.availability.errors.0 }}</div>{% endif %}
+            </div>
+
+            <!-- Bottom Actions: Save Profile and Logout -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 border-top">
+                <button type="submit" class="btn btn-teal py-2 px-4">
+                    <i class="fa-solid fa-floppy-disk me-2"></i> Save Profile
+                </button>
+
+                <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger py-2 px-3" title="Sign out of your ranger session">
+                        <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </form>
+
+    </div>
+
 </div>
 {% endblock %}

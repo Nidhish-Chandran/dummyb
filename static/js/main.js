@@ -183,28 +183,48 @@
     }
 
     // =========================================================================
-    // 5. MOBILE DRAWER AUTO-CLOSE & INTERACTIVITY
+    // 5. MOBILE DRAWER TOGGLE & INTERACTIVITY
     // =========================================================================
     function initMobileNav() {
+        const toggler = document.getElementById('venomNavbarToggler') || document.querySelector('.navbar-toggler');
         const navbarCollapse = document.getElementById('venomNavbar');
-        if (!navbarCollapse) return;
+        if (!toggler || !navbarCollapse) return;
 
-        // Auto close when clicking any navigation link on mobile
-        const navLinks = navbarCollapse.querySelectorAll('.nav-link, .btn');
+        // Auto close when clicking any navigation link or profile badge on mobile
+        const navLinks = navbarCollapse.querySelectorAll('.nav-link, .btn, .user-identity-card');
         navLinks.forEach(link => {
             link.addEventListener('click', function () {
-                if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
-                    const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
-                    if (bsCollapse) bsCollapse.hide();
+                if (window.innerWidth < 992) {
+                    navbarCollapse.classList.remove('show');
+                    toggler.setAttribute('aria-expanded', 'false');
                 }
             });
+        });
+
+        // Close on outside click
+        document.addEventListener('click', function (e) {
+            if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
+                if (!navbarCollapse.contains(e.target) && !toggler.contains(e.target)) {
+                    navbarCollapse.classList.remove('show');
+                    toggler.setAttribute('aria-expanded', 'false');
+                }
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && navbarCollapse.classList.contains('show')) {
+                navbarCollapse.classList.remove('show');
+                toggler.setAttribute('aria-expanded', 'false');
+                toggler.focus();
+            }
         });
     }
 
     // =========================================================================
     // 6. GLOBAL DOM INITIALIZATION
     // =========================================================================
-    document.addEventListener('DOMContentLoaded', function () {
+    function initVenomApp() {
         // Initialize Navigation Enhancements
         initNavigationEffects();
         initMobileNav();
@@ -243,6 +263,13 @@
                 }
             }
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initVenomApp);
+    } else {
+        initVenomApp();
+    }
 
 })();
+

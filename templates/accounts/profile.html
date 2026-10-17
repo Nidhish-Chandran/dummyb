@@ -3,85 +3,183 @@
 {% block title %}My Profile — Venom Watch{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
-            <div class="card-clean p-4 p-md-5">
+<div class="container py-4" style="max-width: 760px;">
 
-                <!-- Profile header -->
-                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
-                         style="width: 48px; height: 48px; background: var(--primary-light);">
-                        <i class="fa-solid fa-id-card" style="color: var(--primary); font-size: 1.1rem;"></i>
-                    </div>
-                    <div>
-                        <h3 class="fw-bold mb-0" style="font-size: 1.15rem; color: var(--text);">{{ user.username }}</h3>
-                        <span class="badge-non-venomous mt-1 d-inline-block">{{ profile.get_role_display }}</span>
-                    </div>
-                </div>
+    <!-- Breadcrumb / Header Title -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text);">
+                <i class="fa-solid fa-id-card me-2" style="color: var(--primary);"></i>
+                {% if profile.role == 'authority' %}Authority Officer Profile{% else %}Citizen Profile{% endif %}
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Manage your personal contact details and operational profile settings.
+            </p>
+        </div>
+        <!-- Logout Form on Profile Page -->
+        <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm px-3" title="End your session and log out">
+                <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+            </button>
+        </form>
+    </div>
 
-                <!-- Account info -->
-                <div class="row mb-4 g-3">
-                    <div class="col-sm-6">
-                        <div class="p-3 rounded border" style="background: var(--surface-hover);">
-                            <small class="text-muted d-block mb-1">
-                                <i class="fa-solid fa-envelope me-1"></i> Email Address
-                            </small>
-                            <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
-                                {{ user.email|default:"Not provided" }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="p-3 rounded border" style="background: var(--surface-hover);">
-                            <small class="text-muted d-block mb-1">
-                                <i class="fa-solid fa-shield-halved me-1"></i> Account Role
-                            </small>
-                            <span class="fw-semibold" style="font-size: 0.875rem; color: var(--primary);">
-                                {{ profile.get_role_display }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+    <!-- Main Profile Card -->
+    <div class="card-clean p-4 p-md-5 mb-4 shadow-sm">
 
-                <!-- Update form -->
-                <h5 class="fw-semibold mb-3" style="font-size: 1rem; color: var(--text);">
-                    <i class="fa-solid fa-user-gear me-2" style="color: var(--primary);"></i>
-                    Update Profile
-                </h5>
-
-                <form method="post">
-                    {% csrf_token %}
-
-                    <div class="mb-3">
-                        <label class="form-label" for="id_phone_number">Phone Number</label>
-                        <input type="text" name="phone_number" id="id_phone_number" class="form-control"
-                               value="{{ form.phone_number.value|default:'' }}" placeholder="+91 98765 43210">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label" for="id_organization">Organization / Department</label>
-                        <input type="text" name="organization" id="id_organization" class="form-control"
-                               value="{{ form.organization.value|default:'' }}" placeholder="e.g. Wildlife Protection Dept">
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label" for="id_assigned_region">Assigned Region / District</label>
-                        <input type="text" name="assigned_region" id="id_assigned_region" class="form-control"
-                               value="{{ form.assigned_region.value|default:'' }}" placeholder="e.g. Western Ghats Sector 4">
-                    </div>
-
-                    <div class="d-flex justify-content-end">
-                        <button type="submit" class="btn btn-teal py-2 px-4">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> Save Changes
-                        </button>
-                    </div>
-                </form>
-
+        <!-- Identity Banner -->
+        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                 style="width: 52px; height: 52px; background: var(--primary-light); color: var(--primary); font-size: 1.3rem;">
+                <i class="fa-solid fa-user"></i>
             </div>
-
+            <div>
+                <h3 class="fw-bold mb-1" style="font-size: 1.2rem; color: var(--text);">{{ user.username }}</h3>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    {% if profile.role == 'authority' %}
+                        <span class="badge-role-authority"><i class="fa-solid fa-shield me-1"></i>Authority Officer</span>
+                    {% elif profile.role == 'citizen' %}
+                        <span class="badge-role-citizen"><i class="fa-solid fa-user me-1"></i>Citizen</span>
+                    {% elif profile.role == 'admin' %}
+                        <span class="badge-role-admin"><i class="fa-solid fa-crown me-1"></i>Platform Admin</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ profile.get_role_display }}</span>
+                    {% endif %}
+                    <span class="text-muted" style="font-size: 0.8rem;">
+                        Member since {{ user.date_joined|date:"M Y" }}
+                    </span>
+                </div>
             </div>
         </div>
+
+        <!-- Account Overview (Read-Only) -->
+        <h5 class="fw-semibold mb-3" style="font-size: 0.95rem; color: var(--text);">
+            <i class="fa-solid fa-circle-info me-2" style="color: var(--info);"></i> Account Overview
+        </h5>
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-user-tag me-1"></i> Full Name
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ user.get_full_name|default:profile.full_name|default:"Not specified" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-envelope me-1"></i> Email Address
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ user.email|default:"Not provided" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Platform Role
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--primary);">
+                        {{ profile.get_role_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-phone me-1"></i> Active Phone
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ profile.phone_number|default:"Not set" }}
+                    </span>
+                </div>
+            </div>
+            {% if profile.role == 'authority' %}
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-building me-1"></i> Department / Agency
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ profile.organization|default:"Kerala Wildlife & Public Safety" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-map-location-dot me-1"></i> Assigned Jurisdiction
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ profile.assigned_region|default:profile.registered_location|default:"Statewide Operations" }}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Editable Profile Settings Form -->
+        <h5 class="fw-semibold mb-3" style="font-size: 0.95rem; color: var(--text);">
+            <i class="fa-solid fa-user-pen me-2" style="color: var(--primary);"></i> Edit Profile Information
+        </h5>
+
+        <form method="post" action="{% url 'accounts:profile' %}" class="action-feedback-form">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="id_phone_number" style="font-size: 0.8125rem;">
+                    Contact Phone Number <span class="text-muted fw-normal">(used for urgent verification &amp; updates)</span>
+                </label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}
+                    <div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.phone_number.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            {% if profile.role == 'authority' or profile.role == 'admin' %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="id_organization" style="font-size: 0.8125rem;">Organization / Department</label>
+                {{ form.organization }}
+                {% if form.organization.errors %}
+                    <div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.organization.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_assigned_region" style="font-size: 0.8125rem;">Assigned Region / District</label>
+                {{ form.assigned_region }}
+                {% if form.assigned_region.errors %}
+                    <div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.assigned_region.errors.0 }}</div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_assigned_region" style="font-size: 0.8125rem;">Residential District / Landmark <span class="text-muted fw-normal">(optional)</span></label>
+                {{ form.assigned_region }}
+            </div>
+            {% endif %}
+
+            <!-- Bottom Actions: Save Changes and Logout -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 border-top">
+                <button type="submit" class="btn btn-teal py-2 px-4">
+                    <i class="fa-solid fa-floppy-disk me-2"></i> Save Changes
+                </button>
+
+                <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger py-2 px-3" title="Sign out of your account">
+                        <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </form>
+
     </div>
+
 </div>
 {% endblock %}

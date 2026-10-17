@@ -265,12 +265,23 @@ class UserRegistrationForm(UserCreationForm):
 
 
 class UserProfileForm(forms.ModelForm):
-    phone_number = forms.CharField(max_length=20, required=False)
+    phone_number = forms.CharField(
+        max_length=20, required=False, label="Contact Phone Number",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+91 98765 43210'})
+    )
 
     class Meta:
         model = UserProfile
         fields = ['phone_number', 'organization', 'assigned_region',
                   'registered_location', 'latitude', 'longitude', 'availability']
+        widgets = {
+            'organization': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Wildlife Protection Dept'}),
+            'assigned_region': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Western Ghats Sector 4'}),
+            'registered_location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Kollam District HQ'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '8.8932', 'step': 'any'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '76.6141', 'step': 'any'}),
+            'availability': forms.Select(attrs={'class': 'form-select'}),
+        }
 
     def clean_phone_number(self):
         phone = self.cleaned_data.get('phone_number', '').strip()
