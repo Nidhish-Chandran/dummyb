@@ -755,5 +755,48 @@ class AuthorityMapAndImageMappingTestCase(TestCase):
         self.assertIsNone(p['image_url'])
         self.assertEqual(p['id'], rep_no_img.id)
 
+    def test_10_ranger_assignment_and_authority_verification_workflows(self):
+        rep = SightingReport.objects.create(
+            user=self.citizen,
+            title="Sighting for Verification and Assignment",
+            latitude=8.8932,
+            longitude=76.6141,
+            location_name="Kollam, Kerala",
+            venomous=True,
+            venom_category=SightingReport.VENOM_HIGHLY,
+            status=SightingReport.STATUS_PENDING,
+            response_status=SightingReport.RESPONSE_UNASSIGNED
+        )
+        self.client.login(username='test_authority_map', password='password123')
+
+        # 1. Authority verifies the report
+        resp_verify = self.client.post(f'/reports/{rep.id}/verify/', {
+            'status': SightingReport.STATUS_VERIFIED,
+            'authority_notes': 'Verified highly venomous cobra sighting.'
+        })
+        self.assertEqual(resp_verify.status_code, 302)
+        rep.refresh_from_db()
+        self.assertEqual(rep.status, SightingReport.STATUS_VERIFIED)
+        self.assertEqual(rep.verified_by, self.authority)
+
+        # 2. Authority assigns eligible candidate ranger
+        resp_assign = self.client.post(f'/reports/{rep.id}/assign/', {
+            'ranger_id': self.ranger.id
+        })
+        self.assertEqual(resp_assign.status_code, 302)
+        rep.refresh_from_db()
+        self.assertEqual(rep.response_status, SightingReport.RESPONSE_ASSIGNED)
+        self.assertEqual(rep.assigned_responder, self.ranger)
+        self.assertTrue(rep.ranger_assignments.filter(ranger=self.ranger, status=RangerAssignment.STATUS_ASSIGNED).exists())
+
+        # 3. Check map API reflects both verified status and assignment
+        resp_map = self.client.get('/reports/api/map-reports/')
+        self.assertEqual(resp_map.status_code, 200)
+        data = resp_map.json()
+        item = next(r for r in data['reports'] if r['id'] == rep.id)
+        self.assertEqual(item['report_status'], SightingReport.STATUS_VERIFIED)
+        self.assertEqual(item['assignment']['status'], RangerAssignment.STATUS_ASSIGNED)
+        self.assertEqual(item['assignment']['ranger'], self.ranger.username)
+
 
 

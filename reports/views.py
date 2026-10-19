@@ -763,20 +763,28 @@ def authority_map_reports_api(request):
             if r.is_venomous and r.status != SightingReport.STATUS_RESOLVED:
                 unassigned_venomous_count += 1
 
-        img_url = None
-        target_img = getattr(r, 'image', None) or getattr(r, 'processed_image', None) or getattr(r, 'original_image', None)
-        if target_img and hasattr(target_img, 'url'):
+        orig_img_url = None
+        if r.original_image and hasattr(r.original_image, 'url'):
             try:
-                img_url = target_img.url
+                orig_img_url = r.original_image.url
             except Exception:
-                img_url = None
+                orig_img_url = None
+
+        proc_img_url = None
+        if r.processed_image and hasattr(r.processed_image, 'url'):
+            try:
+                proc_img_url = r.processed_image.url
+            except Exception:
+                proc_img_url = None
+
+        img_url = orig_img_url or proc_img_url
 
         data.append({
             'id': r.id,
             'report_reference': r.report_reference,
             'title': r.title,
-            'latitude': r.latitude,
-            'longitude': r.longitude,
+            'latitude': float(r.latitude),
+            'longitude': float(r.longitude),
             'location_name': r.location_name,
             'venom_status': r.venom_category,
             'is_venomous': r.is_venomous,
@@ -786,6 +794,8 @@ def authority_map_reports_api(request):
             'report_status': r.status,
             'dispatch_state': dispatch_state,
             'assignment': assign,
+            'original_image_url': orig_img_url,
+            'processed_image_url': proc_img_url,
             'image_url': img_url,
         })
 
@@ -827,20 +837,30 @@ def authority_report_panel_api(request, pk):
             'availability': prof.availability,
         })
 
-    img_url = None
-    target_img = getattr(report, 'image', None) or getattr(report, 'processed_image', None) or getattr(report, 'original_image', None)
-    if target_img and hasattr(target_img, 'url'):
+    orig_img_url = None
+    if report.original_image and hasattr(report.original_image, 'url'):
         try:
-            img_url = target_img.url
+            orig_img_url = report.original_image.url
         except Exception:
-            img_url = None
+            orig_img_url = None
+
+    proc_img_url = None
+    if report.processed_image and hasattr(report.processed_image, 'url'):
+        try:
+            proc_img_url = report.processed_image.url
+        except Exception:
+            proc_img_url = None
+
+    display_img_url = orig_img_url or proc_img_url
 
     payload = dict(assign)
     payload.update({
         'id': report.id,
         'report_reference': report.report_reference,
         'title': report.title,
-        'image_url': img_url,
+        'original_image_url': orig_img_url,
+        'processed_image_url': proc_img_url,
+        'image_url': display_img_url,
         'snake_status': report.get_venom_category_display() if report.venom_category else 'Pending Verification',
         'is_venomous': report.is_venomous,
         'species': report.species_predicted or '',
@@ -848,8 +868,8 @@ def authority_report_panel_api(request, pk):
         'raw_confidence': report.venom_confidence,
         'reported_at': report.created_at.strftime('%b %d, %Y, %I:%M %p'),
         'location_name': report.location_name,
-        'latitude': report.latitude,
-        'longitude': report.longitude,
+        'latitude': float(report.latitude),
+        'longitude': float(report.longitude),
         'notes': report.notes or '',
         'detail_url': f"/reports/{report.id}/",
         'candidates': candidates,

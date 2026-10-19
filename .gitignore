@@ -6,3 +6,13 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 Thumbs.db
+.env
+*.env
+
+# Sensitive verification documents and runtime uploads
+media/verification_docs/
+media/assignment_outcomes/
+media/wounds/
+media/sightings/cobra_image_*
+media/sightings/viper_image_*
+media/sightings/*_HtIFYxH*

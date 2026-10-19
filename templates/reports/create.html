@@ -413,9 +413,14 @@
                                     <p class="mb-2" style="font-size: 0.875rem; color: var(--text-primary);">
                                         The scanner did not detect a clear snake in this photo. For accurate response dispatch, please upload a clear photo of the snake.
                                     </p>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('sightingImageInput').click();">
-                                        <i class="fa-solid fa-arrow-rotate-left me-1"></i> Choose Another Photo
-                                    </button>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('sightingImageInput').click();">
+                                            <i class="fa-solid fa-arrow-rotate-left me-1"></i> Choose Another Photo
+                                        </button>
+                                        <button type="button" class="btn btn-teal btn-sm" onclick="document.getElementById('reportFormDetails').classList.remove('d-none'); document.getElementById('reportFormDetails').scrollIntoView({behavior: 'smooth'}); if (typeof initPickerMap === 'function') initPickerMap();">
+                                            <i class="fa-solid fa-file-shield me-1"></i> Submit for Authority Verification
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         `;

@@ -148,6 +148,7 @@
         const panelApiUrlBase = "{% url 'reports:report_panel_api' pk=0 %}".replace(/0\/$/, '');
         let selectedReportId = null;
         let latestReportsData = [];
+        let previousReportIds = new Set();
         let currentPanelRequestId = 0;
 
         const COLORS = { red: '#dc2626', amber: '#f59e0b', green: '#16a34a' };
@@ -206,6 +207,7 @@
         esriStreet.on('tileerror', handleTileError);
         osm.on('tileerror', handleTileError);
 
+        const spiderLegLayer = L.layerGroup().addTo(map);
         const markerLayer = L.layerGroup().addTo(map);
         const haloLayer = L.layerGroup().addTo(map);
         const markersById = new Map();
@@ -299,8 +301,13 @@
                 confText = ` · <span class="text-muted">Confidence unavailable</span>`;
             }
 
-            let html = `<div style="min-width:190px; font-family:var(--font-sans, sans-serif);">` +
-                `<strong style="color:${color}">Snake Sighting #${r.id}</strong>` +
+            let html = `<div style="min-width:210px; font-family:var(--font-sans, sans-serif);">`;
+            if (r.image_url) {
+                html += `<div class="mb-2 text-center rounded overflow-hidden" style="max-height:110px; background:#f1f5f9; border:1px solid #e2e8f0;">
+                            <img src="${esc(r.image_url)}" alt="Snake photo #${r.id}" style="width:100%; height:100px; object-fit:cover; display:block;" onerror="this.onerror=null; this.parentElement.style.display='none';">
+                         </div>`;
+            }
+            html += `<strong style="color:${color}">Snake Sighting #${r.id}</strong>` +
                 (r.report_reference ? ` <small class="text-muted">(${esc(r.report_reference)})</small>` : '') + `<br>` +
                 `<span class="fw-semibold">${esc(r.species || (r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS'))}</span>${confText}<br>` +
                 `<span class="text-muted">${esc(r.location_name)}</span><br>` +
@@ -311,31 +318,119 @@
             if (groupSize > 1) {
                 html += `<div class="mt-2 pt-1 border-top" style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-layer-group me-1"></i>${groupSize} sightings at this site (spread radially)</div>`;
             }
+            html += `<div class="mt-2 pt-1 text-end"><a href="javascript:void(0)" onclick="openPanel(${r.id})" class="fw-semibold text-decoration-none" style="font-size:0.75rem; color:var(--primary);"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Open Details</a></div>`;
             html += `</div>`;
             return html;
         }
 
+        // Recalculate radial screen offsets dynamically on zoom change so markers never overlap
+        function recalculateOffsets() {
+            spiderLegLayer.clearLayers();
+            allDisplayCoords = [];
+
+            // Group reports by proximity (~25 meters)
+            const coordGroups = new Map();
+            markersById.forEach(entry => {
+                const r = entry.report;
+                const key = `${r.latitude.toFixed(4)},${r.longitude.toFixed(4)}`;
+                if (!coordGroups.has(key)) coordGroups.set(key, []);
+                coordGroups.get(key).push(entry);
+            });
+
+            coordGroups.forEach(group => {
+                const groupSize = group.length;
+                group.sort((a, b) => (b.report.id - a.report.id));
+
+                group.forEach((entry, idx) => {
+                    const r = entry.report;
+                    const baseLatLng = [r.latitude, r.longitude];
+                    let displayLatLng = baseLatLng;
+
+                    if (groupSize > 1) {
+                        // Dynamically spread by 24 pixels on screen so markers are 100% distinct at any zoom level
+                        const centerPt = map.latLngToLayerPoint(baseLatLng);
+                        const angle = (2 * Math.PI * idx) / groupSize - (Math.PI / 2);
+                        const pixelRadius = groupSize <= 4 ? 22 : (groupSize <= 8 ? 28 : 34);
+                        const offsetPt = L.point(
+                            centerPt.x + pixelRadius * Math.cos(angle),
+                            centerPt.y + pixelRadius * Math.sin(angle)
+                        );
+                        displayLatLng = [map.layerPointToLatLng(offsetPt).lat, map.layerPointToLatLng(offsetPt).lng];
+
+                        // Faint spider line connecting cluster center to marker
+                        const line = L.polyline([baseLatLng, displayLatLng], {
+                            color: markerColor(r),
+                            weight: 1.5,
+                            opacity: 0.45,
+                            dashArray: '2, 3'
+                        });
+                        line.addTo(spiderLegLayer);
+                    }
+
+                    entry.displayLatLng = displayLatLng;
+                    entry.marker.setLatLng(displayLatLng);
+                    entry.marker.setPopupContent(buildPopupContent(r, groupSize));
+                    allDisplayCoords.push(displayLatLng);
+                });
+            });
+
+            updateAllMarkerStyles();
+        }
+
+        map.on('zoomend', recalculateOffsets);
+
         function refreshMarkers() {
-            fetch(reportsApiUrl, { credentials: 'same-origin' })
+            // Cache-busting URL with timestamp to prevent any stale HTTP responses
+            const url = reportsApiUrl + (reportsApiUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+            fetch(url, { credentials: 'same-origin', cache: 'no-store' })
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     return res.json();
                 })
                 .then(data => {
-                    // Hide any refresh alert on success
+                    // Hide refresh alert on success
                     const refreshAlert = document.getElementById('mapRefreshAlert');
                     if (refreshAlert) refreshAlert.classList.add('d-none');
 
-                    const reportsList = data.reports || [];
-                    if (latestReportsData.length > 0 && reportsList.length > latestReportsData.length) {
-                        const newCount = reportsList.length - latestReportsData.length;
-                        if (window.showToast) {
-                            window.showToast(`${newCount} new snake incident report(s) received!`, 'info');
+                    const rawReportsList = data.reports || [];
+
+                    // Filter and safely parse coordinates
+                    const reportsList = [];
+                    rawReportsList.forEach(r => {
+                        const lat = typeof r.latitude === 'number' ? r.latitude : parseFloat(r.latitude);
+                        const lng = typeof r.longitude === 'number' ? r.longitude : parseFloat(r.longitude);
+                        if (!isNaN(lat) && !isNaN(lng) && !(lat === 0 && lng === 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                            r.latitude = lat;
+                            r.longitude = lng;
+                            reportsList.push(r);
+                        }
+                    });
+
+                    // Check for newly arrived reports
+                    const currentIds = new Set(reportsList.map(r => r.id));
+                    if (previousReportIds.size > 0) {
+                        const newReports = reportsList.filter(r => !previousReportIds.has(r.id));
+                        if (newReports.length > 0) {
+                            const firstNew = newReports[0];
+                            if (window.showToast) {
+                                window.showToast(`${newReports.length} new snake sighting (#${firstNew.id}) received!`, 'info');
+                            }
+                            // If new report is outside current viewport, notify user with subtle action
+                            const bounds = map.getBounds();
+                            if (!bounds.contains([firstNew.latitude, firstNew.longitude])) {
+                                const banner = document.getElementById('mapRefreshAlert');
+                                if (banner) {
+                                    banner.className = "alert alert-info py-2 px-3 mb-2 d-flex align-items-center justify-content-between";
+                                    banner.innerHTML = `<span><i class="fa-solid fa-bell me-1 text-primary"></i> New incident report <strong>#${firstNew.id}</strong> received outside current view.</span> <button type="button" class="btn btn-primary btn-sm py-0 px-2" style="font-size:0.75rem;" onclick="map.panTo([${firstNew.latitude}, ${firstNew.longitude}], {animate: true}); openPanel(${firstNew.id});">View Incident &raquo;</button>`;
+                                    banner.classList.remove('d-none');
+                                }
+                            }
                         }
                     }
+                    previousReportIds = currentIds;
                     latestReportsData = reportsList;
 
-                    // Update live stat counters if provided
+                    // Update live stat counters
                     if (data.counts) {
                         const c = data.counts;
                         const elGeo = document.getElementById('statGeoCount');
@@ -353,104 +448,71 @@
                         if (elUnplottedBanner) elUnplottedBanner.classList.toggle('d-none', (c.unplotted_count <= 0));
                     }
 
-                    // Group reports with duplicate or extremely close coordinates (~10 meters)
-                    const coordGroups = new Map();
-                    const validReports = [];
-                    reportsList.forEach(r => {
-                        if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number' ||
-                            isNaN(r.latitude) || isNaN(r.longitude) ||
-                            (r.latitude === 0 && r.longitude === 0)) {
-                            return;
-                        }
-                        validReports.push(r);
-                        const key = `${r.latitude.toFixed(4)},${r.longitude.toFixed(4)}`;
-                        if (!coordGroups.has(key)) {
-                            coordGroups.set(key, []);
-                        }
-                        coordGroups.get(key).push(r);
-                    });
-
-                    // Track active IDs to remove markers for deleted/ineligible reports
-                    const currentValidIds = new Set(validReports.map(r => r.id));
-
-                    // Remove obsolete markers
+                    // Remove obsolete markers for deleted reports
                     markersById.forEach((entry, id) => {
-                        if (!currentValidIds.has(id)) {
+                        if (!currentIds.has(id)) {
                             markerLayer.removeLayer(entry.marker);
                             markersById.delete(id);
                         }
                     });
 
-                    allDisplayCoords = [];
+                    // Add or update markers with stable IDs
+                    reportsList.forEach(r => {
+                        const color = markerColor(r);
+                        const isSelected = (r.id === selectedReportId);
 
-                    // Render or update each coordinate group with radial offset if overlapping
-                    coordGroups.forEach(group => {
-                        const groupSize = group.length;
-                        // Sort so that newer reports are placed prominently
-                        group.sort((a, b) => (b.id - a.id));
+                        if (markersById.has(r.id)) {
+                            const entry = markersById.get(r.id);
+                            // Detect if status or assignment changed
+                            const statusChanged = entry.report.report_status !== r.report_status ||
+                                                  entry.report.dispatch_state !== r.dispatch_state ||
+                                                  JSON.stringify(entry.report.assignment) !== JSON.stringify(r.assignment);
+                            entry.report = r;
+                            entry.marker.setStyle({
+                                color: isSelected ? '#0f172a' : color,
+                                fillColor: color,
+                                fillOpacity: 0.9,
+                                radius: isSelected ? 10 : 7,
+                                weight: isSelected ? 3 : 2
+                            });
 
-                        group.forEach((r, idx) => {
-                            let displayLatLng = [r.latitude, r.longitude];
-                            if (groupSize > 1) {
-                                // Spread radially (~60m radius) to make all co-located markers visible and clickable
-                                const angle = (2 * Math.PI * idx) / groupSize;
-                                const offsetRadius = 0.00055;
-                                const latOffset = offsetRadius * Math.sin(angle);
-                                const lngOffset = (offsetRadius * Math.cos(angle)) / Math.cos(r.latitude * (Math.PI / 180));
-                                displayLatLng = [r.latitude + latOffset, r.longitude + lngOffset];
+                            // If this report is currently open in the side panel and changed, silently update panel
+                            if (isSelected && statusChanged) {
+                                openPanel(r.id, true);
                             }
-                            allDisplayCoords.push(displayLatLng);
+                        } else {
+                            // Create new marker
+                            const m = L.circleMarker([r.latitude, r.longitude], {
+                                color: isSelected ? '#0f172a' : color,
+                                fillColor: color,
+                                fillOpacity: 0.9,
+                                radius: isSelected ? 10 : 7,
+                                weight: isSelected ? 3 : 2
+                            });
+                            m.on('click', () => {
+                                const curEntry = markersById.get(r.id);
+                                const targetPos = curEntry ? curEntry.displayLatLng : [r.latitude, r.longitude];
+                                map.panTo(targetPos, { animate: true, duration: 0.35 });
+                                openPanel(r.id);
+                            });
+                            m.addTo(markerLayer);
 
-                            const color = markerColor(r);
-                            const isSelected = (r.id === selectedReportId);
-
-                            if (markersById.has(r.id)) {
-                                // Update existing marker without recreating DOM node
-                                const entry = markersById.get(r.id);
-                                entry.report = r;
-                                entry.displayLatLng = displayLatLng;
-                                entry.marker.setLatLng(displayLatLng);
-                                entry.marker.setStyle({
-                                    color: isSelected ? '#0f172a' : color,
-                                    fillColor: color,
-                                    fillOpacity: 0.9,
-                                    radius: isSelected ? 10 : 7,
-                                    weight: isSelected ? 3 : 2
-                                });
-                                entry.marker.setPopupContent(buildPopupContent(r, groupSize));
-                            } else {
-                                // Create new marker
-                                const m = L.circleMarker(displayLatLng, {
-                                    color: isSelected ? '#0f172a' : color,
-                                    fillColor: color,
-                                    fillOpacity: 0.9,
-                                    radius: isSelected ? 10 : 7,
-                                    weight: isSelected ? 3 : 2
-                                });
-                                m.bindPopup(buildPopupContent(r, groupSize));
-                                m.on('click', () => {
-                                    map.panTo(displayLatLng, { animate: true, duration: 0.35 });
-                                    openPanel(r.id);
-                                });
-                                m.addTo(markerLayer);
-
-                                markersById.set(r.id, {
-                                    marker: m,
-                                    report: r,
-                                    displayLatLng: displayLatLng
-                                });
-                            }
-                        });
+                            markersById.set(r.id, {
+                                marker: m,
+                                report: r,
+                                displayLatLng: [r.latitude, r.longitude]
+                            });
+                        }
                     });
 
-                    // Update selection halo
-                    updateAllMarkerStyles();
+                    // Re-calculate radial screen offsets
+                    recalculateOffsets();
 
                     // Empty state toggle
                     const emptyState = document.getElementById('mapEmptyState');
-                    if (emptyState) emptyState.classList.toggle('d-none', validReports.length > 0);
+                    if (emptyState) emptyState.classList.toggle('d-none', reportsList.length > 0);
 
-                    // Fit initial bounds only once
+                    // Fit initial bounds only once on first load
                     if (allDisplayCoords.length > 0 && !selectedReportId && !initialBoundsFitted) {
                         fitAllMapBounds();
                         initialBoundsFitted = true;
@@ -459,7 +521,11 @@
                 .catch(err => {
                     console.error('Error refreshing report markers:', err);
                     const refreshAlert = document.getElementById('mapRefreshAlert');
-                    if (refreshAlert) refreshAlert.classList.remove('d-none');
+                    if (refreshAlert) {
+                        refreshAlert.className = "alert alert-warning py-2 px-3 mb-2 d-flex align-items-center justify-content-between";
+                        refreshAlert.innerHTML = `<span><i class="fa-solid fa-triangle-exclamation me-1"></i> Live map refresh temporary connection issue. Retaining current map markers.</span> <button type="button" class="btn-close" style="font-size:0.65rem;" onclick="this.parentElement.classList.add('d-none');"></button>`;
+                        refreshAlert.classList.remove('d-none');
+                    }
                 });
         }
 
@@ -474,19 +540,23 @@
 
             let html = '';
 
-            // Image display: exact uploaded image or explicit "Image unavailable" placeholder
+            // Image display: exact uploaded image from database record, or explicit "Image unavailable" placeholder
+            html += `<div class="mb-3 text-center bg-light rounded-3 overflow-hidden border position-relative" style="min-height:130px;">`;
             if (p.image_url) {
-                html += `<div class="mb-3 text-center bg-light rounded-3 overflow-hidden border">
-                            <img src="${esc(p.image_url)}" alt="Snake sighting #${p.id} photo" class="w-100"
-                                 style="max-height:190px;object-fit:cover;"
-                                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'py-4 text-muted\\'><i class=\\'fa-solid fa-image-slash fa-2x mb-1 d-block\\'></i>Image unavailable</div>';">
+                html += `<img src="${esc(p.image_url)}" alt="Snake sighting #${p.id} photo" class="w-100"
+                              style="max-height:220px; object-fit:cover; display:block;"
+                              onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                         <div class="py-4 text-muted d-none">
+                             <i class="fa-solid fa-image-slash fa-2x mb-2 d-block"></i>
+                             <span>Image unavailable</span>
                          </div>`;
             } else {
-                html += `<div class="mb-3 text-center bg-light rounded-3 p-4 border text-muted">
+                html += `<div class="py-4 text-muted">
                             <i class="fa-solid fa-image-slash fa-2x mb-2 d-block"></i>
                             <span>Image unavailable</span>
                          </div>`;
             }
+            html += `</div>`;
 
             // Other reports at the same location if any
             const sameLocationReports = latestReportsData.filter(other =>
@@ -588,7 +658,7 @@
                 document.getElementById('panelTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
-            // Intercept assign submits -> AJAX so the map stays alive (§12/§17)
+            // Intercept assign submits -> AJAX so the map stays alive
             document.querySelectorAll('#reportPanelBody form.assign-form').forEach(f => {
                 f.addEventListener('submit', function (ev) {
                     ev.preventDefault();
@@ -631,24 +701,27 @@
             });
         }
 
-        window.openPanel = function(reportId) {
+        window.openPanel = function(reportId, isSilentRefresh = false) {
             const thisRequestId = ++currentPanelRequestId;
             selectedReportId = reportId;
             updateAllMarkerStyles();
 
-            // Display loading indicator
-            document.getElementById('panelHint').classList.add('d-none');
-            document.getElementById('panelClose').classList.remove('d-none');
-            document.getElementById('panelTitle').innerHTML =
-                `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Loading Sighting #${reportId}...`;
-            document.getElementById('reportPanelBody').innerHTML = `
-                <div class="text-center py-5 text-muted">
-                    <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
-                    <div>Fetching incident details...</div>
-                </div>
-            `;
+            // Display loading indicator only if not a silent background refresh
+            if (!isSilentRefresh) {
+                document.getElementById('panelHint').classList.add('d-none');
+                document.getElementById('panelClose').classList.remove('d-none');
+                document.getElementById('panelTitle').innerHTML =
+                    `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Loading Sighting #${reportId}...`;
+                document.getElementById('reportPanelBody').innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                        <div>Fetching incident details...</div>
+                    </div>
+                `;
+            }
 
-            fetch(panelApiUrlBase + reportId + '/', { credentials: 'same-origin' })
+            const url = panelApiUrlBase + reportId + '/?_t=' + Date.now();
+            fetch(url, { credentials: 'same-origin', cache: 'no-store' })
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     return res.json();
@@ -661,17 +734,19 @@
                 .catch(err => {
                     if (thisRequestId !== currentPanelRequestId) return;
                     console.error('Error loading report panel:', err);
-                    document.getElementById('reportPanelBody').innerHTML = `
-                        <div class="alert alert-danger py-2 px-3" style="font-size:0.8rem;">
-                            <i class="fa-solid fa-circle-exclamation me-1"></i> Failed to load report details for #${reportId}.
-                        </div>
-                    `;
-                    if (window.showToast) window.showToast('Failed to load report details.', 'error');
+                    if (!isSilentRefresh) {
+                        document.getElementById('reportPanelBody').innerHTML = `
+                            <div class="alert alert-danger py-2 px-3" style="font-size:0.8rem;">
+                                <i class="fa-solid fa-circle-exclamation me-1"></i> Failed to load report details for #${reportId}.
+                            </div>
+                        `;
+                        if (window.showToast) window.showToast('Failed to load report details.', 'error');
+                    }
                 });
         };
 
         refreshMarkers();
-        setInterval(refreshMarkers, 8000);  // 8-second live auto-refresh
+        setInterval(refreshMarkers, 10000);  // 10-second live authenticated polling per requirements
     });
 </script>
 {% endblock %}

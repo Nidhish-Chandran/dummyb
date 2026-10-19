@@ -220,9 +220,13 @@
 
         const reportsApiUrl = "{% url 'reports:map_reports_api' %}";
         const panelApiUrlBase = "/reports/api/report-panel/";
-        let markerLayer = L.layerGroup().addTo(map);
+        const spiderLegLayer = L.layerGroup().addTo(map);
+        const markerLayer = L.layerGroup().addTo(map);
+        const clusterLayer = L.layerGroup().addTo(map);
+        const markersById = new Map();
         let selectedReportId = null;
         let initialBoundsFitted = false;
+        let latestReportsData = [];
 
         const COLORS = { red: '#dc2626', amber: '#f59e0b', green: '#16a34a' };
 
@@ -238,62 +242,139 @@
             }[c]));
         }
 
+        function recalculateOffsets() {
+            spiderLegLayer.clearLayers();
+            const groups = new Map();
+            latestReportsData.forEach(r => {
+                const key = `${r.latitude.toFixed(5)},${r.longitude.toFixed(5)}`;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(r);
+            });
+
+            const bounds = [];
+            groups.forEach(groupReports => {
+                const groupSize = groupReports.length;
+                groupReports.forEach((r, idx) => {
+                    const entry = markersById.get(r.id);
+                    if (!entry) return;
+
+                    const baseLatLng = [r.latitude, r.longitude];
+                    let displayLatLng = baseLatLng;
+
+                    if (groupSize > 1) {
+                        const centerPt = map.latLngToLayerPoint(baseLatLng);
+                        const angle = (2 * Math.PI * idx) / groupSize - (Math.PI / 2);
+                        const pixelRadius = groupSize <= 4 ? 22 : 28;
+                        const offsetPt = L.point(
+                            centerPt.x + pixelRadius * Math.cos(angle),
+                            centerPt.y + pixelRadius * Math.sin(angle)
+                        );
+                        displayLatLng = [map.layerPointToLatLng(offsetPt).lat, map.layerPointToLatLng(offsetPt).lng];
+
+                        L.polyline([baseLatLng, displayLatLng], {
+                            color: markerColor(r),
+                            weight: 1.5,
+                            opacity: 0.45,
+                            dashArray: '2, 3'
+                        }).addTo(spiderLegLayer);
+                    }
+
+                    entry.marker.setLatLng(displayLatLng);
+                    bounds.push(displayLatLng);
+                });
+            });
+
+            if (bounds.length > 0 && !initialBoundsFitted) {
+                const first = bounds[0];
+                const allSame = bounds.every(c => Math.abs(c[0] - first[0]) < 0.0001 && Math.abs(c[1] - first[1]) < 0.0001);
+                if (allSame) {
+                    map.setView(first, 13);
+                } else {
+                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+                }
+                initialBoundsFitted = true;
+            }
+        }
+
+        map.on('zoomend', recalculateOffsets);
+
         function refreshMarkers() {
-            fetch(reportsApiUrl, { credentials: 'same-origin' })
+            const url = reportsApiUrl + (reportsApiUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+            fetch(url, { credentials: 'same-origin', cache: 'no-store' })
                 .then(res => res.json())
                 .then(data => {
-                    markerLayer.clearLayers();
-                    const bounds = [];
-                    data.reports.forEach(r => {
-                        if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number' ||
-                            isNaN(r.latitude) || isNaN(r.longitude) ||
-                            (r.latitude === 0 && r.longitude === 0)) {
-                            return;
+                    const validReports = [];
+                    (data.reports || []).forEach(r => {
+                        const lat = typeof r.latitude === 'number' ? r.latitude : parseFloat(r.latitude);
+                        const lng = typeof r.longitude === 'number' ? r.longitude : parseFloat(r.longitude);
+                        if (!isNaN(lat) && !isNaN(lng) && !(lat === 0 && lng === 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                            r.latitude = lat;
+                            r.longitude = lng;
+                            validReports.push(r);
                         }
-                        const latLng = [r.latitude, r.longitude];
-                        bounds.push(latLng);
-                        const m = L.circleMarker(latLng, {
-                            color: markerColor(r), fillColor: markerColor(r),
-                            fillOpacity: 0.85, radius: r.id === selectedReportId ? 11 : 7,
-                            weight: r.id === selectedReportId ? 3 : 2
-                        });
-                        m.bindPopup(
-                            `<div style="min-width:160px">` +
-                            `<strong style="color:${markerColor(r)}">Snake Sighting #${r.id}</strong><br>` +
-                            `<span>${esc(r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS')} · ${esc(r.location_name)}</span><br>` +
-                            `<small>Assignment: <b>${esc(r.assignment.status_display)}</b>` +
-                            (r.assignment.ranger ? ` (${esc(r.assignment.ranger)})` : '') + `</small></div>`
-                        );
-                        m.on('click', () => openPanel(r.id));
-                        m.addTo(markerLayer);
                     });
 
-                    // DBSCAN density clusters (existing hotspot layer kept intact)
-                    fetch("{% url 'hotspots:api_clusters' %}", { credentials: 'same-origin' })
+                    latestReportsData = validReports;
+                    const returnedIds = new Set(validReports.map(r => r.id));
+
+                    // Remove markers no longer in dataset
+                    for (const [id, entry] of markersById.entries()) {
+                        if (!returnedIds.has(id)) {
+                            markerLayer.removeLayer(entry.marker);
+                            markersById.delete(id);
+                        }
+                    }
+
+                    // Add or update markers
+                    validReports.forEach(r => {
+                        const color = markerColor(r);
+                        const popupHtml = `<div style="min-width:160px">` +
+                            `<strong style="color:${color}">Snake Sighting #${r.id}</strong><br>` +
+                            `<span>${esc(r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS')} · ${esc(r.location_name)}</span><br>` +
+                            `<small>Assignment: <b>${esc(r.assignment.status_display)}</b>` +
+                            (r.assignment.ranger ? ` (${esc(r.assignment.ranger)})` : '') + `</small></div>`;
+
+                        if (markersById.has(r.id)) {
+                            const entry = markersById.get(r.id);
+                            entry.data = r;
+                            entry.marker.setStyle({
+                                color: color,
+                                fillColor: color,
+                                radius: r.id === selectedReportId ? 11 : 7,
+                                weight: r.id === selectedReportId ? 3 : 2
+                            });
+                            entry.marker.setPopupContent(popupHtml);
+                        } else {
+                            const m = L.circleMarker([r.latitude, r.longitude], {
+                                color: color, fillColor: color,
+                                fillOpacity: 0.85, radius: r.id === selectedReportId ? 11 : 7,
+                                weight: r.id === selectedReportId ? 3 : 2
+                            });
+                            m.bindPopup(popupHtml);
+                            m.on('click', () => openPanel(r.id));
+                            m.addTo(markerLayer);
+                            markersById.set(r.id, { marker: m, data: r });
+                        }
+                    });
+
+                    recalculateOffsets();
+
+                    // Refresh DBSCAN clusters cleanly into clusterLayer
+                    fetch("{% url 'hotspots:api_clusters' %}", { credentials: 'same-origin', cache: 'no-store' })
                         .then(res => res.json())
                         .then(hs => {
-                            hs.clusters.forEach(cluster => {
+                            clusterLayer.clearLayers();
+                            (hs.clusters || []).forEach(cluster => {
                                 L.circle([cluster.center_lat, cluster.center_lng], {
                                     color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.10,
                                     radius: cluster.radius_meters, weight: 1.5, dashArray: '5,5'
-                                }).addTo(map).bindPopup(
+                                }).addTo(clusterLayer).bindPopup(
                                     `<strong style="color:#7c3aed;">DBSCAN DENSITY CLUSTER</strong><br>` +
                                     `<b>Location:</b> ${esc(cluster.location_name)}<br>` +
                                     `<b>Active Sightings:</b> ${cluster.sighting_count}`
                                 );
                             });
                         }).catch(() => {});
-
-                    if (bounds.length > 0 && !initialBoundsFitted) {
-                        const first = bounds[0];
-                        const allSame = bounds.every(c => Math.abs(c[0] - first[0]) < 0.0001 && Math.abs(c[1] - first[1]) < 0.0001);
-                        if (allSame) {
-                            map.setView(first, 13);
-                        } else {
-                            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-                        }
-                        initialBoundsFitted = true;
-                    }
                 })
                 .catch(err => console.error("Error loading report markers:", err));
         }
@@ -310,11 +391,23 @@
 
         function renderPanel(p) {
             selectedReportId = p.id;
+            // Highlight selected marker
+            for (const [id, entry] of markersById.entries()) {
+                entry.marker.setStyle({
+                    radius: id === selectedReportId ? 11 : 7,
+                    weight: id === selectedReportId ? 3 : 2
+                });
+            }
+
             document.getElementById('panelTitle').innerHTML =
                 `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Snake Sighting #${p.id}`;
             let html = '';
             html += `<div class="d-flex gap-3 mb-2">`;
-            if (p.image_url) html += `<img src="${esc(p.image_url)}" alt="snake" style="width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;">`;
+            if (p.image_url) {
+                html += `<img src="${esc(p.image_url)}" alt="snake" style="width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;" onerror="this.onerror=null;this.parentElement.innerHTML='<div style=\'width:84px;height:84px;background:#f1f5f9;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.7rem;text-align:center;padding:4px;\'>Image unavailable</div>';">`;
+            } else {
+                html += `<div style="width:84px;height:84px;background:#f1f5f9;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.7rem;text-align:center;padding:4px;border:1px solid #e2e8f0;">Image unavailable</div>`;
+            }
             html += `<div>
                 <div><span style="font-weight:700;color:${p.is_venomous ? '#dc2626' : '#16a34a'}">${esc(p.snake_status)}</span>
                 ${p.confidence ? `<span class="text-muted"> · ${p.confidence}% confidence</span>` : ''}</div>
@@ -357,7 +450,7 @@
         }
 
         function openPanel(reportId) {
-            fetch(panelApiUrlBase + reportId + '/', { credentials: 'same-origin' })
+            fetch(panelApiUrlBase + reportId + '/', { credentials: 'same-origin', cache: 'no-store' })
                 .then(res => res.json())
                 .then(renderPanel)
                 .catch(err => console.error("Error loading report panel:", err));
@@ -365,6 +458,8 @@
 
         window.refreshAuthorityMap = refreshMarkers;
         refreshMarkers();
+        // Reliable 10-second automatic polling
+        setInterval(refreshMarkers, 10000);
     });
 </script>
 {% endblock %}
