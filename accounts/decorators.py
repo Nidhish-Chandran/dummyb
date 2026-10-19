@@ -7,14 +7,19 @@ def _get_profile(user):
     return getattr(user, 'profile', None)
 
 
+def _check_operational(request, profile):
+    if not request.user.is_superuser and profile is not None:
+        if not profile.is_operational:
+            status_desc = profile.get_account_status_display().lower()
+            reason = profile.suspension_reason or "Account suspended or pending administrative approval."
+            raise PermissionDenied(f"Access Denied: Your account is {status_desc}. {reason}")
+
+
 def authority_required(view_func):
     """
-    Authority console access — Platform Administrators AND Authority officers.
-
-    Rangers are deliberately excluded — ranger access lives under /ranger/
-    with its own dashboard, assignments and object-level security.
-    Citizens receive HTTP 403; Rangers receive HTTP 403 pointing them to
-    their own console.
+    Authority console access — Platform Administrators AND active Authority officers.
+    Rangers are excluded — ranger access lives under /ranger/.
+    Citizens receive HTTP 403.
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -22,6 +27,8 @@ def authority_required(view_func):
             return redirect_to_login(request.get_full_path(), login_url='accounts:login')
 
         profile = _get_profile(request.user)
+        _check_operational(request, profile)
+
         if profile is not None and (profile.is_admin or profile.is_authority_officer):
             return view_func(request, *args, **kwargs)
 
@@ -36,13 +43,15 @@ def authority_required(view_func):
 
 
 def citizen_required(view_func):
-    """Citizen module access — any authenticated user that is not a ranger."""
+    """Citizen module access — any authenticated operational user that is not a ranger."""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect_to_login(request.get_full_path(), login_url='accounts:login')
 
         profile = _get_profile(request.user)
+        _check_operational(request, profile)
+
         if profile is not None and profile.is_ranger:
             raise PermissionDenied(
                 "Access Denied: Rangers must use the Ranger Console (/ranger/).")
@@ -53,13 +62,15 @@ def citizen_required(view_func):
 
 
 def ranger_required(view_func):
-    """Ranger Console access — only users whose effective role is RANGER."""
+    """Ranger Console access — only users whose effective role is RANGER and approved."""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect_to_login(request.get_full_path(), login_url='accounts:login')
 
         profile = _get_profile(request.user)
+        _check_operational(request, profile)
+
         if profile is not None and profile.is_ranger:
             return view_func(request, *args, **kwargs)
 

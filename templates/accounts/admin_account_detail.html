@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Details: {{ target_user.username }} — VenomWatch Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 860px;">
+
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{% url 'accounts:admin_provision' %}#pane-roster" class="badge text-decoration-none" style="background: rgba(13, 148, 136, 0.12); color: var(--primary); font-size: 0.78rem;">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Account Management
+                </a>
+            </div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text);">
+                <i class="fa-solid fa-id-card me-2" style="color: var(--primary);"></i>
+                Account Details: {{ target_user.username }}
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Read-only official account record. Profile details are maintained by the account owner.
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            {% if target_user.profile.role == 'authority' %}
+                <span class="badge" style="background: rgba(13, 148, 136, 0.15); color: var(--primary); font-size: 0.85rem; padding: 6px 12px;">
+                    <i class="fa-solid fa-shield me-1"></i>Authority Officer
+                </span>
+            {% elif target_user.profile.role == 'ranger' %}
+                <span class="badge" style="background: rgba(5, 150, 105, 0.15); color: #059669; font-size: 0.85rem; padding: 6px 12px;">
+                    <i class="fa-solid fa-tree me-1"></i>Forest Ranger
+                </span>
+            {% else %}
+                <span class="badge bg-secondary" style="font-size: 0.85rem; padding: 6px 12px;">{{ target_user.profile.get_role_display }}</span>
+            {% endif %}
+
+            {% if target_user.profile.account_status == 'ACTIVE' %}
+                <span class="badge bg-success" style="font-size: 0.85rem; padding: 6px 12px;">
+                    <i class="fa-solid fa-circle-check me-1"></i>Active
+                </span>
+            {% elif target_user.profile.account_status == 'SUSPENDED' %}
+                <span class="badge bg-warning text-dark" style="font-size: 0.85rem; padding: 6px 12px;">
+                    <i class="fa-solid fa-circle-pause me-1"></i>Suspended
+                </span>
+            {% elif target_user.profile.account_status == 'BANNED' %}
+                <span class="badge bg-danger" style="font-size: 0.85rem; padding: 6px 12px;">
+                    <i class="fa-solid fa-ban me-1"></i>Banned
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Read-Only Information Card -->
+    <div class="card-clean p-4 p-md-5 mb-4 shadow-sm">
+
+        <!-- Personal & Contact Details -->
+        <h6 class="fw-bold mb-3 pb-2 border-bottom" style="font-size: 0.95rem; color: var(--text);">
+            <i class="fa-solid fa-user me-2" style="color: var(--primary);"></i> Personal &amp; Contact Information
+        </h6>
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Full Name</small>
+                    <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                        {{ target_user.profile.full_name|default:target_user.get_full_name|default:"Not specified" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Username</small>
+                    <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                        @{{ target_user.username }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Email Address</small>
+                    <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                        {{ target_user.email|default:"Not provided" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Contact Phone</small>
+                    <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                        {{ target_user.profile.phone_number|default:"Not provided" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operational Parameters & Jurisdiction -->
+        <h6 class="fw-bold mb-3 pb-2 border-bottom" style="font-size: 0.95rem; color: var(--text);">
+            <i class="fa-solid fa-map-location-dot me-2" style="color: var(--primary);"></i> Operational Jurisdiction &amp; Deployment
+        </h6>
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Organization / Department</small>
+                    <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                        {{ target_user.profile.organization|default:"Kerala Forest & Wildlife Department" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Assigned District / Jurisdiction</small>
+                    <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                        {{ target_user.profile.assigned_region|default:"Not assigned" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Registered Operational Base</small>
+                    <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                        {{ target_user.profile.registered_location|default:"Not specified" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">GPS Coordinates</small>
+                    <span class="fw-semibold" style="font-size: 0.9rem; color: var(--text);">
+                        {% if target_user.profile.latitude and target_user.profile.longitude %}
+                            <i class="fa-solid fa-location-dot me-1 text-primary"></i>
+                            {{ target_user.profile.latitude|floatformat:4 }}, {{ target_user.profile.longitude|floatformat:4 }}
+                        {% else %}
+                            <span class="text-muted">No GPS coordinates recorded</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Field Availability & Account Status -->
+        <h6 class="fw-bold mb-3 pb-2 border-bottom" style="font-size: 0.95rem; color: var(--text);">
+            <i class="fa-solid fa-clock-rotate-left me-2" style="color: var(--primary);"></i> Operational Status &amp; Timeline
+        </h6>
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Field Availability Status</small>
+                    <div>
+                        {% if target_user.profile.role == 'ranger' %}
+                            {% if target_user.profile.availability == 'AVAILABLE' %}
+                                <span class="badge bg-success"><i class="fa-solid fa-circle-dot me-1"></i>Available for Dispatch</span>
+                            {% elif target_user.profile.availability == 'BUSY' %}
+                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-person-running me-1"></i>On Mission</span>
+                            {% else %}
+                                <span class="badge bg-secondary"><i class="fa-solid fa-moon me-1"></i>Offline</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">Not applicable (Surveillance Role)</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Account Timeline</small>
+                    <small class="d-block text-muted">Registered: <strong>{{ target_user.date_joined|date:"M j, Y H:i" }}</strong></small>
+                    <small class="d-block text-muted">Last Login: <strong>{{ target_user.last_login|date:"M j, Y H:i"|default:"Never" }}</strong></small>
+                </div>
+            </div>
+        </div>
+
+        {% if target_user.profile.account_status != 'ACTIVE' and target_user.profile.suspension_reason %}
+        <!-- Suspension Details Notice -->
+        <div class="alert alert-danger p-3 mb-4" style="font-size: 0.85rem;">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>Administrative {{ target_user.profile.get_account_status_display }} Record</strong>
+            </div>
+            <p class="mb-1"><strong>Recorded Reason:</strong> {{ target_user.profile.suspension_reason }}</p>
+            {% if target_user.profile.suspended_by %}
+                <small class="text-muted">Action taken by: {{ target_user.profile.suspended_by.username }} on {{ target_user.profile.suspended_at|date:"M j, Y H:i" }}</small>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Security Notice -->
+        <div class="alert alert-info py-2 px-3 mb-4 d-flex align-items-center gap-2" style="font-size: 0.8125rem;">
+            <i class="fa-solid fa-shield-halved text-primary flex-shrink-0"></i>
+            <div>
+                <strong>Security Policy:</strong> Authority and Ranger accounts manage their own personal profile information. Platform Administrators maintain platform integrity by reviewing applications and administering account operational status (active, suspended, banned, reinstated).
+            </div>
+        </div>
+
+        <!-- Administrative Actions Bar -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-3 border-top">
+            <a href="{% url 'accounts:admin_provision' %}#pane-roster" class="btn btn-outline-secondary btn-sm px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Accounts
+            </a>
+
+            <div class="d-flex align-items-center gap-2">
+                {% if target_user.profile.account_status == 'ACTIVE' %}
+                    <!-- Suspend Button -->
+                    <button type="button" class="btn btn-outline-warning btn-sm px-3 text-dark"
+                            data-bs-toggle="modal" data-bs-target="#suspendModalDetail">
+                        <i class="fa-solid fa-pause me-1"></i> Suspend Account
+                    </button>
+                    <!-- Ban Button -->
+                    <button type="button" class="btn btn-outline-danger btn-sm px-3"
+                            data-bs-toggle="modal" data-bs-target="#banModalDetail">
+                        <i class="fa-solid fa-ban me-1"></i> Ban Account
+                    </button>
+                {% else %}
+                    <!-- Reinstate Form -->
+                    <form method="post" action="{% url 'accounts:admin_provision' %}" class="d-inline"
+                          onsubmit="return confirm('Reinstate account for {{ target_user.username }}? This will restore active platform privileges.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reinstate_account">
+                        <input type="hidden" name="user_id" value="{{ target_user.id }}">
+                        <button type="submit" class="btn btn-success btn-sm px-3">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Reinstate Account
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Suspend Modal for Detail Page -->
+<div class="modal fade" id="suspendModalDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog text-start">
+        <form method="post" action="{% url 'accounts:admin_provision' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="suspend_account">
+            <input type="hidden" name="user_id" value="{{ target_user.id }}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fs-6 fw-bold">Suspend Account: @{{ target_user.username }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="font-size: 0.85rem;">
+                    <p class="text-muted">Suspending this account immediately halts login privileges and removes the responder from active queues. Historical sightings and audit logs are preserved.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Suspension Reason *</label>
+                        <textarea name="reason" class="form-control form-control-sm" rows="3" required
+                                  placeholder="Document reason for suspension (e.g. conduct inquiry, temporary inactivity)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning btn-sm text-dark">Confirm Suspension</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Ban Modal for Detail Page -->
+<div class="modal fade" id="banModalDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog text-start">
+        <form method="post" action="{% url 'accounts:admin_provision' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="ban_account">
+            <input type="hidden" name="user_id" value="{{ target_user.id }}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fs-6 fw-bold text-danger">Permanently Ban Account: @{{ target_user.username }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="font-size: 0.85rem;">
+                    <p class="text-danger fw-semibold">This will permanently bar this user from platform access. Record an official rationale for the permanent audit trail.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ban Reason *</label>
+                        <textarea name="reason" class="form-control form-control-sm" rows="3" required
+                                  placeholder="Document official reason for permanent administrative ban..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Confirm Permanent Ban</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

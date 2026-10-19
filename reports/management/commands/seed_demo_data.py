@@ -2,9 +2,9 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Seed fresh demo users (citizen/authority/ranger/admin), hospitals and dispatch reports."
+    help = "Disabled: Dummy data seeding is permanently disabled to enforce real database records."
 
     def handle(self, *args, **options):
-        import seed_demo_data
-        seed_demo_data.seed_data()
-        self.stdout.write(self.style.SUCCESS("seed_demo_data complete."))
+        self.stdout.write(
+            self.style.WARNING("Notice: Demo data seeding has been permanently disabled per project requirements. The application operates solely on real database records.")
+        )

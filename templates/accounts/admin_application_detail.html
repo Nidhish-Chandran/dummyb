@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}Application #{{ app.id }}: {{ app.full_name }} — VenomWatch Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 960px;">
+
+    <!-- Navigation Return Path -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <a href="{% url 'accounts:admin_provision' %}?tab=applications" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Application Queue
+            </a>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted" style="font-size: 0.8rem;">Application Reference:</span>
+            <code>APP-#{{ app.id|stringformat:"04d" }}</code>
+        </div>
+    </div>
+
+    <!-- Application Status Banner -->
+    <div class="card-clean p-4 mb-4 border-start border-4 shadow-sm
+        {% if app.status == 'PENDING' %}border-warning
+        {% elif app.status == 'APPROVED' %}border-success
+        {% elif app.status == 'REJECTED' %}border-danger
+        {% else %}border-secondary{% endif %}">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    {% if app.requested_role == 'authority' %}
+                        <span class="badge" style="background: var(--teal-light, #ccfbf1); color: var(--teal, #0d9488);">
+                            <i class="fa-solid fa-shield me-1"></i>Authority Officer Application
+                        </span>
+                    {% elif app.requested_role == 'ranger' %}
+                        <span class="badge" style="background: var(--emerald-light, #d1fae5); color: var(--emerald, #059669);">
+                            <i class="fa-solid fa-tree me-1"></i>Forest Ranger Application
+                        </span>
+                    {% endif %}
+                    <span class="badge
+                        {% if app.status == 'PENDING' %}bg-warning text-dark
+                        {% elif app.status == 'APPROVED' %}bg-success text-white
+                        {% elif app.status == 'REJECTED' %}bg-danger text-white
+                        {% else %}bg-secondary text-white{% endif %}">
+                        {{ app.get_status_display }}
+                    </span>
+                </div>
+                <h3 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text);">
+                    {{ app.full_name }}
+                </h3>
+                <small class="text-muted">
+                    Username: <strong>@{{ app.user.username }}</strong> &middot; Submitted on {{ app.submitted_at|date:"F j, Y, g:i A" }}
+                </small>
+            </div>
+            {% if app.supporting_document %}
+                <div>
+                    <a href="{% url 'accounts:admin_application_document' app.id %}" target="_blank" class="btn btn-outline-primary btn-sm px-3">
+                        <i class="fa-solid fa-file-pdf me-1"></i> Inspect Verification Document
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column: Applicant & Role Information -->
+        <div class="col-lg-7">
+            <!-- Identity & Contact Information -->
+            <div class="card-clean p-4 shadow-sm mb-4">
+                <h6 class="fw-bold mb-3 text-dark border-bottom pb-2" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-id-card me-2 text-teal"></i> Applicant Information
+                </h6>
+                <table class="table table-sm table-borderless mb-0" style="font-size: 0.85rem;">
+                    <tr>
+                        <td class="text-muted" style="width: 36%;">Full Name</td>
+                        <td><strong>{{ app.full_name }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Username</td>
+                        <td><code>@{{ app.user.username }}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Email Address</td>
+                        <td><a href="mailto:{{ app.user.email }}" class="text-decoration-none">{{ app.user.email|default:"Not provided" }}</a></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Contact Phone</td>
+                        <td>
+                            {% if app.phone_number %}
+                                <a href="tel:{{ app.phone_number }}" class="text-decoration-none">{{ app.phone_number }}</a>
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">User Account Status</td>
+                        <td>
+                            {% if app.user.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive (Pending Review)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Submission Timestamp</td>
+                        <td>{{ app.submitted_at|date:"M j, Y H:i:s" }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Role & Operational Jurisdiction -->
+            <div class="card-clean p-4 shadow-sm mb-4">
+                <h6 class="fw-bold mb-3 text-dark border-bottom pb-2" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-map-location-dot me-2 text-teal"></i> Requested Operational Role &amp; Jurisdiction
+                </h6>
+                <table class="table table-sm table-borderless mb-0" style="font-size: 0.85rem;">
+                    <tr>
+                        <td class="text-muted" style="width: 36%;">Requested Role</td>
+                        <td><strong>{{ app.get_requested_role_display }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Organization / Agency</td>
+                        <td>{{ app.organization|default:"Not specified" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Assigned Region / District</td>
+                        <td>{{ app.assigned_region|default:"Not specified" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Base Location</td>
+                        <td>{{ app.registered_location|default:"Not specified" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Base Coordinates</td>
+                        <td>
+                            {% if app.latitude and app.longitude %}
+                                <span class="fw-semibold">({{ app.latitude|floatformat:4 }}, {{ app.longitude|floatformat:4 }})</span>
+                            {% else %}
+                                <span class="text-muted">Not specified</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Verification Document Card -->
+            <div class="card-clean p-4 shadow-sm">
+                <h6 class="fw-bold mb-3 text-dark border-bottom pb-2" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-file-shield me-2 text-teal"></i> Verification Credentials
+                </h6>
+                {% if app.supporting_document %}
+                    <div class="p-3 bg-light rounded d-flex align-items-center justify-content-between border">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-file-lines fs-3 text-primary"></i>
+                            <div>
+                                <div class="fw-semibold" style="font-size: 0.85rem;">Uploaded Verification Document</div>
+                                <small class="text-muted">{{ app.supporting_document.name }}</small>
+                            </div>
+                        </div>
+                        <a href="{% url 'accounts:admin_application_document' app.id %}" target="_blank"
+                           class="btn btn-primary btn-sm px-3">
+                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Inspect
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-secondary py-2 px-3 mb-0" style="font-size: 0.82rem;">
+                        <i class="fa-solid fa-circle-info me-1"></i> No verification document was uploaded with this application.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column: Administrative Review Actions -->
+        <div class="col-lg-5">
+            {% if app.status == 'PENDING' or app.status == 'NEEDS_INFO' %}
+                <!-- Pending Review Action Panel -->
+                <div class="card-clean p-4 shadow-sm border-top border-4 border-warning mb-4">
+                    <h6 class="fw-bold mb-3 text-dark" style="font-size: 0.95rem;">
+                        <i class="fa-solid fa-stamp me-2 text-warning"></i> Administrative Decision
+                    </h6>
+                    <p class="text-muted mb-4" style="font-size: 0.8125rem; line-height: 1.5;">
+                        Review the uploaded credentials and department authorization. Approving activates the user account and assigns official operational permissions.
+                    </p>
+
+                    <!-- Approve Form -->
+                    <form method="post" action="{% url 'accounts:admin_application_approve' app.id %}" class="mb-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve_application">
+                        <input type="hidden" name="application_id" value="{{ app.id }}">
+                        <button type="submit" class="btn btn-teal w-100 py-2 fw-semibold" style="font-size: 0.875rem;">
+                            <i class="fa-solid fa-check me-1"></i> Approve &amp; Activate Account
+                        </button>
+                    </form>
+
+                    <!-- Reject Form Trigger Button -->
+                    <button type="button" class="btn btn-outline-danger w-100 py-2 fw-semibold" style="font-size: 0.875rem;"
+                            data-bs-toggle="collapse" data-bs-target="#rejectCollapse">
+                        <i class="fa-solid fa-xmark me-1"></i> Reject Application...
+                    </button>
+
+                    <!-- Reject Form Collapse -->
+                    <div class="collapse mt-3" id="rejectCollapse">
+                        <form method="post" action="{% url 'accounts:admin_application_reject' app.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reject_application">
+                            <input type="hidden" name="application_id" value="{{ app.id }}">
+                            <div class="p-3 bg-light rounded border">
+                                <label class="form-label fw-semibold" style="font-size: 0.8rem;">Documented Rejection Reason *</label>
+                                <textarea name="rejection_reason" class="form-control form-control-sm mb-2" rows="3" required
+                                          placeholder="e.g. Identity document unreadable, jurisdiction mismatch..."></textarea>
+                                <button type="submit" class="btn btn-danger btn-sm w-100">
+                                    <i class="fa-solid fa-ban me-1"></i> Confirm Rejection
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Already Reviewed Panel -->
+                <div class="card-clean p-4 shadow-sm border-top border-4
+                    {% if app.status == 'APPROVED' %}border-success{% else %}border-danger{% endif %} mb-4">
+                    <h6 class="fw-bold mb-3 text-dark" style="font-size: 0.95rem;">
+                        <i class="fa-solid fa-clipboard-check me-2"></i> Review Record
+                    </h6>
+                    <div class="mb-2" style="font-size: 0.85rem;">
+                        <span class="text-muted">Outcome:</span>
+                        <strong class="{% if app.status == 'APPROVED' %}text-success{% else %}text-danger{% endif %}">
+                            {{ app.get_status_display }}
+                        </strong>
+                    </div>
+                    {% if app.reviewed_by %}
+                        <div class="mb-2" style="font-size: 0.85rem;">
+                            <span class="text-muted">Reviewed By:</span>
+                            <strong>@{{ app.reviewed_by.username }}</strong>
+                        </div>
+                    {% endif %}
+                    {% if app.reviewed_at %}
+                        <div class="mb-2" style="font-size: 0.85rem;">
+                            <span class="text-muted">Review Timestamp:</span>
+                            <span>{{ app.reviewed_at|date:"F j, Y, g:i A" }}</span>
+                        </div>
+                    {% endif %}
+                    {% if app.rejection_reason %}
+                        <div class="mt-3 pt-2 border-top" style="font-size: 0.85rem;">
+                            <span class="text-muted d-block mb-1">Documented Rationale:</span>
+                            <div class="p-2 bg-light rounded border text-danger" style="font-size: 0.8rem;">
+                                {{ app.rejection_reason }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Quick Access Links -->
+            <div class="card-clean p-3 shadow-sm">
+                <small class="text-muted fw-semibold d-block mb-2 text-uppercase" style="font-size: 0.72rem;">Administrative Links</small>
+                <div class="d-flex flex-column gap-2" style="font-size: 0.82rem;">
+                    <a href="{% url 'accounts:admin_provision' %}?tab=applications" class="text-decoration-none">
+                        <i class="fa-solid fa-list-check me-2 text-teal"></i> Pending Applications Queue
+                    </a>
+                    <a href="{% url 'accounts:admin_provision' %}?tab=roster" class="text-decoration-none">
+                        <i class="fa-solid fa-users me-2 text-teal"></i> Operational Accounts Roster
+                    </a>
+                    <a href="{% url 'accounts:admin_dashboard' %}" class="text-decoration-none">
+                        <i class="fa-solid fa-gauge me-2 text-teal"></i> Platform Admin Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -35,7 +35,7 @@
             <div class="stat-box d-flex align-items-center gap-3">
                 <div class="stat-icon bg-light border"><i class="fa-solid fa-location-crosshairs" style="color: var(--primary);"></i></div>
                 <div>
-                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ geo_report_count }}</div>
+                    <div class="fw-bold" id="statGeoCount" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ geo_report_count }}</div>
                     <div class="text-muted" style="font-size: 0.75rem;">Reports on Map</div>
                 </div>
             </div>
@@ -44,7 +44,7 @@
             <div class="stat-box d-flex align-items-center gap-3">
                 <div class="stat-icon bg-danger-light"><i class="fa-solid fa-skull-crossbones" style="color: var(--danger);"></i></div>
                 <div>
-                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ unassigned_venomous }}</div>
+                    <div class="fw-bold" id="statUnassignedVenomous" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ unassigned_venomous }}</div>
                     <div class="text-muted" style="font-size: 0.75rem;">Venomous · Unassigned</div>
                 </div>
             </div>
@@ -53,7 +53,7 @@
             <div class="stat-box d-flex align-items-center gap-3">
                 <div class="stat-icon bg-warning-light"><i class="fa-solid fa-person-running" style="color: var(--warning);"></i></div>
                 <div>
-                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ active_assignments }}</div>
+                    <div class="fw-bold" id="statActiveAssignments" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ active_assignments }}</div>
                     <div class="text-muted" style="font-size: 0.75rem;">Active Responses</div>
                 </div>
             </div>
@@ -62,7 +62,7 @@
             <div class="stat-box d-flex align-items-center gap-3">
                 <div class="stat-icon bg-light border"><i class="fa-solid fa-circle-check" style="color: var(--success, #16a34a);"></i></div>
                 <div>
-                    <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ completed_assignments }}</div>
+                    <div class="fw-bold" id="statCompletedAssignments" style="font-size: 1.35rem; line-height: 1.1; color: var(--text);">{{ completed_assignments }}</div>
                     <div class="text-muted" style="font-size: 0.75rem;">Completed</div>
                 </div>
             </div>
@@ -78,9 +78,29 @@
                         <i class="fa-solid fa-map me-2" style="color: var(--primary);"></i>
                         Live Incident Markers
                     </h5>
-                    <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">
-                        <i class="fa-solid fa-lock me-1" style="color: var(--primary);"></i> Authority View
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" id="btnFitAllBounds" class="btn btn-outline-teal btn-sm py-1 px-2" style="font-size: 0.75rem;" title="Zoom map to encompass all incident reports">
+                            <i class="fa-solid fa-expand me-1"></i> Fit All Incidents
+                        </button>
+                        <span id="liveIndicator" class="badge bg-light text-success border" style="font-size: 0.7rem;">
+                            <i class="fa-solid fa-circle text-success me-1" style="font-size: 0.5rem;"></i> Live Updates Active
+                        </span>
+                        <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">
+                            <i class="fa-solid fa-lock me-1" style="color: var(--primary);"></i> Authority View
+                        </span>
+                    </div>
+                </div>
+                <div id="unplottedReportsBanner" class="alert alert-info py-2 px-3 mb-2 d-flex align-items-center justify-content-between {% if not unplotted_count %}d-none{% endif %}" style="font-size: 0.78rem;">
+                    <span><i class="fa-solid fa-circle-info me-2 text-primary"></i><strong id="unplottedCountText">{{ unplotted_count }}</strong> incident report(s) without valid GPS coordinates are accessible via the Reports list.</span>
+                    <a href="{% url 'reports:list' %}" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.75rem;">View Reports List &raquo;</a>
+                </div>
+                <div id="mapTileAlert" class="alert alert-warning py-2 px-3 mb-2 d-none d-flex align-items-center justify-content-between" style="font-size: 0.78rem;">
+                    <span><i class="fa-solid fa-triangle-exclamation me-1"></i> Basemap tiles could not be loaded from provider. Check connection or switch layer.</span>
+                    <button type="button" class="btn-close" style="font-size:0.65rem;" onclick="document.getElementById('mapTileAlert').classList.add('d-none');"></button>
+                </div>
+                <div id="mapRefreshAlert" class="alert alert-warning py-2 px-3 mb-2 d-none d-flex align-items-center justify-content-between" style="font-size: 0.78rem;">
+                    <span><i class="fa-solid fa-triangle-exclamation me-1"></i> Live map refresh temporary connection issue. Retaining current map markers.</span>
+                    <button type="button" class="btn-close" style="font-size:0.65rem;" onclick="document.getElementById('mapRefreshAlert').classList.add('d-none');"></button>
                 </div>
                 <div id="authorityMap" class="map-container" style="height: 600px;"></div>
                 <div id="mapEmptyState" class="text-center text-muted py-4 d-none">
@@ -120,32 +140,99 @@
 {% block extra_js %}
 <script>
     // ===== Authority Operations Map (dedicated page) =====
-    // Loads REAL report markers from the DB via the existing
-    // /reports/api/map-reports/ endpoint. Clicking a marker fetches that
-    // exact report (+ location-filtered AVAILABLE rangers) from
-    // /reports/api/report-panel/<id>/ — no page reload, no fake data.
+    // Loads REAL report markers from the DB via /reports/api/map-reports/
+    // Clicking a marker fetches that exact report (+ location-filtered AVAILABLE rangers)
+    // from /reports/api/report-panel/<id>/ — no page reload, no fake data.
     document.addEventListener("DOMContentLoaded", function () {
         const reportsApiUrl = "{% url 'reports:map_reports_api' %}";
         const panelApiUrlBase = "{% url 'reports:report_panel_api' pk=0 %}".replace(/0\/$/, '');
         let selectedReportId = null;
+        let latestReportsData = [];
+        let currentPanelRequestId = 0;
 
         const COLORS = { red: '#dc2626', amber: '#f59e0b', green: '#16a34a' };
 
-        const map = L.map('authorityMap').setView([9.9312, 76.2673], 11); // Kerala default
-        setTimeout(function(){ map.invalidateSize(); }, 150);
-        L.tileLayer(
+        const map = L.map('authorityMap', {
+            center: [9.9312, 76.2673],
+            zoom: 11,
+            minZoom: 3,
+            maxZoom: 19,
+            zoomControl: true,
+            scrollWheelZoom: true
+        });
+
+        // Ensure correct sizing
+        map.invalidateSize();
+        window.addEventListener('resize', () => map.invalidateSize());
+
+        // Primary reliable basemap: Esri World Street Map with maxNativeZoom: 17
+        const esriStreet = L.tileLayer(
             'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
             {
+                minZoom: 3,
+                maxNativeZoom: 17,
                 maxZoom: 19,
-                attribution: '© Esri'
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, METI, TomTom'
             }
+        );
+
+        // Documented secondary provider: OpenStreetMap standard tiles
+        const osm = L.tileLayer(
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                minZoom: 3,
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+            }
+        );
+
+        esriStreet.addTo(map);
+
+        // Basemap switcher for authorities
+        L.control.layers(
+            { "Esri Street Map": esriStreet, "OpenStreetMap": osm },
+            null,
+            { position: 'topright' }
         ).addTo(map);
 
+        const mapTileAlert = document.getElementById('mapTileAlert');
+        let tileErrorShown = false;
+        function handleTileError() {
+            if (!tileErrorShown && mapTileAlert) {
+                tileErrorShown = true;
+                mapTileAlert.classList.remove('d-none');
+            }
+        }
+        esriStreet.on('tileerror', handleTileError);
+        osm.on('tileerror', handleTileError);
+
         const markerLayer = L.layerGroup().addTo(map);
+        const haloLayer = L.layerGroup().addTo(map);
+        const markersById = new Map();
+        let initialBoundsFitted = false;
+        let allDisplayCoords = [];
+
+        function fitAllMapBounds() {
+            if (allDisplayCoords.length > 0) {
+                const first = allDisplayCoords[0];
+                const allSame = allDisplayCoords.every(c => Math.abs(c[0] - first[0]) < 0.0001 && Math.abs(c[1] - first[1]) < 0.0001);
+                if (allSame) {
+                    map.setView(first, 13);
+                } else {
+                    map.fitBounds(allDisplayCoords, { padding: [50, 50], maxZoom: 14 });
+                }
+            }
+        }
+
+        const fitAllBtn = document.getElementById('btnFitAllBounds');
+        if (fitAllBtn) {
+            fitAllBtn.addEventListener('click', fitAllMapBounds);
+        }
 
         function markerColor(r) {
             if (r.dispatch_state === 'ACTIVE') return COLORS.amber;
             if (r.dispatch_state === 'COMPLETED') return COLORS.green;
+            if (r.report_status === 'PENDING' && !r.venom_status) return COLORS.amber;
             return r.is_venomous ? COLORS.red : COLORS.green;
         }
 
@@ -167,94 +254,276 @@
 
         window.resetPanel = function () {
             selectedReportId = null;
+            haloLayer.clearLayers();
             document.getElementById('reportPanelBody').innerHTML = '';
             document.getElementById('panelHint').classList.remove('d-none');
             document.getElementById('panelClose').classList.add('d-none');
             document.getElementById('panelTitle').innerHTML =
                 '<i class="fa-solid fa-file-medical me-1" style="color:var(--primary);"></i> Report Details';
-            refreshMarkers();
+            updateAllMarkerStyles();
         };
+
+        function updateAllMarkerStyles() {
+            haloLayer.clearLayers();
+            markersById.forEach((entry, id) => {
+                const isSelected = (id === selectedReportId);
+                const color = markerColor(entry.report);
+                entry.marker.setStyle({
+                    color: isSelected ? '#0f172a' : color,
+                    fillColor: color,
+                    fillOpacity: 0.9,
+                    radius: isSelected ? 10 : 7,
+                    weight: isSelected ? 3 : 2
+                });
+                if (isSelected) {
+                    entry.marker.bringToFront();
+                    const halo = L.circleMarker(entry.displayLatLng, {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.25,
+                        radius: 17,
+                        weight: 2,
+                        dashArray: '3, 4'
+                    });
+                    halo.addTo(haloLayer);
+                }
+            });
+        }
+
+        function buildPopupContent(r, groupSize) {
+            const color = markerColor(r);
+            let confText = '';
+            if (r.confidence !== null && r.confidence !== undefined) {
+                confText = ` · ${r.confidence}% conf.`;
+            } else {
+                confText = ` · <span class="text-muted">Confidence unavailable</span>`;
+            }
+
+            let html = `<div style="min-width:190px; font-family:var(--font-sans, sans-serif);">` +
+                `<strong style="color:${color}">Snake Sighting #${r.id}</strong>` +
+                (r.report_reference ? ` <small class="text-muted">(${esc(r.report_reference)})</small>` : '') + `<br>` +
+                `<span class="fw-semibold">${esc(r.species || (r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS'))}</span>${confText}<br>` +
+                `<span class="text-muted">${esc(r.location_name)}</span><br>` +
+                `<small class="text-muted">(${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)})</small><br>` +
+                `<div class="mt-1"><small>Reported: <b>${esc(r.created_at)}</b><br>` +
+                `Status: <b>${esc(r.assignment.status_display)}</b>` +
+                (r.assignment.ranger ? `<br><i class="fa-solid fa-user-shield me-1"></i>Ranger: ${esc(r.assignment.ranger_name || r.assignment.ranger)}` : '') + `</small></div>`;
+            if (groupSize > 1) {
+                html += `<div class="mt-2 pt-1 border-top" style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-layer-group me-1"></i>${groupSize} sightings at this site (spread radially)</div>`;
+            }
+            html += `</div>`;
+            return html;
+        }
 
         function refreshMarkers() {
             fetch(reportsApiUrl, { credentials: 'same-origin' })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
                 .then(data => {
-                    markerLayer.clearLayers();
-                    const bounds = [];
-                    (data.reports || []).forEach(r => {
-                        const latLng = [r.latitude, r.longitude];
-                        bounds.push(latLng);
-                        const isSelected = (r.id === selectedReportId);
-                        const color = markerColor(r);
+                    // Hide any refresh alert on success
+                    const refreshAlert = document.getElementById('mapRefreshAlert');
+                    if (refreshAlert) refreshAlert.classList.add('d-none');
 
-                        // If selected, add an outer pulsing accent ring
-                        if (isSelected) {
-                            const halo = L.circleMarker(latLng, {
-                                color: color,
-                                fillColor: color,
-                                fillOpacity: 0.2,
-                                radius: 16,
-                                weight: 2,
-                                dashArray: '3, 4'
-                            });
-                            halo.addTo(markerLayer);
+                    const reportsList = data.reports || [];
+                    if (latestReportsData.length > 0 && reportsList.length > latestReportsData.length) {
+                        const newCount = reportsList.length - latestReportsData.length;
+                        if (window.showToast) {
+                            window.showToast(`${newCount} new snake incident report(s) received!`, 'info');
                         }
+                    }
+                    latestReportsData = reportsList;
 
-                        const m = L.circleMarker(latLng, {
-                            color: isSelected ? '#0f172a' : color,
-                            fillColor: color,
-                            fillOpacity: 0.9,
-                            radius: isSelected ? 10 : 7,
-                            weight: isSelected ? 3 : 2
-                        });
-                        m.bindPopup(
-                            `<div style="min-width:180px; font-family:var(--font-sans, sans-serif);">` +
-                            `<strong style="color:${color}">Snake Sighting #${r.id}</strong><br>` +
-                            `<span class="fw-semibold">${esc(r.species || (r.is_venomous ? 'VENOMOUS' : 'NON-VENOMOUS'))}</span> · <span class="text-muted">${esc(r.location_name)}</span><br>` +
-                            `<small class="text-muted">(${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)})</small><br>` +
-                            `<div class="mt-1"><small>Status: <b>${esc(r.assignment.status_display)}</b>` +
-                            (r.assignment.ranger ? `<br><i class="fa-solid fa-user-shield me-1"></i>Ranger: ${esc(r.assignment.ranger)}` : '') + `</small></div>` +
-                            `</div>`
-                        );
-                        m.on('click', () => {
-                            map.panTo(latLng, { animate: true, duration: 0.4 });
-                            openPanel(r.id);
-                        });
-                        m.addTo(markerLayer);
+                    // Update live stat counters if provided
+                    if (data.counts) {
+                        const c = data.counts;
+                        const elGeo = document.getElementById('statGeoCount');
+                        const elVenom = document.getElementById('statUnassignedVenomous');
+                        const elActive = document.getElementById('statActiveAssignments');
+                        const elComp = document.getElementById('statCompletedAssignments');
+                        const elUnplotted = document.getElementById('unplottedCountText');
+                        const elUnplottedBanner = document.getElementById('unplottedReportsBanner');
+
+                        if (elGeo) elGeo.textContent = c.geo_report_count;
+                        if (elVenom) elVenom.textContent = c.unassigned_venomous;
+                        if (elActive) elActive.textContent = c.active_assignments;
+                        if (elComp) elComp.textContent = c.completed_assignments;
+                        if (elUnplotted) elUnplotted.textContent = c.unplotted_count;
+                        if (elUnplottedBanner) elUnplottedBanner.classList.toggle('d-none', (c.unplotted_count <= 0));
+                    }
+
+                    // Group reports with duplicate or extremely close coordinates (~10 meters)
+                    const coordGroups = new Map();
+                    const validReports = [];
+                    reportsList.forEach(r => {
+                        if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number' ||
+                            isNaN(r.latitude) || isNaN(r.longitude) ||
+                            (r.latitude === 0 && r.longitude === 0)) {
+                            return;
+                        }
+                        validReports.push(r);
+                        const key = `${r.latitude.toFixed(4)},${r.longitude.toFixed(4)}`;
+                        if (!coordGroups.has(key)) {
+                            coordGroups.set(key, []);
+                        }
+                        coordGroups.get(key).push(r);
                     });
-                    document.getElementById('mapEmptyState').classList.toggle('d-none', bounds.length > 0);
-                    if (bounds.length > 0 && !selectedReportId) {
-                        map.fitBounds(bounds, { padding: [40, 40] });
+
+                    // Track active IDs to remove markers for deleted/ineligible reports
+                    const currentValidIds = new Set(validReports.map(r => r.id));
+
+                    // Remove obsolete markers
+                    markersById.forEach((entry, id) => {
+                        if (!currentValidIds.has(id)) {
+                            markerLayer.removeLayer(entry.marker);
+                            markersById.delete(id);
+                        }
+                    });
+
+                    allDisplayCoords = [];
+
+                    // Render or update each coordinate group with radial offset if overlapping
+                    coordGroups.forEach(group => {
+                        const groupSize = group.length;
+                        // Sort so that newer reports are placed prominently
+                        group.sort((a, b) => (b.id - a.id));
+
+                        group.forEach((r, idx) => {
+                            let displayLatLng = [r.latitude, r.longitude];
+                            if (groupSize > 1) {
+                                // Spread radially (~60m radius) to make all co-located markers visible and clickable
+                                const angle = (2 * Math.PI * idx) / groupSize;
+                                const offsetRadius = 0.00055;
+                                const latOffset = offsetRadius * Math.sin(angle);
+                                const lngOffset = (offsetRadius * Math.cos(angle)) / Math.cos(r.latitude * (Math.PI / 180));
+                                displayLatLng = [r.latitude + latOffset, r.longitude + lngOffset];
+                            }
+                            allDisplayCoords.push(displayLatLng);
+
+                            const color = markerColor(r);
+                            const isSelected = (r.id === selectedReportId);
+
+                            if (markersById.has(r.id)) {
+                                // Update existing marker without recreating DOM node
+                                const entry = markersById.get(r.id);
+                                entry.report = r;
+                                entry.displayLatLng = displayLatLng;
+                                entry.marker.setLatLng(displayLatLng);
+                                entry.marker.setStyle({
+                                    color: isSelected ? '#0f172a' : color,
+                                    fillColor: color,
+                                    fillOpacity: 0.9,
+                                    radius: isSelected ? 10 : 7,
+                                    weight: isSelected ? 3 : 2
+                                });
+                                entry.marker.setPopupContent(buildPopupContent(r, groupSize));
+                            } else {
+                                // Create new marker
+                                const m = L.circleMarker(displayLatLng, {
+                                    color: isSelected ? '#0f172a' : color,
+                                    fillColor: color,
+                                    fillOpacity: 0.9,
+                                    radius: isSelected ? 10 : 7,
+                                    weight: isSelected ? 3 : 2
+                                });
+                                m.bindPopup(buildPopupContent(r, groupSize));
+                                m.on('click', () => {
+                                    map.panTo(displayLatLng, { animate: true, duration: 0.35 });
+                                    openPanel(r.id);
+                                });
+                                m.addTo(markerLayer);
+
+                                markersById.set(r.id, {
+                                    marker: m,
+                                    report: r,
+                                    displayLatLng: displayLatLng
+                                });
+                            }
+                        });
+                    });
+
+                    // Update selection halo
+                    updateAllMarkerStyles();
+
+                    // Empty state toggle
+                    const emptyState = document.getElementById('mapEmptyState');
+                    if (emptyState) emptyState.classList.toggle('d-none', validReports.length > 0);
+
+                    // Fit initial bounds only once
+                    if (allDisplayCoords.length > 0 && !selectedReportId && !initialBoundsFitted) {
+                        fitAllMapBounds();
+                        initialBoundsFitted = true;
                     }
                 })
-                .catch(err => console.error('Error loading report markers:', err));
+                .catch(err => {
+                    console.error('Error refreshing report markers:', err);
+                    const refreshAlert = document.getElementById('mapRefreshAlert');
+                    if (refreshAlert) refreshAlert.classList.remove('d-none');
+                });
         }
 
         function renderPanel(p) {
             selectedReportId = p.id;
-            refreshMarkers(); // updates marker highlight
+            updateAllMarkerStyles();
 
             document.getElementById('panelTitle').innerHTML =
-                `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Snake Sighting #${p.id}`;
+                `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Snake Sighting #${p.id}` +
+                (p.report_reference ? ` <span class="badge bg-light text-dark border ms-1" style="font-size:0.75rem;">${esc(p.report_reference)}</span>` : '');
             document.getElementById('panelClose').classList.remove('d-none');
 
             let html = '';
+
+            // Image display: exact uploaded image or explicit "Image unavailable" placeholder
             if (p.image_url) {
                 html += `<div class="mb-3 text-center bg-light rounded-3 overflow-hidden border">
-                            <img src="${esc(p.image_url)}" alt="snake report" class="w-100"
-                                 style="max-height:190px;object-fit:cover;">
+                            <img src="${esc(p.image_url)}" alt="Snake sighting #${p.id} photo" class="w-100"
+                                 style="max-height:190px;object-fit:cover;"
+                                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'py-4 text-muted\\'><i class=\\'fa-solid fa-image-slash fa-2x mb-1 d-block\\'></i>Image unavailable</div>';">
+                         </div>`;
+            } else {
+                html += `<div class="mb-3 text-center bg-light rounded-3 p-4 border text-muted">
+                            <i class="fa-solid fa-image-slash fa-2x mb-2 d-block"></i>
+                            <span>Image unavailable</span>
                          </div>`;
             }
+
+            // Other reports at the same location if any
+            const sameLocationReports = latestReportsData.filter(other =>
+                other.id !== p.id &&
+                Math.abs(other.latitude - p.latitude) < 0.0005 &&
+                Math.abs(other.longitude - p.longitude) < 0.0005
+            );
+            if (sameLocationReports.length > 0) {
+                html += `<div class="mb-3 p-2 bg-light rounded-2 border" style="font-size:0.75rem;">
+                    <div class="fw-semibold text-muted mb-1"><i class="fa-solid fa-layer-group me-1"></i>Other sightings at this location (${sameLocationReports.length}):</div>
+                    <div class="d-flex flex-wrap gap-1">`;
+                sameLocationReports.forEach(o => {
+                    html += `<button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.72rem;" onclick="openPanel(${o.id});">
+                        #${o.id} ${o.report_reference ? `(${esc(o.report_reference)})` : ''} · ${esc(o.species || 'Snake')}
+                    </button>`;
+                });
+                html += `</div></div>`;
+            }
+
+            // AI Confidence formatted correctly (0% to 100%) or explicit unavailable
+            let confText = '';
+            if (p.confidence !== null && p.confidence !== undefined) {
+                confText = ` <span class="text-muted">· ${p.confidence}% conf.</span>`;
+            } else {
+                confText = ` <span class="text-muted">· Confidence unavailable</span>`;
+            }
+
             html += `<table class="table table-sm mb-3" style="font-size:0.82rem;">
                 <tr><td class="text-muted" style="width:38%;">Status</td>
-                    <td><b style="color:${p.is_venomous ? '#dc2626' : '#16a34a'}">${esc(p.snake_status)}</b>
-                        ${p.confidence ? `<span class="text-muted">· ${p.confidence}% conf.</span>` : ''}</td></tr>
+                    <td><b style="color:${p.is_venomous ? '#dc2626' : (p.snake_status === 'Pending Verification' ? '#d97706' : '#16a34a')}">${esc(p.snake_status)}</b>${confText}</td></tr>
                 ${p.species ? `<tr><td class="text-muted">Species</td><td><b>${esc(p.species)}</b></td></tr>` : ''}
                 <tr><td class="text-muted">Reported</td><td>${esc(p.reported_at)}</td></tr>
                 <tr><td class="text-muted">Location</td><td>${esc(p.location_name)}</td></tr>
                 <tr><td class="text-muted">Coordinates</td><td>${p.latitude.toFixed(4)}, ${p.longitude.toFixed(4)}</td></tr>
                 <tr><td class="text-muted">Assignment</td><td>${badge(p.status)}${p.ranger ? ` <div class="mt-1"><b>${esc(p.ranger_name || p.ranger)}</b>${p.distance_km != null ? ` · <span class="badge bg-light text-dark border">${p.distance_km} km away</span>` : ''}</div>` : ''}</td></tr>
               </table>`;
+
             html += `<div class="mb-3"><a href="${esc(p.detail_url)}" class="fw-semibold text-decoration-none" style="color:var(--primary); font-size:0.82rem;">
                         <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open full incident file &raquo;
                      </a></div>`;
@@ -273,6 +542,12 @@
                         {% csrf_token %}
                         <button class="btn btn-sm btn-outline-danger w-100"><i class="fa-solid fa-rotate me-1"></i>Cancel &amp; Reassign Ranger</button>
                     </form>
+                </div>`;
+            } else if (p.status === 'COMPLETED') {
+                html += `<div class="p-3 bg-light rounded-3 border text-center text-success">
+                    <i class="fa-solid fa-circle-check fa-2x mb-2 d-block"></i>
+                    <div class="fw-semibold" style="font-size:0.875rem;">Incident Resolved</div>
+                    <small class="text-muted">Ranger response verified &amp; incident closed.</small>
                 </div>`;
             } else if (p.candidates && p.candidates.length) {
                 html += `<div class="mt-3 pt-3 border-top">
@@ -356,18 +631,47 @@
             });
         }
 
-        function openPanel(reportId) {
+        window.openPanel = function(reportId) {
+            const thisRequestId = ++currentPanelRequestId;
+            selectedReportId = reportId;
+            updateAllMarkerStyles();
+
+            // Display loading indicator
+            document.getElementById('panelHint').classList.add('d-none');
+            document.getElementById('panelClose').classList.remove('d-none');
+            document.getElementById('panelTitle').innerHTML =
+                `<i class="fa-solid fa-location-dot me-1" style="color:var(--primary);"></i> Loading Sighting #${reportId}...`;
+            document.getElementById('reportPanelBody').innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                    <div>Fetching incident details...</div>
+                </div>
+            `;
+
             fetch(panelApiUrlBase + reportId + '/', { credentials: 'same-origin' })
-                .then(res => res.json())
-                .then(renderPanel)
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    // Prevent asynchronous response race if user clicked another marker
+                    if (thisRequestId !== currentPanelRequestId) return;
+                    renderPanel(data);
+                })
                 .catch(err => {
+                    if (thisRequestId !== currentPanelRequestId) return;
                     console.error('Error loading report panel:', err);
+                    document.getElementById('reportPanelBody').innerHTML = `
+                        <div class="alert alert-danger py-2 px-3" style="font-size:0.8rem;">
+                            <i class="fa-solid fa-circle-exclamation me-1"></i> Failed to load report details for #${reportId}.
+                        </div>
+                    `;
                     if (window.showToast) window.showToast('Failed to load report details.', 'error');
                 });
-        }
+        };
 
         refreshMarkers();
-        setInterval(refreshMarkers, 30000);  // keep statuses fresh without reload
+        setInterval(refreshMarkers, 8000);  // 8-second live auto-refresh
     });
 </script>
 {% endblock %}

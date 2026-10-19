@@ -73,6 +73,7 @@ class SightingReport(models.Model):
     RESPONSE_UNASSIGNED = 'UNASSIGNED'
     RESPONSE_ASSIGNED = 'ASSIGNED'
     RESPONSE_IN_PROGRESS = 'IN_PROGRESS'
+    RESPONSE_DISPATCHED = 'IN_PROGRESS'
     RESPONSE_RESOLVED = 'RESOLVED'
 
     RESPONSE_STATUS_CHOICES = [
@@ -99,6 +100,39 @@ class SightingReport(models.Model):
     @property
     def is_venomous(self):
         return self.venom_category in [self.VENOM_HIGHLY, self.VENOM_MODERATE]
+
+    @property
+    def image(self):
+        """Convenience accessor returning processed_image if available, otherwise original_image."""
+        return self.processed_image or self.original_image
+
+    @property
+    def report_reference(self):
+        """Permanent unique incident reference identifier, e.g. VW-0012."""
+        return f"VW-{self.pk:04d}"
+
+    @property
+    def citizen_submission_number(self):
+        """Chronological submission sequence number for this specific citizen."""
+        if not self.user_id:
+            return 1
+        # Count reports submitted by this user up to this report ID
+        return SightingReport.objects.filter(user_id=self.user_id, id__lte=self.id).count()
+
+    @property
+    def latest_assignment(self):
+        """The most recent assignment created for this incident."""
+        return self.ranger_assignments.first()
+
+    @property
+    def active_assignment(self):
+        """The currently active assignment for this incident (if any)."""
+        return self.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES).first()
+
+    @property
+    def verified_outcome_assignment(self):
+        """The completed assignment whose outcome was approved by Authority."""
+        return self.ranger_assignments.filter(status=RangerAssignment.STATUS_COMPLETED, review_decision='APPROVED').first()
 
 
 class RangerAssignment(models.Model):
@@ -131,14 +165,20 @@ class RangerAssignment(models.Model):
 
     ACTIVE_STATUSES = [STATUS_ASSIGNED, STATUS_ACCEPTED, STATUS_ON_THE_WAY, STATUS_AT_LOCATION, STATUS_OUTCOME_SUBMITTED]
 
+    OUTCOME_CAPTURED = 'SNAKE_CAPTURED'
+    OUTCOME_RELOCATED = 'SNAKE_RELOCATED'
+    OUTCOME_ESCAPED = 'SNAKE_ESCAPED'
+    OUTCOME_UNRESOLVED = 'UNRESOLVED'
+    OUTCOME_OTHER = 'OTHER'
+
     OUTCOME_CHOICES = [
-        ('SNAKE_CAPTURED', 'Snake Safely Captured'),
-        ('SNAKE_RELOCATED', 'Snake Safely Relocated'),
-        ('SNAKE_ESCAPED', 'Snake Escaped / Not Located'),
+        (OUTCOME_CAPTURED, 'Snake Safely Captured'),
+        (OUTCOME_RELOCATED, 'Snake Safely Relocated'),
+        (OUTCOME_ESCAPED, 'Snake Escaped / Not Located'),
         ('REFERRED_OTHER_TEAM', 'Incident Referred to Another Response Team'),
-        ('UNRESOLVED', 'Incident Unresolved'),
+        (OUTCOME_UNRESOLVED, 'Incident Unresolved'),
         ('REPORT_UNVERIFIED', 'Report Could Not Be Verified'),
-        ('OTHER', 'Other Justified Outcome'),
+        (OUTCOME_OTHER, 'Other Justified Outcome'),
     ]
 
     REVIEW_CHOICES = [
@@ -148,12 +188,12 @@ class RangerAssignment(models.Model):
         ('CLARIFICATION_REQUESTED', 'Clarification Requested'),
     ]
 
-    # Allowed status transitions
+    # Allowed status transitions: Ranger cannot self-complete; only Authority review verifies & completes.
     ALLOWED_TRANSITIONS = {
         STATUS_ASSIGNED: {STATUS_ACCEPTED, STATUS_DECLINED},
         STATUS_ACCEPTED: {STATUS_ON_THE_WAY},
         STATUS_ON_THE_WAY: {STATUS_AT_LOCATION},
-        STATUS_AT_LOCATION: {STATUS_OUTCOME_SUBMITTED, STATUS_COMPLETED},
+        STATUS_AT_LOCATION: {STATUS_OUTCOME_SUBMITTED},
         STATUS_OUTCOME_SUBMITTED: {STATUS_COMPLETED, STATUS_AT_LOCATION, STATUS_CANCELLED},
     }
 

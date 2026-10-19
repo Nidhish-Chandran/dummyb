@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.list_reports_view, name='list'),
     path('create/', views.create_report_view, name='create'),
     path('risk-zones/', views.risk_zones_public_view, name='risk_zones'),
+    path('api/risk-zones/', views.risk_zones_api, name='risk_zones_api'),
     path('api/map-reports/', views.authority_map_reports_api, name='map_reports_api'),
     path('api/report-panel/<int:pk>/', views.authority_report_panel_api, name='report_panel_api'),
     path('map/', views.authority_map_view, name='map'),

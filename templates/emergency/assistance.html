@@ -1,50 +1,55 @@
 {% extends 'base.html' %}
 
-{% block title %}Emergency Support & Hospital Locator — Venom Watch{% endblock %}
+{% block title %}Emergency Support & Nearby Hospitals — Venom Watch{% endblock %}
 
 {% block content %}
 <div class="container py-4">
 
-    <!-- Emergency Header -->
+    <!-- Emergency Support Header -->
     <div class="emergency-banner p-4 mb-4">
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
-                <i class="fa-solid fa-truck-medical" style="color: var(--danger); font-size: 1.4rem;"></i>
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width: 48px; height: 48px; background: rgba(220, 38, 38, 0.12); color: var(--danger); font-size: 1.3rem;">
+                    <i class="fa-solid fa-truck-medical"></i>
+                </div>
                 <div>
-                    <h2 class="fw-bold mb-1" style="font-size: 1.15rem; color: var(--text);">
-                        Snakebite Emergency Support & Hospital Locator
+                    <h2 class="fw-bold mb-1" style="font-size: 1.25rem; color: var(--text);">
+                        Emergency Support &amp; Nearby Hospitals
                     </h2>
                     <p class="text-muted mb-0" style="font-size: 0.8125rem;">
-                        Nearest anti-venom hospitals sorted by Haversine distance calculation
+                        Direct hotlines, essential snakebite first-aid guidance, and anti-venom medical facilities
                     </p>
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a href="tel:108" class="btn btn-danger-venom btn-sm text-nowrap">
-                    <i class="fa-solid fa-phone me-1"></i> Call 108
+                <a href="tel:108" class="btn btn-danger-venom btn-sm text-nowrap px-3 py-2">
+                    <i class="fa-solid fa-phone me-1"></i> Call 108 (Ambulance)
                 </a>
-                <a href="tel:1926" class="btn btn-outline-danger btn-sm text-nowrap">
-                    <i class="fa-solid fa-tree me-1"></i> 1926 Wildlife
+                <a href="tel:1926" class="btn btn-outline-danger btn-sm text-nowrap px-3 py-2">
+                    <i class="fa-solid fa-tree me-1"></i> Call 1926 (Forest Rescue)
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Interactive Emergency SOS Trigger -->
-    <div class="card-clean p-4 mb-4 border-start border-danger border-4 shadow-sm" style="background: #fff5f5;">
+    <!-- Emergency SOS Action -->
+    <div class="card-clean p-4 mb-4 border-start border-danger border-4 shadow-sm" style="background: #fffafa;">
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
             <div>
-                <h5 class="fw-bold mb-1 text-danger">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Log Emergency SOS Distress Signal
+                <h5 class="fw-bold mb-1 text-danger" style="font-size: 1.05rem;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Request Urgent Emergency Assistance
                 </h5>
                 <p class="text-muted mb-0" style="font-size: 0.8125rem;">
-                    Broadcasts your GPS coordinates directly to the VenomWatch Operations Desk for priority tracking.
+                    Record your current location to alert response coordinators while you contact medical services.
                 </p>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <input type="tel" id="sosContactPhone" class="form-control form-control-sm" placeholder="Callback Phone #" style="max-width: 190px;" value="{{ request.user.profile.phone|default:'' }}">
+                <input type="tel" id="sosContactPhone" class="form-control form-control-sm"
+                       placeholder="Callback phone number" style="max-width: 210px;"
+                       value="{{ request.user.profile.phone_number|default:'' }}">
                 <button type="button" id="btnTriggerSOS" class="btn btn-danger-venom btn-sm text-nowrap px-3 py-2">
-                    <i class="fa-solid fa-bullhorn me-1"></i> Trigger SOS Signal
+                    <i class="fa-solid fa-bullhorn me-1"></i> Send Emergency Alert
                 </button>
             </div>
         </div>
@@ -55,138 +60,178 @@
     <div class="card-clean p-4 mb-4 card-warning-clean">
         <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
             <i class="fa-solid fa-kit-medical me-2" style="color: var(--warning);"></i>
-            Immediate Snakebite First-Aid Protocol
+            Essential Snakebite First-Aid Steps
         </h5>
         <div class="row g-3">
             <div class="col-md-3 col-sm-6">
-                <div class="p-3 rounded border" style="background: var(--surface-hover);">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
                     <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
-                        1. Keep Patient Still
+                        1. Keep Calm and Still
                     </p>
-                    <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                        Immobilize the bitten limb. Minimize movement to slow venom transport.
+                    <p class="text-muted mb-0" style="font-size: 0.8rem; line-height: 1.45;">
+                        Immobilize the bitten limb at or below heart level. Keep movement to an absolute minimum to slow venom spread.
                     </p>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <div class="p-3 rounded border" style="background: var(--surface-hover);">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
                     <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
-                        2. Do NOT Cut or Suck
+                        2. Do Not Cut or Tourniquet
                     </p>
-                    <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                        Never make incisions. Avoid tight tourniquets which cause tissue necrosis.
+                    <p class="text-muted mb-0" style="font-size: 0.8rem; line-height: 1.45;">
+                        Never cut, wash, or attempt to suck venom. Avoid tight tourniquets or ice, which cause severe tissue damage.
                     </p>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <div class="p-3 rounded border" style="background: var(--surface-hover);">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
                     <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
-                        3. Remove Jewelry
+                        3. Remove Constricting Items
                     </p>
-                    <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                        Remove rings, watches, or tight footwear before swelling begins.
+                    <p class="text-muted mb-0" style="font-size: 0.8rem; line-height: 1.45;">
+                        Quickly remove rings, watches, bracelets, or tight footwear from the affected limb before swelling starts.
                     </p>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <div class="p-3 rounded border" style="background: var(--surface-hover);">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
                     <p class="fw-semibold mb-1" style="font-size: 0.875rem; color: var(--text);">
-                        4. Rush to Hospital
+                        4. Transport Immediately
                     </p>
-                    <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                        Transport immediately to the nearest hospital with polyvalent ASV.
+                    <p class="text-muted mb-0" style="font-size: 0.8rem; line-height: 1.45;">
+                        Reach the nearest hospital equipped with anti-venom as quickly and safely as possible. Call ahead if possible.
                     </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Hospital List -->
-    <div class="card-clean">
+    <!-- Hospital Directory -->
+    <div class="card-clean mb-4">
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 p-4 border-bottom">
             <div>
-                <h5 class="fw-semibold mb-1" style="font-size: 0.9375rem; color: var(--text);">
+                <h5 class="fw-semibold mb-1" style="font-size: 0.95rem; color: var(--text);">
                     <i class="fa-solid fa-hospital me-2" style="color: var(--primary);"></i>
-                    Nearest Anti-Venom Specialty Hospitals
+                    Nearby Hospitals &amp; Emergency Facilities
                 </h5>
                 <p class="text-muted mb-0" style="font-size: 0.8125rem;">
-                    Sorted by distance from your location
-                    ({{ user_lat|floatformat:4 }}, {{ user_lng|floatformat:4 }})
+                    {% if has_user_coords %}
+                        Sorted by distance from your location ({{ user_lat|floatformat:4 }}, {{ user_lng|floatformat:4 }})
+                    {% else %}
+                        Showing registered facilities. Detect your location to view distances from you.
+                    {% endif %}
                 </p>
             </div>
-            <button type="button" id="btnUpdateLocation" class="btn btn-outline-teal btn-sm">
-                <i class="fa-solid fa-location-crosshairs me-1"></i> Update My Location
-            </button>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" id="btnUpdateLocation" class="btn btn-outline-teal btn-sm">
+                    <i class="fa-solid fa-location-crosshairs me-1"></i> Detect My Location
+                </button>
+            </div>
         </div>
+
+        <div id="locStatusFeedback" class="d-none alert py-2 px-3 mx-4 mt-3 mb-0" style="font-size: 0.8rem;"></div>
 
         <div class="p-4">
             <div class="row g-4">
                 {% for h in hospitals %}
                     <div class="col-md-4">
-                        <div class="border rounded p-3 h-100 d-flex flex-column"
+                        <div class="border rounded p-3 h-100 d-flex flex-column shadow-sm"
                              style="background: var(--surface);">
-                            <!-- Distance & Stock Badges -->
+                            
+                            <!-- Badges Header -->
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="fw-semibold" style="color: var(--primary); font-size: 0.875rem;">
-                                    <i class="fa-solid fa-location-arrow me-1"></i>
-                                    {{ h.distance_km }} km away
-                                </span>
-                                {% if h.anti_venom_available %}
-                                    <span class="badge" style="background: var(--success-light); color: var(--success);">
-                                        <i class="fa-solid fa-check me-1"></i> Anti-Venom
+                                {% if h.distance_km is not None %}
+                                    <span class="fw-semibold" style="color: var(--primary); font-size: 0.875rem;">
+                                        <i class="fa-solid fa-location-arrow me-1"></i>
+                                        {{ h.distance_km }} km away
                                     </span>
                                 {% else %}
-                                    <span class="badge" style="background: var(--danger-light); color: var(--danger);">
+                                    <span class="text-muted" style="font-size: 0.8rem;">
+                                        <i class="fa-solid fa-map-pin me-1"></i> {{ h.district|default:"Monitored Region" }}
+                                    </span>
+                                {% endif %}
+
+                                {% if h.anti_venom_available %}
+                                    <span class="badge" style="background: var(--success-light); color: var(--success); font-size: 0.75rem;">
+                                        <i class="fa-solid fa-check me-1"></i> Anti-Venom Available
+                                    </span>
+                                {% else %}
+                                    <span class="badge" style="background: var(--danger-light); color: var(--danger); font-size: 0.75rem;">
                                         Out of Stock
                                     </span>
                                 {% endif %}
                             </div>
 
-                            <!-- Hospital Info -->
-                            <p class="fw-bold mb-1" style="font-size: 0.9375rem; color: var(--text);">{{ h.name }}</p>
+                            <!-- Hospital Details -->
+                            <h6 class="fw-bold mb-1" style="font-size: 0.95rem; color: var(--text);">{{ h.name }}</h6>
                             <p class="text-muted mb-3" style="font-size: 0.8125rem;">
                                 <i class="fa-solid fa-location-dot me-1" style="color: var(--danger);"></i>
                                 {{ h.address }}
                             </p>
 
-                            <!-- Hospital Stats -->
+                            <!-- Facility Info -->
                             <div class="rounded border p-2 mb-3" style="background: var(--surface-hover);">
                                 <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
-                                    <span class="text-muted">Anti-Venom Stock</span>
-                                    <strong style="color: var(--primary);">{{ h.anti_venom_stock_vials }} Vials</strong>
+                                    <span class="text-muted">Emergency Hours</span>
+                                    <strong style="color: var(--text);">{{ h.operating_hours|default:"24/7 Emergency Care" }}</strong>
                                 </div>
                                 <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
-                                    <span class="text-muted">24/7 ICU</span>
+                                    <span class="text-muted">ICU Facilities</span>
                                     <strong>
                                         {% if h.has_icu %}
-                                            <span style="color: var(--success);">Available</span>
+                                            <span style="color: var(--success);"><i class="fa-solid fa-check me-1"></i> Available</span>
                                         {% else %}
-                                            <span class="text-muted">Limited</span>
+                                            <span class="text-muted">Not specified</span>
                                         {% endif %}
                                     </strong>
                                 </div>
-                                <div class="d-flex justify-content-between" style="font-size: 0.8rem;">
-                                    <span class="text-muted">Hours</span>
-                                    <strong style="color: var(--text);">{{ h.operating_hours }}</strong>
-                                </div>
+                                {% if h.anti_venom_available and h.anti_venom_stock_vials %}
+                                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                        <span class="text-muted">Anti-Venom Stock</span>
+                                        <strong style="color: var(--primary);">{{ h.anti_venom_stock_vials }} Vials</strong>
+                                    </div>
+                                {% endif %}
+                                {% if h.stock_last_updated %}
+                                    <div class="d-flex justify-content-between pt-1 border-top mt-1" style="font-size: 0.72rem;">
+                                        <span class="text-muted">Authority verified:</span>
+                                        <span class="text-muted">{{ h.stock_last_updated|date:"M d, Y" }}</span>
+                                    </div>
+                                {% endif %}
                             </div>
 
+                            {% if h.anti_venom_notes %}
+                                <div class="text-muted small mb-3 p-2 rounded" style="background: rgba(241, 245, 249, 0.6); font-size: 0.75rem;">
+                                    <i class="fa-solid fa-circle-info me-1" style="color: var(--info);"></i>
+                                    {{ h.anti_venom_notes }}
+                                </div>
+                            {% endif %}
+
                             <!-- Action Buttons -->
-                            <div class="mt-auto d-flex flex-column gap-2">
-                                <a href="tel:{{ h.phone_number }}" class="btn btn-teal btn-sm w-100">
-                                    <i class="fa-solid fa-phone me-1"></i> Call {{ h.phone_number }}
-                                </a>
-                                <a href="https://www.google.com/maps/dir/?api=1&destination={{ h.latitude }},{{ h.longitude }}"
-                                   target="_blank" class="btn btn-outline-secondary btn-sm w-100">
-                                    <i class="fa-solid fa-directions me-1"></i> Get Directions
-                                </a>
+                            <div class="mt-auto d-flex flex-column gap-2 pt-2">
+                                {% if h.phone_number %}
+                                    <a href="tel:{{ h.phone_number }}" class="btn btn-teal btn-sm w-100">
+                                        <i class="fa-solid fa-phone me-1"></i> Call {{ h.phone_number }}
+                                    </a>
+                                {% endif %}
+                                {% if h.latitude and h.longitude %}
+                                    <a href="https://www.google.com/maps/dir/?api=1&destination={{ h.latitude }},{{ h.longitude }}"
+                                       target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm w-100">
+                                        <i class="fa-solid fa-diamond-turn-right me-1"></i> Directions
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                 {% empty %}
                     <div class="col-12 text-center py-5 text-muted">
                         <i class="fa-solid fa-hospital fa-2x mb-2 d-block" style="color: var(--border-hover);"></i>
-                        <p class="mb-0" style="font-size: 0.875rem;">No hospital records found in system.</p>
+                        <p class="mb-1 fw-semibold" style="font-size: 0.95rem; color: var(--text);">No hospital records available.</p>
+                        <p class="mb-3 text-muted" style="font-size: 0.8125rem;">
+                            No hospitals currently registered. Hospital anti-venom records are managed by wildlife authorities. In an active emergency, please contact 108 directly.
+                        </p>
+                        <a href="tel:108" class="btn btn-danger-venom btn-sm">
+                            <i class="fa-solid fa-phone me-1"></i> Call Emergency Hotline: 108
+                        </a>
                     </div>
                 {% endfor %}
             </div>
@@ -199,20 +244,38 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const btn = document.getElementById("btnUpdateLocation");
-        if (btn) {
-            btn.addEventListener("click", function() {
-                if ("geolocation" in navigator) {
-                    navigator.geolocation.getCurrentPosition(function(pos) {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-                        window.location.href = `?lat=${lat}&lng=${lng}`;
-                    }, function(err) {
-                        alert("Could not retrieve GPS location: " + err.message);
-                    });
-                } else {
-                    alert("Geolocation is not supported by your browser.");
+        const btnLoc = document.getElementById("btnUpdateLocation");
+        const feedback = document.getElementById("locStatusFeedback");
+
+        if (btnLoc && feedback) {
+            btnLoc.addEventListener("click", function() {
+                if (!("geolocation" in navigator)) {
+                    feedback.className = "alert alert-warning py-2 px-3 mx-4 mt-3 mb-0";
+                    feedback.textContent = "Browser geolocation is not supported on this device.";
+                    feedback.classList.remove("d-none");
+                    return;
                 }
+
+                btnLoc.disabled = true;
+                btnLoc.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Detecting location…';
+                feedback.className = "alert alert-info py-2 px-3 mx-4 mt-3 mb-0";
+                feedback.textContent = "Detecting your location to find the closest hospitals…";
+                feedback.classList.remove("d-none");
+
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    const lat = pos.coords.latitude.toFixed(6);
+                    const lng = pos.coords.longitude.toFixed(6);
+                    window.location.href = `?lat=${lat}&lng=${lng}`;
+                }, function(err) {
+                    btnLoc.disabled = false;
+                    btnLoc.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Detect My Location';
+                    feedback.className = "alert alert-warning py-2 px-3 mx-4 mt-3 mb-0";
+                    let msg = "Could not detect location. Showing default regional facilities.";
+                    if (err.code === err.PERMISSION_DENIED) {
+                        msg = "Location permission denied. Showing default regional facilities.";
+                    }
+                    feedback.textContent = msg;
+                }, { timeout: 10000 });
             });
         }
 
@@ -221,7 +284,7 @@
         if (sosBtn && alertBox) {
             sosBtn.addEventListener("click", function() {
                 sosBtn.disabled = true;
-                sosBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Broadcasting...';
+                sosBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Recording alert…';
 
                 function sendSOS(lat, lng) {
                     const phone = document.getElementById("sosContactPhone").value;
@@ -229,7 +292,7 @@
                     formData.append("latitude", lat);
                     formData.append("longitude", lng);
                     formData.append("phone_number", phone);
-                    formData.append("location", `GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+                    formData.append("location", `GPS (${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)})`);
                     formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
 
                     fetch("{% url 'emergency:api_sos' %}", {
@@ -239,31 +302,31 @@
                     .then(res => res.json())
                     .then(data => {
                         sosBtn.disabled = false;
-                        sosBtn.innerHTML = '<i class="fa-solid fa-bullhorn me-1"></i> Trigger SOS Signal';
+                        sosBtn.innerHTML = '<i class="fa-solid fa-bullhorn me-1"></i> Send Emergency Alert';
                         alertBox.classList.remove("d-none");
                         if (data.status === "SUCCESS") {
                             alertBox.innerHTML = `
                                 <div class="alert alert-success d-flex align-items-start gap-2 mb-0" style="font-size: 0.85rem;">
-                                    <i class="fa-solid fa-circle-check mt-1"></i>
+                                    <i class="fa-solid fa-circle-check text-success mt-1"></i>
                                     <div>
-                                        <strong>Distress Logged (Event #${data.event_id || 'Active'}):</strong> ${data.message}
-                                        <div class="mt-2 fw-bold">Emergency Hotlines: ${data.emergency_contacts ? data.emergency_contacts.join(' | ') : 'Call 108'}</div>
+                                        <strong>Emergency Alert Recorded (Incident #${data.event_id || 'Active'}):</strong> ${data.message}
+                                        <div class="mt-2 fw-semibold">Direct Hotlines: Call 108 (Ambulance) or 1926 (Wildlife Rescue)</div>
                                     </div>
                                 </div>
                             `;
                         } else {
                             alertBox.innerHTML = `
                                 <div class="alert alert-danger mb-0" style="font-size: 0.85rem;">
-                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> ${data.message || 'Error broadcasting distress signal.'}
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> ${data.message || 'Error recording emergency alert.'}
                                 </div>
                             `;
                         }
                     })
                     .catch(err => {
                         sosBtn.disabled = false;
-                        sosBtn.innerHTML = '<i class="fa-solid fa-bullhorn me-1"></i> Trigger SOS Signal';
+                        sosBtn.innerHTML = '<i class="fa-solid fa-bullhorn me-1"></i> Send Emergency Alert';
                         alertBox.classList.remove("d-none");
-                        alertBox.innerHTML = `<div class="alert alert-danger mb-0">Network error: ${err}</div>`;
+                        alertBox.innerHTML = `<div class="alert alert-danger mb-0">Network error recording alert. Please call 108 directly.</div>`;
                     });
                 }
 
@@ -271,7 +334,6 @@
                     navigator.geolocation.getCurrentPosition(function(pos) {
                         sendSOS(pos.coords.latitude, pos.coords.longitude);
                     }, function() {
-                        // Fallback to page coordinates
                         sendSOS({{ user_lat }}, {{ user_lng }});
                     }, {timeout: 6000});
                 } else {

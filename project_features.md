@@ -399,11 +399,9 @@ AUTHORITY
    python manage.py runserver 127.0.0.1:8000
    ```
 
-### Demo Accounts & Credentials
-| Role | Username | Password | Default Landing Page |
-|---|---|---|---|
-| **Authority** | `authority_demo` | `authority_demo123` | `/authority/map/` |
-| **Ranger** | `ranger_demo` | `ranger_demo123` | `/ranger/` |
-| **Citizen** | `john_citizen` | `citizen_demo123` | `/reports/` |
-| **Administrator** | `admin_demo` | `admin_demo123` | `/admin/` |
+### Account Authentication & Roles
+- All users log in through the standard authentication page at `/accounts/login/`.
+- **Citizens** register directly at `/accounts/register/`.
+- **Authority Officers** and **Forest Rangers** submit official registration applications with identity documents for administrative review.
+- **Platform Administrators** approve or reject applications and manage operational accounts via the Platform Administration Panel at `/accounts/dashboard/`.
 

@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
-{% block title %}Sighting Reports — Venom Watch{% endblock %}
+{% block title %}
+    {% if is_authority %}All Incident Reports — Venom Watch{% else %}My Submitted Sightings — Venom Watch{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -16,88 +18,162 @@
                     <i class="fa-solid fa-truck-medical me-2" style="color: var(--primary);"></i>
                     Assigned Response Tasks
                 {% else %}
-                    <i class="fa-solid fa-clipboard-user me-2" style="color: var(--primary);"></i>
+                    <i class="fa-solid fa-list-check me-2" style="color: var(--primary);"></i>
                     My Submitted Sightings
                 {% endif %}
             </h2>
-            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+            <p class="text-muted mb-0" style="font-size: 0.875rem;">
                 {% if is_authority %}
-                    Incident management, verification, duplicate review & responder dispatch
+                    Triage, verify species classifications, and dispatch wildlife handlers.
+                {% elif is_responder %}
+                    Live queue of community snake sightings assigned to you for extraction.
                 {% else %}
-                    Track AI results, verification progress & rescue response status
+                    Track the real-time verification and response status of your reports.
                 {% endif %}
             </p>
         </div>
-        <a href="{% url 'reports:create' %}" class="btn btn-teal btn-sm text-nowrap">
-            <i class="fa-solid fa-plus me-1"></i> Report New Sighting
-        </a>
+
+        <div>
+            <a href="{% url 'reports:create' %}" class="btn btn-teal">
+                <i class="fa-solid fa-plus me-1"></i> Report a Sighting
+            </a>
+        </div>
     </div>
 
-    <!-- Filter Toolbar -->
-    <div class="filter-toolbar mb-4">
-        <form method="get" class="d-flex flex-wrap gap-2 align-items-center w-100">
-            <input type="text" name="q" class="form-control form-control-sm"
-                   style="min-width: 200px; flex: 1 1 200px;"
-                   placeholder="Search by title, species, landmark…"
-                   value="{{ query|default:'' }}">
+    {% if is_authority %}
+        <!-- Authority Filter Toolbar -->
+        <div class="card-clean p-3 mb-4">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                        </span>
+                        <input type="text"
+                               name="q"
+                               value="{{ query }}"
+                               class="form-control form-control-sm border-start-0"
+                               placeholder="Search species, location, notes…">
+                    </div>
+                </div>
 
-            <select name="venom" class="form-select form-select-sm" style="min-width: 160px; flex: 0 1 160px;">
-                <option value="">All venom types</option>
-                <option value="HIGHLY_VENOMOUS" {% if filter_venom == 'HIGHLY_VENOMOUS' %}selected{% endif %}>Highly Venomous</option>
-                <option value="VENOMOUS" {% if filter_venom == 'VENOMOUS' %}selected{% endif %}>Venomous</option>
-                <option value="NON_VENOMOUS" {% if filter_venom == 'NON_VENOMOUS' %}selected{% endif %}>Non-Venomous</option>
-            </select>
+                <div class="col-md-3">
+                    <select name="venom" class="form-select form-select-sm">
+                        <option value="">All Venom Levels</option>
+                        <option value="HIGHLY_VENOMOUS" {% if filter_venom == 'HIGHLY_VENOMOUS' %}selected{% endif %}>Highly Venomous</option>
+                        <option value="VENOMOUS" {% if filter_venom == 'VENOMOUS' %}selected{% endif %}>Venomous</option>
+                        <option value="NON_VENOMOUS" {% if filter_venom == 'NON_VENOMOUS' %}selected{% endif %}>Non-Venomous</option>
+                    </select>
+                </div>
 
-            {% if is_authority %}
-                <select name="duplicate" class="form-select form-select-sm" style="min-width: 160px; flex: 0 1 160px;">
-                    <option value="">All submissions</option>
-                    <option value="1" {% if filter_dup == '1' %}selected{% endif %}>Flagged Duplicates</option>
-                </select>
-            {% endif %}
+                <div class="col-md-2">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="active"
+                               value="1"
+                               id="activeCheck"
+                               {% if filter_active == '1' %}checked{% endif %}>
+                        <label class="form-check-label" for="activeCheck" style="font-size: 0.8125rem;">
+                            Active (48h)
+                        </label>
+                    </div>
+                </div>
 
-            <button type="submit" class="btn btn-outline-teal btn-sm">
-                <i class="fa-solid fa-filter me-1"></i> Filter
-            </button>
-        </form>
-    </div>
+                <div class="col-md-2 text-md-end">
+                    <button type="submit" class="btn btn-teal btn-sm me-1">
+                        Filter
+                    </button>
+                    {% if query or filter_venom or filter_active or filter_dup %}
+                        <a href="{% url 'reports:list' %}" class="btn btn-outline-teal btn-sm" title="Clear Filters">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    {% else %}
+        <!-- Citizen Simple Search Toolbar -->
+        <div class="card-clean p-3 mb-4">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                        </span>
+                        <input type="text"
+                               name="q"
+                               value="{{ query }}"
+                               class="form-control form-control-sm border-start-0"
+                               placeholder="Search your sightings by location or species…">
+                        <button type="submit" class="btn btn-teal btn-sm">
+                            Search
+                        </button>
+                        {% if query %}
+                            <a href="{% url 'reports:list' %}" class="btn btn-outline-teal btn-sm" title="Clear Search">
+                                <i class="fa-solid fa-xmark"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    {% endif %}
 
-    <!-- Sightings Table -->
-    <div class="card-clean">
+    <!-- Sightings Table Card -->
+    <div class="card-clean p-0 overflow-hidden">
         {% if reports %}
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead>
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.875rem;">
+                    <thead style="background: var(--surface-hover); border-bottom: 1px solid var(--border);">
                         <tr>
-                            <th>#</th>
-                            <th>Image</th>
-                            <th>Sighting / Location</th>
-                            <th>AI Result</th>
-                            <th>Venom</th>
+                            <th style="width: 70px; padding: 0.75rem 1rem;">#</th>
+                            <th style="width: 80px;">Photo</th>
+                            <th>Location & Time</th>
+                            <th>AI Assessment</th>
+                            <th>Venom Status</th>
                             <th>Verification</th>
-                            <th>Rescue Status</th>
-                            <th class="text-end">Action</th>
+                            {% if is_authority %}
+                                <th>Rescue Status</th>
+                            {% endif %}
+                            <th class="text-end" style="padding-right: 1.25rem;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for r in reports %}
-                            <tr>
-                                <td class="text-muted fw-semibold" style="font-size: 0.8rem;">#{{ r.id }}</td>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <!-- Report Number (Submission Index for Citizens, ID for Authorities) -->
+                                <td style="padding: 0.75rem 1rem;">
+                                    <span class="badge bg-light text-dark border fw-mono" style="font-size: 0.75rem;">
+                                        {% if is_authority %}
+                                            #{{ r.id }}
+                                        {% else %}
+                                            #{{ forloop.revcounter }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+
+                                <!-- Image Thumbnail -->
                                 <td>
                                     {% if r.processed_image %}
-                                        <img src="{{ r.processed_image.url }}" alt="AI Annotated"
+                                        <img src="{{ r.processed_image.url }}"
+                                             alt="Sighting photo"
                                              class="rounded border"
                                              style="width: 48px; height: 48px; object-fit: cover;">
                                     {% elif r.original_image %}
-                                        <img src="{{ r.original_image.url }}" alt="Sighting"
+                                        <img src="{{ r.original_image.url }}"
+                                             alt="Sighting photo"
                                              class="rounded border"
                                              style="width: 48px; height: 48px; object-fit: cover;">
                                     {% else %}
                                         <div class="rounded border d-flex align-items-center justify-content-center text-muted"
-                                             style="width: 48px; height: 48px; background: var(--surface-hover);">
-                                            <i class="fa-solid fa-image" style="font-size: 0.9rem;"></i>
+                                             style="width: 48px; height: 48px; background: var(--surface-hover); font-size: 0.75rem;">
+                                            <i class="fa-solid fa-image"></i>
                                         </div>
                                     {% endif %}
                                 </td>
+
+                                <!-- Sighting Details & Location -->
                                 <td>
                                     <span class="fw-semibold d-block" style="font-size: 0.875rem; color: var(--text);">
                                         {{ r.title }}
@@ -106,14 +182,22 @@
                                         <i class="fa-solid fa-location-dot me-1" style="color: var(--danger);"></i>
                                         {{ r.location_name }}
                                     </small>
-                                    <small class="text-muted">{{ r.created_at|date:"M d, Y · H:i" }}</small>
+                                    <small class="text-muted" style="font-size: 0.75rem;">
+                                        {{ r.created_at|date:"M d, Y · H:i" }}
+                                    </small>
                                 </td>
+
+                                <!-- AI Assessment -->
                                 <td>
                                     <span class="fw-semibold d-block" style="font-size: 0.8125rem; color: var(--primary);">
-                                        {{ r.species_predicted|default:"Snake" }}
+                                        {{ r.species_predicted|default:"Snake Detected" }}
                                     </span>
-                                    <small class="text-muted">{{ r.ai_confidence }}% confidence</small>
+                                    {% if r.ai_confidence %}
+                                        <small class="text-muted" style="font-size: 0.75rem;">{{ r.ai_confidence }}% confidence</small>
+                                    {% endif %}
                                 </td>
+
+                                <!-- Venom Assessment -->
                                 <td>
                                     {% if r.venom_category == 'HIGHLY_VENOMOUS' %}
                                         <span class="badge-venomous">Highly Venomous</span>
@@ -124,55 +208,58 @@
                                     {% endif %}
 
                                     {% if is_authority and r.duplicate_flag %}
-                                        <br><span class="badge bg-warning text-dark mt-1">
+                                        <br><span class="badge bg-warning text-dark mt-1" style="font-size: 0.72rem;">
                                             <i class="fa-solid fa-copy me-1"></i> Duplicate
                                         </span>
                                     {% endif %}
-                                    {% if is_authority and r.spam_flag %}
-                                        <br><span class="badge bg-danger text-white mt-1">
-                                            <i class="fa-solid fa-flag me-1"></i> Spam
-                                        </span>
-                                    {% endif %}
                                 </td>
+
+                                <!-- Verification Status -->
                                 <td>
                                     {% if r.status == 'VERIFIED' %}
-                                        <span class="badge" style="background: var(--success-light); color: var(--success);">
+                                        <span class="badge" style="background: var(--success-light); color: var(--success); font-size: 0.75rem;">
                                             <i class="fa-solid fa-check me-1"></i> Verified
                                         </span>
                                     {% elif r.status == 'REJECTED' %}
-                                        <span class="badge" style="background: var(--danger-light); color: var(--danger);">
+                                        <span class="badge" style="background: var(--danger-light); color: var(--danger); font-size: 0.75rem;">
                                             <i class="fa-solid fa-xmark me-1"></i> Rejected
                                         </span>
                                     {% elif r.status == 'RESOLVED' %}
-                                        <span class="badge" style="background: var(--info-light); color: var(--info);">
+                                        <span class="badge" style="background: var(--info-light); color: var(--info); font-size: 0.75rem;">
                                             <i class="fa-solid fa-circle-check me-1"></i> Cleared
                                         </span>
                                     {% else %}
-                                        <span class="badge" style="background: var(--warning-light); color: var(--warning);">
-                                            <i class="fa-solid fa-clock me-1"></i> Pending
+                                        <span class="badge" style="background: var(--warning-light); color: var(--warning); font-size: 0.75rem;">
+                                            <i class="fa-solid fa-clock me-1"></i> Pending Review
                                         </span>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    {% if r.response_status == 'RESOLVED' %}
-                                        <span class="badge" style="background: var(--success-light); color: var(--success);">
-                                            Relocated
-                                        </span>
-                                    {% elif r.response_status == 'IN_PROGRESS' %}
-                                        <span class="badge" style="background: var(--info-light); color: var(--info);">
-                                            In Progress
-                                        </span>
-                                    {% elif r.response_status == 'ASSIGNED' %}
-                                        <span class="badge" style="background: var(--primary-muted); color: var(--primary-hover);">
-                                            Assigned
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-light text-muted border">Unassigned</span>
-                                    {% endif %}
-                                </td>
+
+                                <!-- Authority-Only Rescue Status Column -->
+                                {% if is_authority %}
+                                    <td>
+                                        {% if r.response_status == 'RESOLVED' %}
+                                            <span class="badge" style="background: var(--success-light); color: var(--success); font-size: 0.75rem;">
+                                                Relocated
+                                            </span>
+                                        {% elif r.response_status == 'IN_PROGRESS' %}
+                                            <span class="badge" style="background: var(--info-light); color: var(--info); font-size: 0.75rem;">
+                                                In Progress
+                                            </span>
+                                        {% elif r.response_status == 'ASSIGNED' %}
+                                            <span class="badge" style="background: var(--primary-muted); color: var(--primary-hover); font-size: 0.75rem;">
+                                                Assigned
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-muted border" style="font-size: 0.75rem;">Unassigned</span>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+
+                                <!-- View Action -->
                                 <td class="text-end">
                                     <a href="{% url 'reports:detail' pk=r.pk %}" class="btn btn-outline-teal btn-sm">
-                                        View
+                                        View Details
                                     </a>
                                 </td>
                             </tr>
@@ -182,8 +269,21 @@
             </div>
         {% else %}
             <div class="text-center py-5 text-muted">
-                <i class="fa-solid fa-folder-open fa-2x mb-2 d-block" style="color: var(--border-hover);"></i>
-                <p class="mb-0" style="font-size: 0.875rem;">No sighting reports found matching the criteria.</p>
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                     style="width: 54px; height: 54px; background: var(--surface-hover); color: var(--text-muted); font-size: 1.3rem;">
+                    <i class="fa-solid fa-clipboard-question"></i>
+                </div>
+                <h6 class="fw-semibold mb-1" style="color: var(--text);">No Sightings Reported Yet</h6>
+                <p class="text-muted mb-3" style="font-size: 0.8125rem;">
+                    {% if query %}
+                        No reports matched your search term "{{ query }}".
+                    {% else %}
+                        When you encounter a snake in your neighborhood, submit a report to alert responders and community members.
+                    {% endif %}
+                </p>
+                <a href="{% url 'reports:create' %}" class="btn btn-teal btn-sm">
+                    <i class="fa-solid fa-plus me-1"></i> Report a Sighting
+                </a>
             </div>
         {% endif %}
     </div>

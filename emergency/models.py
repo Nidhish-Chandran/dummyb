@@ -12,8 +12,20 @@ class Hospital(models.Model):
     has_icu = models.BooleanField(default=True, help_text="24/7 ICU & Ventilator availability")
     operating_hours = models.CharField(max_length=100, default="24/7 Emergency Care")
 
+    district = models.CharField(max_length=100, blank=True, default='', help_text="District or administrative region")
+    emergency_department = models.BooleanField(default=True, help_text="Dedicated 24/7 Emergency Department")
+    anti_venom_notes = models.TextField(blank=True, default='', help_text="Stock notes, species-specific anti-venom details, or supplier info")
+    stock_last_updated = models.DateTimeField(auto_now=True, help_text="Timestamp when anti-venom stock was last verified/updated")
+    updated_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_hospitals', help_text="Admin who last updated this record")
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
-        return f"{self.name} ({'Anti-Venom Available' if self.anti_venom_available else 'Out of Stock'})"
+        dist_str = f" - {self.district}" if self.district else ""
+        return f"{self.name}{dist_str} ({'Anti-Venom Available' if self.anti_venom_available else 'Out of Stock'})"
 
     def distance_from(self, user_lat, user_lng):
         """Calculates distance in kilometers using the Haversine formula."""

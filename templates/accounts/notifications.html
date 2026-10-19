@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications — Venom Watch{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text);">
+                <i class="fa-solid fa-bell me-2 text-teal"></i> Notifications
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Stay updated on sighting verification, ranger assignments, and account updates.
+            </p>
+        </div>
+        {% if unread_notifications_count > 0 %}
+            <form method="post" action="{% url 'accounts:mark_notification_read' 0 %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-teal btn-sm">
+                    <i class="fa-solid fa-check-double me-1"></i> Mark All as Read
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <!-- Notification Cards List -->
+    <div class="card-clean p-4 shadow-sm">
+        {% if notifications %}
+            <div class="list-group list-group-flush">
+                {% for n in notifications %}
+                    <div class="list-group-item d-flex align-items-start justify-content-between gap-3 p-3 {% if not n.is_read %}bg-light border-start border-teal border-3{% endif %}"
+                         style="border-radius: 8px; margin-bottom: 8px;">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="rounded-circle p-2 d-flex align-items-center justify-content-center text-white"
+                                 style="width: 36px; height: 36px; background: {% if n.notification_type == 'OUTCOME_VERIFIED' %}var(--emerald, #059669){% elif n.notification_type == 'ASSIGNMENT_CREATED' or n.notification_type == 'ASSIGNMENT_ACCEPTED' %}var(--teal, #0d9488){% elif n.notification_type == 'ACCOUNT_SUSPENDED' or n.notification_type == 'ACCOUNT_BANNED' or n.notification_type == 'APPLICATION_REJECTED' %}#ef4444{% else %}#3b82f6{% endif %}; font-size: 0.85rem;">
+                                {% if n.notification_type == 'OUTCOME_VERIFIED' %}
+                                    <i class="fa-solid fa-circle-check"></i>
+                                {% elif n.notification_type == 'ASSIGNMENT_CREATED' %}
+                                    <i class="fa-solid fa-clipboard-question"></i>
+                                {% elif n.notification_type == 'ASSIGNMENT_ACCEPTED' %}
+                                    <i class="fa-solid fa-truck-fast"></i>
+                                {% elif n.notification_type == 'ACCOUNT_SUSPENDED' or n.notification_type == 'ACCOUNT_BANNED' %}
+                                    <i class="fa-solid fa-ban"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-bell"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.88rem;">{{ n.title }}</h6>
+                                <p class="mb-1 text-muted" style="font-size: 0.82rem; line-height: 1.4;">{{ n.message }}</p>
+                                <small class="text-muted" style="font-size: 0.72rem;">
+                                    <i class="fa-regular fa-clock me-1"></i>{{ n.created_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            {% if n.link %}
+                                <a href="{{ n.link }}" class="btn btn-outline-primary btn-sm py-1 px-2" style="font-size: 0.75rem;">
+                                    View <i class="fa-solid fa-arrow-right ms-1"></i>
+                                </a>
+                            {% endif %}
+                            {% if not n.is_read %}
+                                <form method="post" action="{% url 'accounts:mark_notification_read' n.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-link btn-sm text-muted p-0" title="Mark as read">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa-regular fa-bell-slash fs-1 mb-3 opacity-50 d-block"></i>
+                <h6 class="fw-semibold text-dark">You're all caught up</h6>
+                <p class="mb-0" style="font-size: 0.8125rem;">No new notifications. You are up to date on all response and incident activities.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

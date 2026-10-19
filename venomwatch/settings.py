@@ -55,8 +55,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'accounts.middleware.AuthenticatedNoCacheMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'accounts.middleware.AuthenticatedNoCacheMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -74,6 +74,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'accounts.context_processors.notifications_processor',
             ],
         },
     },

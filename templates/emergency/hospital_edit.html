@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Hospital — Venom Watch Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{% url 'emergency:hospital_manage' %}" class="badge text-decoration-none" style="background: rgba(13, 148, 136, 0.12); color: var(--primary); font-size: 0.78rem;">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Hospital Registry
+                </a>
+            </div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text);">
+                <i class="fa-solid fa-pen-to-square me-2" style="color: var(--primary);"></i>
+                Edit Hospital: {{ hospital.name }}
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Update operational emergency details, anti-venom vial inventories, and facility coordinates.
+            </p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-light text-muted border" style="font-size: 0.75rem;">Hospital ID #{{ hospital.pk }}</span>
+        </div>
+    </div>
+
+    <!-- Edit Form Card -->
+    <div class="card-clean p-4 p-md-5 mb-4 shadow-sm">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2 px-3 mb-4" style="font-size: 0.8125rem;">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Basic Identification -->
+            <h6 class="fw-bold mb-3 pb-2 border-bottom" style="font-size: 0.95rem; color: var(--text);">
+                <i class="fa-solid fa-hospital me-2" style="color: var(--primary);"></i> Facility Information
+            </h6>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="id_hospital_name" style="font-size: 0.8125rem;">
+                    Hospital Name <span class="text-danger">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.name.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_hospital_district" style="font-size: 0.8125rem;">
+                        District / Region <span class="text-danger">*</span>
+                    </label>
+                    {{ form.district }}
+                    {% if form.district.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.district.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_hospital_phone" style="font-size: 0.8125rem;">
+                        Emergency Contact / Hotline <span class="text-danger">*</span>
+                    </label>
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.phone_number.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="id_hospital_address" style="font-size: 0.8125rem;">
+                    Address &amp; Landmark <span class="text-danger">*</span>
+                </label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                    <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.address.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- GPS Coordinates -->
+            <div class="p-3 rounded mb-4" style="background: var(--surface-hover); border: 1px dashed var(--border);">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="form-label fw-semibold mb-0" style="font-size: 0.8125rem;">
+                        <i class="fa-solid fa-location-dot me-1 text-primary"></i> GPS Coordinates
+                    </label>
+                    <button type="button" class="btn btn-outline-teal btn-xs py-1 px-2" style="font-size: 0.75rem;" onclick="detectHospitalGPS()">
+                        <i class="fa-solid fa-crosshairs me-1"></i> Detect Current GPS
+                    </button>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <small class="text-muted d-block mb-1" style="font-size: 0.72rem;">Latitude (-90 to +90)</small>
+                        {{ form.latitude }}
+                        {% if form.latitude.errors %}
+                            <div class="text-danger mt-1" style="font-size: 0.72rem;">{{ form.latitude.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block mb-1" style="font-size: 0.72rem;">Longitude (-180 to +180)</small>
+                        {{ form.longitude }}
+                        {% if form.longitude.errors %}
+                            <div class="text-danger mt-1" style="font-size: 0.72rem;">{{ form.longitude.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anti-Venom & Inventory -->
+            <h6 class="fw-bold mb-3 pb-2 border-bottom" style="font-size: 0.95rem; color: #047857;">
+                <i class="fa-solid fa-shield-virus me-2"></i> Anti-Venom Stock &amp; Inventory Management
+            </h6>
+
+            <div class="p-3 rounded mb-4 border" style="background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.2) !important;">
+                <div class="form-check form-switch mb-3">
+                    {{ form.anti_venom_available }}
+                    <label class="form-check-label fw-semibold" for="id_anti_venom_available" style="font-size: 0.8125rem;">
+                        Anti-Venom Available in Stock
+                    </label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="id_anti_venom_stock_vials" style="font-size: 0.8125rem;">
+                        Verified Stock (Vials)
+                    </label>
+                    {{ form.anti_venom_stock_vials }}
+                    {% if form.anti_venom_stock_vials.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.anti_venom_stock_vials.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="form-label fw-semibold" for="id_anti_venom_notes" style="font-size: 0.8125rem;">
+                        Stock Notes &amp; Anti-Venom Species Types
+                    </label>
+                    {{ form.anti_venom_notes }}
+                    {% if form.anti_venom_notes.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.anti_venom_notes.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Emergency Facilities & Hours -->
+            <h6 class="fw-bold mb-3 pb-2 border-bottom" style="font-size: 0.95rem; color: var(--text);">
+                <i class="fa-solid fa-heart-pulse me-2" style="color: var(--primary);"></i> Operational Care Capabilities
+            </h6>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="id_operating_hours" style="font-size: 0.8125rem;">Operating Hours</label>
+                {{ form.operating_hours }}
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                    <div class="p-3 rounded border h-100" style="background: var(--surface);">
+                        <div class="form-check">
+                            {{ form.emergency_department }}
+                            <label class="form-check-label fw-semibold" for="id_emergency_department" style="font-size: 0.8125rem;">
+                                24/7 Emergency Department
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Dedicated acute trauma &amp; envenomation stabilization unit</small>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 rounded border h-100" style="background: var(--surface);">
+                        <div class="form-check">
+                            {{ form.has_icu }}
+                            <label class="form-check-label fw-semibold" for="id_has_icu" style="font-size: 0.8125rem;">
+                                ICU &amp; Mechanical Ventilator
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Advanced respiratory support for neurotoxic snake envenomation</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Trail Metadata -->
+            <div class="p-3 rounded mb-4 text-muted border" style="background: var(--surface-hover); font-size: 0.75rem;">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <i class="fa-regular fa-clock me-1"></i> Stock last updated:
+                        <strong>{{ hospital.stock_last_updated|date:"M d, Y H:i"|default:"Never recorded" }}</strong>
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-user-pen me-1"></i> Last updated by:
+                        <strong>{{ hospital.updated_by.username|default:"System Seed" }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex align-items-center justify-content-between gap-3 pt-3 border-top">
+                <a href="{% url 'emergency:hospital_manage' %}" class="btn btn-outline-secondary px-4">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-teal px-4 py-2">
+                    <i class="fa-solid fa-floppy-disk me-2"></i> Save Hospital Changes
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+<script>
+function detectHospitalGPS() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            document.getElementById('id_hospital_lat').value = position.coords.latitude.toFixed(6);
+            document.getElementById('id_hospital_lng').value = position.coords.longitude.toFixed(6);
+        },
+        function(error) {
+            alert("Unable to retrieve GPS coordinates: " + error.message);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+}
+</script>
+{% endblock %}

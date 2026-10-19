@@ -1,185 +1,821 @@
 {% extends 'base.html' %}
 
-{% block title %}Account Provisioning — Venom Watch Admin{% endblock %}
+{% block title %}Account Management — VenomWatch Admin{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4" style="max-width: 1200px;">
 
-    <!-- Header -->
+    <!-- Header & Navigation -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
-            <h2 class="fw-bold mb-1" style="font-size: 1.25rem; color: var(--text);">
-                <i class="fa-solid fa-user-shield me-2" style="color: var(--primary);"></i>
-                Platform Account Provisioning
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{% url 'accounts:admin_dashboard' %}" class="badge text-decoration-none" style="background: rgba(13, 148, 136, 0.12); color: var(--primary); font-size: 0.78rem;">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Admin Dashboard
+                </a>
+                <span class="text-muted" style="font-size: 0.78rem;">/</span>
+                <span class="text-muted" style="font-size: 0.78rem;">Account Management</span>
+            </div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text);">
+                <i class="fa-solid fa-users-gear me-2" style="color: var(--primary);"></i>
+                Account Management &amp; Application Review
             </h2>
             <p class="text-muted mb-0" style="font-size: 0.8125rem;">
-                Provision official Authority Officers and Field Forest Rangers with operational location and dispatch coordinates.
+                Review official registration applications, inspect verification credentials, and manage operational account statuses.
             </p>
         </div>
-        <div>
-            <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary btn-sm" target="_blank">
-                <i class="fa-solid fa-gear me-1"></i> Open Django Admin Console
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Return to Platform Administration Dashboard">
+                <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+            </a>
+            <a href="{% url 'emergency:hospital_manage' %}" class="btn btn-outline-primary btn-sm" title="Manage Hospital & Anti-Venom Registry">
+                <i class="fa-solid fa-hospital me-1"></i> Hospital Registry
             </a>
         </div>
     </div>
 
-    <div class="row g-4">
-        <!-- Provisioning Form -->
-        <div class="col-lg-5">
-            <div class="card-clean p-4 border-start border-teal border-4 shadow-sm">
-                <h5 class="fw-semibold mb-3" style="font-size: 0.95rem; color: var(--text);">
-                    <i class="fa-solid fa-user-plus me-1" style="color: var(--primary);"></i> Provision New Officer / Ranger
-                </h5>
+    {% if authority_form.errors or ranger_form.errors or form.errors %}
+        <div class="alert alert-danger py-2 px-3 mb-4 card-clean" style="font-size: 0.8125rem;">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            <strong>Form Validation Errors:</strong>
+            <ul class="mb-0 mt-1 ps-3">
+                {% for err in authority_form.non_field_errors %}<li>{{ err }}</li>{% endfor %}
+                {% for fld, errs in authority_form.errors.items %}
+                    {% for err in errs %}<li>{{ err }}</li>{% endfor %}
+                {% endfor %}
+                {% for err in ranger_form.non_field_errors %}<li>{{ err }}</li>{% endfor %}
+                {% for fld, errs in ranger_form.errors.items %}
+                    {% for err in errs %}<li>{{ err }}</li>{% endfor %}
+                {% endfor %}
+                {% for err in form.non_field_errors %}<li>{{ err }}</li>{% endfor %}
+                {% for fld, errs in form.errors.items %}
+                    {% for err in errs %}<li>{{ err }}</li>{% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 
-                <form method="post" action="{% url 'accounts:admin_provision' %}" class="action-feedback-form">
-                    {% csrf_token %}
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Account Role <span class="text-danger">*</span></label>
-                        {{ form.role }}
-                        {% if form.role.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.role.errors.0 }}</div>{% endif %}
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Username <span class="text-danger">*</span></label>
-                            {{ form.username }}
-                            {% if form.username.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.username.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Email Address <span class="text-danger">*</span></label>
-                            {{ form.email }}
-                            {% if form.email.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.email.errors.0 }}</div>{% endif %}
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">First Name <span class="text-danger">*</span></label>
-                            {{ form.first_name }}
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Last Name</label>
-                            {{ form.last_name }}
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Temporary Password <span class="text-danger">*</span></label>
-                        {{ form.password }}
-                        {% if form.password.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.password.errors.0 }}</div>{% endif %}
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Phone Number <span class="text-danger">*</span></label>
-                            {{ form.phone_number }}
-                            {% if form.phone_number.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.phone_number.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Department / Org</label>
-                            {{ form.organization }}
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Operational Region / District <span class="text-danger">*</span></label>
-                        {{ form.registered_location }}
-                        {% if form.registered_location.errors %}<div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.registered_location.errors.0 }}</div>{% endif %}
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Base Latitude</label>
-                            {{ form.latitude }}
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold" style="font-size: 0.8rem;">Base Longitude</label>
-                            {{ form.longitude }}
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold" style="font-size: 0.8rem;">Initial Availability Status</label>
-                        {{ form.availability }}
-                    </div>
-
-                    <button type="submit" class="btn btn-teal btn-sm w-100 py-2">
-                        <i class="fa-solid fa-check me-1"></i> Provision Account &amp; Activate Access
-                    </button>
-                </form>
+    <!-- Operational Statistics Summary Bar -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card-clean p-3 h-100 border-start border-warning border-4 shadow-sm">
+                <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Pending Applications</small>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="fs-4 fw-bold text-warning">{{ pending_applications|length }}</span>
+                    <i class="fa-solid fa-file-signature text-muted opacity-50 fs-5"></i>
+                </div>
             </div>
         </div>
+        <div class="col-6 col-md-3">
+            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: var(--primary) !important;">
+                <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Authority Officers</small>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="fs-4 fw-bold" style="color: var(--primary);">{{ stats.total_authority }}</span>
+                    <i class="fa-solid fa-shield text-muted opacity-50 fs-5"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card-clean p-3 h-100 border-start border-success border-4 shadow-sm">
+                <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Active Forest Rangers</small>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="fs-4 fw-bold text-success">{{ stats.total_rangers }}</span>
+                    <i class="fa-solid fa-tree text-muted opacity-50 fs-5"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card-clean p-3 h-100 border-start border-danger border-4 shadow-sm">
+                <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Restricted / Suspended</small>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="fs-4 fw-bold text-danger">{{ stats.suspended_accounts|add:stats.banned_accounts }}</span>
+                    <i class="fa-solid fa-ban text-muted opacity-50 fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Provisioned Accounts Directory -->
-        <div class="col-lg-7">
-            <div class="card-clean p-4 shadow-sm">
+    <!-- Two Primary Administrative Tabs -->
+    <ul class="nav nav-tabs mb-4" id="adminAccountTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if pending_applications %}active fw-semibold{% endif %}" id="tab-applications" data-bs-toggle="tab" data-bs-target="#pane-applications" type="button" role="tab">
+                <i class="fa-solid fa-file-signature me-1 text-warning"></i>
+                Pending Applications
+                {% if pending_applications %}
+                    <span class="badge rounded-pill bg-danger ms-1">{{ pending_applications|length }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if not pending_applications %}active fw-semibold{% endif %}" id="tab-roster" data-bs-toggle="tab" data-bs-target="#pane-roster" type="button" role="tab">
+                <i class="fa-solid fa-users-gear me-1 text-teal"></i>
+                Operational Accounts
+                <span class="badge rounded-pill bg-light text-dark border ms-1">{{ provisioned_users|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-audit" data-bs-toggle="tab" data-bs-target="#pane-audit" type="button" role="tab">
+                <i class="fa-solid fa-clock-rotate-left me-1 text-secondary"></i>
+                Security Audit Log
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="adminAccountTabsContent">
+
+        <!-- ================= TAB A: PENDING APPLICATIONS ================= -->
+        <div class="tab-pane fade {% if pending_applications %}show active{% endif %}" id="pane-applications" role="tabpanel">
+            <div class="card-clean p-4 shadow-sm mb-4">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h5 class="fw-semibold mb-0" style="font-size: 0.95rem; color: var(--text);">
-                        <i class="fa-solid fa-id-badge me-1" style="color: var(--info);"></i>
-                        Provisioned Operational Roster
-                    </h5>
-                    <span class="badge" style="background: var(--info-light); color: var(--info);">
-                        {{ provisioned_users.count }} Officers &amp; Responders
-                    </span>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">
+                            <i class="fa-solid fa-inbox me-2 text-warning"></i>
+                            Registration Applications Queue
+                        </h5>
+                        <small class="text-muted">Applications submitted by prospective Authority Officers and Rangers awaiting official administrative review.</small>
+                    </div>
                 </div>
 
+                {% if pending_applications %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.8125rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Applicant Name &amp; User</th>
+                                    <th>Requested Role</th>
+                                    <th>District / Operational Location</th>
+                                    <th>Submission Date</th>
+                                    <th>Verification Document</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Verification Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in pending_applications %}
+                                    <tr>
+                                        <td>
+                                            <strong class="text-dark d-block">{{ app.full_name }}</strong>
+                                            <small class="text-muted">@{{ app.user.username }} &middot; {{ app.user.email }}</small>
+                                            {% if app.phone_number %}
+                                                <small class="text-muted d-block"><i class="fa-solid fa-phone me-1"></i>{{ app.phone_number }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if app.requested_role == 'authority' %}
+                                                <span class="badge" style="background: var(--teal-light, #ccfbf1); color: var(--teal, #0d9488);">
+                                                    <i class="fa-solid fa-shield me-1"></i>Authority Officer
+                                                </span>
+                                            {% elif app.requested_role == 'ranger' %}
+                                                <span class="badge" style="background: var(--emerald-light, #d1fae5); color: var(--emerald, #059669);">
+                                                    <i class="fa-solid fa-tree me-1"></i>Forest Ranger
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div><strong>{{ app.organization|default:"Not specified" }}</strong></div>
+                                            <small class="text-muted">{{ app.assigned_region|default:app.registered_location|default:"—" }}</small>
+                                            {% if app.latitude and app.longitude %}
+                                                <small class="text-muted d-block"><i class="fa-solid fa-location-crosshairs me-1"></i>({{ app.latitude|floatformat:4 }}, {{ app.longitude|floatformat:4 }})</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ app.submitted_at|date:"M j, Y H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            {% if app.supporting_document %}
+                                                <a href="{% url 'accounts:admin_application_document' app.id %}" target="_blank"
+                                                   class="btn btn-outline-primary btn-sm py-1 px-2" style="font-size: 0.75rem;"
+                                                   title="View uploaded verification document securely via protected endpoint">
+                                                    <i class="fa-solid fa-file-pdf me-1"></i> Inspect Document
+                                                </a>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No Document</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning text-dark">{{ app.get_status_display }}</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex align-items-center justify-content-end gap-1">
+                                                <!-- View Details Trigger -->
+                                                <a href="{% url 'accounts:admin_application_detail' app.id %}" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size: 0.75rem;" title="View full application details">
+                                                    <i class="fa-solid fa-eye me-1"></i> Details
+                                                </a>
+
+                                                <!-- Approve Modal Trigger -->
+                                                <button type="button" class="btn btn-teal btn-sm py-1 px-2" style="font-size: 0.75rem;"
+                                                        data-bs-toggle="modal" data-bs-target="#approveModal{{ app.id }}" title="Approve and activate official account">
+                                                    <i class="fa-solid fa-check me-1"></i> Approve
+                                                </button>
+
+                                                <!-- Reject Modal Trigger -->
+                                                <button type="button" class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;"
+                                                        data-bs-toggle="modal" data-bs-target="#rejectModal{{ app.id }}">
+                                                    <i class="fa-solid fa-xmark me-1"></i> Reject
+                                                </button>
+
+                                                <!-- Request Info Modal Trigger -->
+                                                <button type="button" class="btn btn-outline-warning text-dark btn-sm py-1 px-2" style="font-size: 0.75rem;"
+                                                        data-bs-toggle="modal" data-bs-target="#infoModal{{ app.id }}">
+                                                    <i class="fa-solid fa-question me-1"></i> Info
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Modals for Pending Applications (placed outside table-responsive to avoid clipping/backdrop issues) -->
+                    {% for app in pending_applications %}
+                        <!-- Approve Modal -->
+                        <div class="modal fade" id="approveModal{{ app.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog text-start">
+                                <form method="post" action="{% url 'accounts:admin_application_approve' app.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve_application">
+                                    <input type="hidden" name="application_id" value="{{ app.id }}">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fs-6 fw-bold">Approve Application: {{ app.full_name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body" style="font-size: 0.85rem;">
+                                            <p>Are you sure you want to approve <strong>{{ app.full_name }}</strong> (@{{ app.user.username }}) for an official <strong>{{ app.get_requested_role_display }}</strong> account?</p>
+                                            <ul class="text-muted mb-0" style="font-size: 0.8rem;">
+                                                <li>Account status will be set to <strong>Active</strong> immediately.</li>
+                                                <li>Assigned role: <strong>{{ app.get_requested_role_display }}</strong></li>
+                                                {% if app.organization %}<li>Department: <strong>{{ app.organization }}</strong></li>{% endif %}
+                                                {% if app.assigned_region %}<li>Region: <strong>{{ app.assigned_region }}</strong></li>{% endif %}
+                                                <li>The applicant will receive an in-app notification and be able to sign in.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-teal btn-sm">Confirm & Activate Account</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Application Detail Modal -->
+                        <div class="modal fade" id="appDetailModal{{ app.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog text-start">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title fs-6 fw-bold">Application Details: {{ app.full_name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body" style="font-size: 0.85rem;">
+                                        <div class="mb-2"><strong>Applicant:</strong> {{ app.full_name }} (@{{ app.user.username }})</div>
+                                        <div class="mb-2"><strong>Email:</strong> {{ app.user.email }}</div>
+                                        <div class="mb-2"><strong>Contact Phone:</strong> {{ app.phone_number|default:"Not provided" }}</div>
+                                        <div class="mb-2"><strong>Requested Role:</strong> {{ app.get_requested_role_display }}</div>
+                                        <div class="mb-2"><strong>Organization:</strong> {{ app.organization|default:"Not specified" }}</div>
+                                        <div class="mb-2"><strong>Assigned Region / Jurisdiction:</strong> {{ app.assigned_region|default:"Not specified" }}</div>
+                                        <div class="mb-2"><strong>Registered Location:</strong> {{ app.registered_location|default:"Not specified" }}</div>
+                                        {% if app.latitude and app.longitude %}
+                                        <div class="mb-2"><strong>GPS Coordinates:</strong> {{ app.latitude|floatformat:4 }}, {{ app.longitude|floatformat:4 }}</div>
+                                        {% endif %}
+                                        <div class="mb-2"><strong>Submission Timestamp:</strong> {{ app.submitted_at|date:"M j, Y H:i:s" }}</div>
+                                        {% if app.supporting_document %}
+                                        <div class="mt-3 pt-2 border-top">
+                                            <a href="{% url 'accounts:admin_application_document' app.id %}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                <i class="fa-solid fa-file-pdf me-1"></i> Inspect Verification Document
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reject Modal -->
+                        <div class="modal fade" id="rejectModal{{ app.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog text-start">
+                                <form method="post" action="{% url 'accounts:admin_application_reject' app.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reject_application">
+                                    <input type="hidden" name="application_id" value="{{ app.id }}">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fs-6 fw-bold">Reject Application: {{ app.full_name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body" style="font-size: 0.85rem;">
+                                            <p class="text-muted">Please record a documented reason for rejecting this application. The record is preserved in the audit database.</p>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Rejection Reason *</label>
+                                                <textarea name="rejection_reason" class="form-control form-control-sm" rows="3" required
+                                                          placeholder="e.g. Identity document unreadable, department verification failed..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger btn-sm">Confirm Rejection</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Request Info Modal -->
+                        <div class="modal fade" id="infoModal{{ app.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog text-start">
+                                <form method="post" action="{% url 'accounts:admin_provision' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="request_info_application">
+                                    <input type="hidden" name="application_id" value="{{ app.id }}">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fs-6 fw-bold">Request More Information: {{ app.full_name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body" style="font-size: 0.85rem;">
+                                            <p class="text-muted">Notify applicant regarding missing information or clarification needed before approval.</p>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Information Requested *</label>
+                                                <textarea name="info_notes" class="form-control form-control-sm" rows="3" required
+                                                          placeholder="e.g. Please re-upload clearer scanned copy of department identity badge..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-warning btn-sm text-dark">Send Information Request</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-inbox fs-3 mb-2 opacity-50 d-block"></i>
+                        <h6 class="fw-bold mb-1">No pending applications</h6>
+                        <small>All registration submissions for Authority and Ranger accounts have been processed.</small>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recently Reviewed Applications Summary -->
+            {% if reviewed_applications %}
+                <div class="card-clean p-4 shadow-sm">
+                    <h6 class="fw-bold mb-3 text-dark" style="font-size: 0.95rem;">
+                        <i class="fa-solid fa-clock-rotate-left me-2 text-teal"></i>
+                        Recently Reviewed Applications
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.78rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Applicant</th>
+                                    <th>Requested Role</th>
+                                    <th>Decision</th>
+                                    <th>Reason / Notes</th>
+                                    <th>Reviewed By</th>
+                                    <th>Review Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rev in reviewed_applications %}
+                                    <tr>
+                                        <td><strong>{{ rev.full_name }}</strong> <small class="text-muted">(@{{ rev.user.username }})</small></td>
+                                        <td>{{ rev.get_requested_role_display }}</td>
+                                        <td>
+                                            {% if rev.status == 'APPROVED' %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% elif rev.status == 'REJECTED' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% elif rev.status == 'NEEDS_INFO' %}
+                                                <span class="badge bg-warning text-dark">Needs Info</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ rev.rejection_reason|default:"—" }}</td>
+                                        <td>{{ rev.reviewed_by.username|default:"Admin" }}</td>
+                                        <td>{{ rev.reviewed_at|date:"M j, Y H:i" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- ================= TAB B: OPERATIONAL ACCOUNTS ================= -->
+        <div class="tab-pane fade {% if not pending_applications %}show active{% endif %}" id="pane-roster" role="tabpanel">
+            <div class="card-clean p-4 shadow-sm">
+
+                <!-- Roster Header & Search/Filter Controls -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div>
+                        <h5 class="fw-semibold mb-0" style="font-size: 0.95rem; color: var(--text);">
+                            <i class="fa-solid fa-users-gear me-1" style="color: var(--primary);"></i>
+                            Official Operational Accounts
+                        </h5>
+                        <small class="text-muted" style="font-size: 0.75rem;">
+                            Approved Authority and Ranger responders. Account details are read-only for Platform Administrators.
+                        </small>
+                    </div>
+
+                    <!-- Role Filters -->
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Role Filter">
+                        <a href="{% url 'accounts:admin_provision' %}#pane-roster" class="btn btn-sm {% if not filters.role %}btn-teal{% else %}btn-outline-secondary{% endif %}">
+                            All
+                        </a>
+                        <a href="{% url 'accounts:admin_provision' %}?role=authority#pane-roster" class="btn btn-sm {% if filters.role == 'authority' %}btn-teal{% else %}btn-outline-secondary{% endif %}">
+                            Authority
+                        </a>
+                        <a href="{% url 'accounts:admin_provision' %}?role=ranger#pane-roster" class="btn btn-sm {% if filters.role == 'ranger' %}btn-teal{% else %}btn-outline-secondary{% endif %}">
+                            Rangers
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Search Input Bar -->
+                <form method="get" action="{% url 'accounts:admin_provision' %}" class="mb-3">
+                    {% if filters.role %}<input type="hidden" name="role" value="{{ filters.role }}">{% endif %}
+                    {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" name="q" value="{{ filters.q }}" class="form-control border-start-0" placeholder="Search by name, username, email, or district…">
+                        {% if filters.q or filters.role or filters.status %}
+                            <a href="{% url 'accounts:admin_provision' %}#pane-roster" class="btn btn-outline-secondary">Reset</a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-secondary">Filter</button>
+                    </div>
+                </form>
+
+                <!-- Operational Accounts Table -->
                 <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.82rem;">
+                    <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.8125rem;">
                         <thead class="table-light">
                             <tr>
-                                <th>User</th>
+                                <th>Name &amp; Username</th>
                                 <th>Role</th>
-                                <th>Region / Base</th>
-                                <th>Contact</th>
-                                <th>Status</th>
+                                <th>Email</th>
+                                <th>District / Jurisdiction</th>
+                                <th>Ranger Availability</th>
+                                <th>Account Status</th>
+                                <th class="text-end">Administrative Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for u in provisioned_users %}
-                                <tr>
+                                <tr {% if u.profile.account_status == 'SUSPENDED' or u.profile.account_status == 'BANNED' %}style="background: rgba(239, 68, 68, 0.04);"{% endif %}>
                                     <td>
-                                        <strong>{{ u.username }}</strong><br>
-                                        <small class="text-muted">{{ u.email }}</small>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white"
+                                                 style="width: 32px; height: 32px; background: {% if u.profile.role == 'authority' %}var(--teal, #0d9488){% elif u.profile.role == 'ranger' %}var(--emerald, #059669){% else %}#6366f1{% endif %}; font-size: 0.8rem;">
+                                                {% if u.profile.role == 'authority' %}<i class="fa-solid fa-shield"></i>
+                                                {% elif u.profile.role == 'ranger' %}<i class="fa-solid fa-tree"></i>
+                                                {% else %}<i class="fa-solid fa-crown"></i>{% endif %}
+                                            </div>
+                                            <div>
+                                                <strong class="d-block" style="color: var(--text);">
+                                                    {{ u.profile.full_name|default:u.get_full_name|default:u.username }}
+                                                </strong>
+                                                <small class="text-muted">@{{ u.username }}</small>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
                                         {% if u.profile.role == 'authority' %}
-                                            <span class="badge" style="background: var(--teal-light, #ccfbf1); color: var(--teal, #0d9488);">Authority</span>
+                                            <span class="badge" style="background: var(--teal-light, #ccfbf1); color: var(--teal, #0d9488);">
+                                                <i class="fa-solid fa-shield me-1"></i>Authority
+                                            </span>
                                         {% elif u.profile.role == 'ranger' %}
-                                            <span class="badge" style="background: var(--emerald-light, #d1fae5); color: var(--emerald, #059669);">Ranger</span>
+                                            <span class="badge" style="background: var(--emerald-light, #d1fae5); color: var(--emerald, #059669);">
+                                                <i class="fa-solid fa-tree me-1"></i>Ranger
+                                            </span>
+                                        {% elif u.profile.role == 'admin' %}
+                                            <span class="badge bg-primary">Admin</span>
                                         {% else %}
                                             <span class="badge bg-secondary">{{ u.profile.get_role_display }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {{ u.profile.registered_location|default:u.profile.assigned_region|default:"—" }}<br>
+                                        <span class="text-muted">{{ u.email|default:"—" }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">{{ u.profile.assigned_region|default:u.profile.registered_location|default:"—" }}</span>
                                         {% if u.profile.latitude and u.profile.longitude %}
-                                            <small class="text-muted">({{ u.profile.latitude|floatformat:4 }}, {{ u.profile.longitude|floatformat:4 }})</small>
+                                            <small class="text-muted d-block">
+                                                <i class="fa-solid fa-location-dot me-1"></i>({{ u.profile.latitude|floatformat:4 }}, {{ u.profile.longitude|floatformat:4 }})
+                                            </small>
                                         {% endif %}
                                     </td>
-                                    <td>{{ u.profile.phone|default:u.profile.phone_number|default:"—" }}</td>
                                     <td>
-                                        {% if u.profile.availability == 'AVAILABLE' %}
-                                            <span class="badge" style="background: var(--success-light); color: var(--success);">Available</span>
-                                        {% elif u.profile.availability == 'BUSY' %}
-                                            <span class="badge" style="background: var(--warning-light); color: var(--warning);">On Mission</span>
+                                        {% if u.profile.role == 'ranger' %}
+                                            {% if u.profile.availability == 'AVAILABLE' %}
+                                                <span class="badge" style="background: var(--success-light); color: var(--success);">
+                                                    <i class="fa-solid fa-circle-dot me-1"></i>Available
+                                                </span>
+                                            {% elif u.profile.availability == 'BUSY' %}
+                                                <span class="badge" style="background: var(--warning-light); color: var(--warning);">
+                                                    <i class="fa-solid fa-person-running me-1"></i>On Mission
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fa-solid fa-moon me-1"></i>Offline
+                                                </span>
+                                            {% endif %}
                                         {% else %}
-                                            <span class="badge bg-secondary">Offline</span>
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if u.profile.account_status == 'ACTIVE' %}
+                                            <span class="badge bg-success" style="font-size: 0.72rem;"><i class="fa-solid fa-circle-check me-1"></i>Active</span>
+                                        {% elif u.profile.account_status == 'SUSPENDED' %}
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.72rem;" title="{{ u.profile.suspension_reason }}">
+                                                <i class="fa-solid fa-circle-pause me-1"></i>Suspended
+                                            </span>
+                                        {% elif u.profile.account_status == 'BANNED' %}
+                                            <span class="badge bg-danger" style="font-size: 0.72rem;" title="{{ u.profile.suspension_reason }}">
+                                                <i class="fa-solid fa-ban me-1"></i>Banned
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if u.pk == request.user.pk %}
+                                            <span class="badge bg-light text-muted border py-1">You (Admin)</span>
+                                        {% else %}
+                                            <div class="d-flex align-items-center justify-content-end gap-1">
+                                                <!-- View Details Action (Read-Only Modal Trigger) -->
+                                                <button type="button" class="btn btn-outline-teal btn-sm py-0 px-2" style="font-size: 0.72rem;"
+                                                        data-bs-toggle="modal" data-bs-target="#viewDetailsModal{{ u.id }}" title="View account details (Read-Only)">
+                                                    <i class="fa-solid fa-eye me-1"></i>View Details
+                                                </button>
+
+                                                {% if u.profile.account_status == 'ACTIVE' %}
+                                                    <!-- Suspend Trigger -->
+                                                    <button type="button" class="btn btn-outline-warning btn-sm py-0 px-2 text-dark" style="font-size: 0.72rem;"
+                                                            data-bs-toggle="modal" data-bs-target="#suspendModal{{ u.id }}">
+                                                        <i class="fa-solid fa-pause me-1"></i>Suspend
+                                                    </button>
+                                                    <!-- Ban Trigger -->
+                                                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.72rem;"
+                                                            data-bs-toggle="modal" data-bs-target="#banModal{{ u.id }}">
+                                                        <i class="fa-solid fa-ban me-1"></i>Ban
+                                                    </button>
+                                                {% else %}
+                                                    <!-- Reinstate Form -->
+                                                    <form method="post" action="{% url 'accounts:admin_provision' %}" class="d-inline"
+                                                          onsubmit="return confirm('Reinstate account for {{ u.username }}? This restores active operational privileges.');">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="reinstate_account">
+                                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                                        <button type="submit" class="btn btn-outline-success btn-sm py-0 px-2" style="font-size: 0.72rem;">
+                                                            <i class="fa-solid fa-rotate-left me-1"></i>Reinstate
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Read-Only View Details Modal -->
+                                            <div class="modal fade" id="viewDetailsModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog text-start">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title fs-6 fw-bold">
+                                                                <i class="fa-solid fa-id-badge text-teal me-1"></i>
+                                                                Account Record: @{{ u.username }}
+                                                            </h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body" style="font-size: 0.85rem;">
+                                                            <div class="alert alert-light border py-1 px-2 mb-3 d-flex align-items-center gap-2" style="font-size: 0.75rem;">
+                                                                <i class="fa-solid fa-lock text-muted"></i>
+                                                                <span>Read-Only: Authority and Ranger profile details are managed by the account owner.</span>
+                                                            </div>
+
+                                                            <div class="row g-2 mb-2">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Full Name</small>
+                                                                    <strong>{{ u.profile.full_name|default:u.get_full_name|default:"Not specified" }}</strong>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Platform Role</small>
+                                                                    <span class="badge {% if u.profile.role == 'authority' %}bg-primary{% else %}bg-success{% endif %}">
+                                                                        {{ u.profile.get_role_display }}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row g-2 mb-2">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Email Address</small>
+                                                                    <span>{{ u.email|default:"Not provided" }}</span>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Contact Phone</small>
+                                                                    <span>{{ u.profile.phone_number|default:"Not provided" }}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row g-2 mb-2">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Organization</small>
+                                                                    <span>{{ u.profile.organization|default:"Kerala Forest & Wildlife Dept" }}</span>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Assigned District / Region</small>
+                                                                    <span>{{ u.profile.assigned_region|default:"Not specified" }}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row g-2 mb-2">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Operational Base</small>
+                                                                    <span>{{ u.profile.registered_location|default:"Not specified" }}</span>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">GPS Coordinates</small>
+                                                                    {% if u.profile.latitude and u.profile.longitude %}
+                                                                        <span>{{ u.profile.latitude|floatformat:4 }}, {{ u.profile.longitude|floatformat:4 }}</span>
+                                                                    {% else %}
+                                                                        <span class="text-muted">Not recorded</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+
+                                                            {% if u.profile.role == 'ranger' %}
+                                                            <div class="mb-2">
+                                                                <small class="text-muted d-block">Field Availability</small>
+                                                                {% if u.profile.availability == 'AVAILABLE' %}
+                                                                    <span class="badge bg-success">Available</span>
+                                                                {% elif u.profile.availability == 'BUSY' %}
+                                                                    <span class="badge bg-warning text-dark">On Mission</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">Offline</span>
+                                                                {% endif %}
+                                                            </div>
+                                                            {% endif %}
+
+                                                            <div class="row g-2 mb-2 pt-2 border-top">
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Account Status</small>
+                                                                    <strong>{{ u.profile.get_account_status_display }}</strong>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <small class="text-muted d-block">Member Since</small>
+                                                                    <span>{{ u.date_joined|date:"M j, Y" }}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {% if u.profile.account_status != 'ACTIVE' and u.profile.suspension_reason %}
+                                                            <div class="alert alert-danger py-2 px-3 mt-2 mb-0" style="font-size: 0.78rem;">
+                                                                <strong>Suspension Reason:</strong> {{ u.profile.suspension_reason }}
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="modal-footer d-flex justify-content-between">
+                                                            <a href="{% url 'accounts:admin_account_detail' u.id %}" class="btn btn-outline-secondary btn-sm" style="font-size: 0.75rem;">
+                                                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Full Record Page
+                                                            </a>
+                                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Suspend Modal -->
+                                            <div class="modal fade" id="suspendModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog text-start">
+                                                    <form method="post" action="{% url 'accounts:admin_provision' %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="suspend_account">
+                                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title fs-6 fw-bold">Suspend Account: @{{ u.username }}</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <div class="modal-body" style="font-size: 0.85rem;">
+                                                                <p class="text-muted">Suspending this account immediately halts login privileges and removes the responder from active queues. Historical sightings and audit logs are preserved.</p>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label fw-semibold">Suspension Reason *</label>
+                                                                    <textarea name="reason" class="form-control form-control-sm" rows="3" required
+                                                                              placeholder="Document reason for suspension (e.g. conduct inquiry, temporary inactivity)..."></textarea>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-warning btn-sm text-dark">Confirm Suspension</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+
+                                            <!-- Ban Modal -->
+                                            <div class="modal fade" id="banModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog text-start">
+                                                    <form method="post" action="{% url 'accounts:admin_provision' %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="ban_account">
+                                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title fs-6 fw-bold text-danger">Permanently Ban Account: @{{ u.username }}</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <div class="modal-body" style="font-size: 0.85rem;">
+                                                                <p class="text-danger fw-semibold">Warning: Banning is an administrative sanction for serious violations. The user will be permanently blocked from signing in.</p>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label fw-semibold">Ban Reason *</label>
+                                                                    <textarea name="reason" class="form-control form-control-sm" rows="3" required
+                                                                              placeholder="e.g. Fraudulent incident verification, policy violation..."></textarea>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-danger btn-sm">Confirm Permanent Ban</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         {% endif %}
                                     </td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        No provisioned authority or ranger accounts found.
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="fa-solid fa-user-xmark fs-4 d-block mb-2 opacity-50"></i>
+                                        {% if filters.role == 'ranger' %}
+                                            No Rangers are registered.
+                                        {% elif filters.role == 'authority' %}
+                                            No Authority officers are registered.
+                                        {% else %}
+                                            No operational accounts are registered.
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+
             </div>
         </div>
+
+        <!-- ================= TAB C: SECURITY AUDIT LOG ================= -->
+        <div class="tab-pane fade" id="pane-audit" role="tabpanel">
+            <div class="card-clean p-4 shadow-sm">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">
+                            <i class="fa-solid fa-shield-halved me-2 text-teal"></i> Platform Security &amp; Audit Trail
+                        </h5>
+                        <small class="text-muted">Immutable log of sensitive administrative actions and account status changes.</small>
+                    </div>
+                </div>
+
+                {% if audit_logs %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.78rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Administrator / Actor</th>
+                                    <th>Action</th>
+                                    <th>Target Object</th>
+                                    <th>Rationale / Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in audit_logs %}
+                                    <tr>
+                                        <td><small class="text-muted">{{ log.timestamp|date:"M j, Y H:i:s" }}</small></td>
+                                        <td>
+                                            {% if log.actor %}
+                                                <strong>@{{ log.actor.username }}</strong>
+                                            {% else %}
+                                                <span class="text-muted">System</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light border text-dark">{{ log.get_action_display }}</span>
+                                        </td>
+                                        <td><code>{{ log.target_model }}:{{ log.target_id }}</code></td>
+                                        <td>{{ log.details|truncatechars:120 }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-4 mb-0">No audit logs recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
 </div>

@@ -89,19 +89,22 @@ def assignment_detail_view(request, pk):
     })
 
 
+from django.urls import reverse
+from accounts.models import UserProfile, Notification, AuditLog
+
+
 @login_required
 @ranger_required
 @never_cache
 @require_POST
 def assignment_update_view(request, pk):
-    """Ranger lifecycle actions: ACCEPT / DECLINE / ON THE WAY / AT LOCATION / COMPLETE.
+    """Ranger lifecycle actions: ACCEPT / DECLINE / ON_THE_WAY / AT_LOCATION / SUBMIT_OUTCOME.
 
-    Only the strictly allowed next transition is accepted; anything else
-    (including arbitrary status injection) is rejected server-side.
-    Completing requires an outcome choice.
+    Only strictly allowed next transitions are accepted; arbitrary status jumps are rejected server-side.
+    Rangers CANNOT self-verify or mark an incident completed; only Authority review can verify outcomes.
     """
     assignment = get_object_or_404(RangerAssignment, pk=pk, ranger=request.user)
-    action = request.POST.get('action', '')
+    action = request.POST.get('action', '').strip()
 
     valid_actions = {
         'ACCEPT': RangerAssignment.STATUS_ACCEPTED,
@@ -109,78 +112,219 @@ def assignment_update_view(request, pk):
         'ON_THE_WAY': RangerAssignment.STATUS_ON_THE_WAY,
         'AT_LOCATION': RangerAssignment.STATUS_AT_LOCATION,
         'SUBMIT_OUTCOME': RangerAssignment.STATUS_OUTCOME_SUBMITTED,
-        'COMPLETE': RangerAssignment.STATUS_COMPLETED,
     }
     target = valid_actions.get(action)
 
     if target is None:
-        messages.error(request, "Unknown assignment action.")
+        messages.error(request, "Invalid or unauthorized assignment action.")
         return redirect('ranger:assignment_detail', pk=assignment.pk)
 
     if not assignment.can_transition(target):
         messages.error(
             request,
-            f"Illegal status change: cannot move from '{assignment.get_status_display()}' "
+            f"Illegal status change: cannot transition from '{assignment.get_status_display()}' "
             f"to '{target.replace('_', ' ').title()}'.")
         return redirect('ranger:assignment_detail', pk=assignment.pk)
 
     profile = request.user.profile
+    sighting = assignment.sighting
 
-    if target == RangerAssignment.STATUS_OUTCOME_SUBMITTED:
-        outcome = request.POST.get('outcome', '')
+    if target == RangerAssignment.STATUS_ACCEPTED:
+        assignment.status = target
+        assignment.responded_at = timezone.now()
+        assignment.save(update_fields=['status', 'responded_at'])
+
+        # Ranger transitions to BUSY
+        if profile.availability == UserProfile.AVAILABILITY_AVAILABLE:
+            profile.availability = UserProfile.AVAILABILITY_BUSY
+            profile.save(update_fields=['availability'])
+
+        # Update parent report response status
+        sighting.response_status = SightingReport.RESPONSE_IN_PROGRESS
+        sighting.save(update_fields=['response_status'])
+
+        AuditLog.record(
+            actor=request.user,
+            action='ACCEPT_ASSIGNMENT',
+            target_type='RangerAssignment',
+            target_id=assignment.pk,
+            target_repr=f"Assignment #{assignment.pk} for Incident #{sighting.pk}",
+            details="Ranger accepted incident dispatch."
+        )
+
+        # Notify Citizen that assigned ranger accepted
+        Notification.send(
+            recipient=sighting.user,
+            actor=request.user,
+            title="Ranger Accepted Sighting",
+            message=f"Ranger {profile.display_name} has accepted Incident #{sighting.pk} and is preparing to respond.",
+            notification_type=Notification.TYPE_SUCCESS,
+            link=reverse('reports:detail', kwargs={'pk': sighting.pk})
+        )
+
+        # Notify Authority
+        if assignment.assigned_by:
+            Notification.send(
+                recipient=assignment.assigned_by,
+                actor=request.user,
+                title="Assignment Accepted",
+                message=f"Ranger {profile.display_name} accepted dispatch for Incident #{sighting.pk}.",
+                notification_type=Notification.TYPE_INFO,
+                link=reverse('reports:detail', kwargs={'pk': sighting.pk})
+            )
+
+        messages.success(request, f"Assignment #{assignment.pk} accepted. You are now designated responder.")
+
+    elif target == RangerAssignment.STATUS_DECLINED:
+        assignment.status = target
+        assignment.responded_at = timezone.now()
+        assignment.save(update_fields=['status', 'responded_at'])
+
+        # Sighting returns to unassigned
+        sighting.assigned_responder = None
+        sighting.response_status = SightingReport.RESPONSE_UNASSIGNED
+        sighting.save(update_fields=['assigned_responder', 'response_status'])
+
+        AuditLog.record(
+            actor=request.user,
+            action='DECLINE_ASSIGNMENT',
+            target_type='RangerAssignment',
+            target_id=assignment.pk,
+            target_repr=f"Assignment #{assignment.pk} for Incident #{sighting.pk}",
+            details="Ranger declined assignment."
+        )
+
+        # Notify Authority of decline so they can reassign
+        if assignment.assigned_by:
+            Notification.send(
+                recipient=assignment.assigned_by,
+                actor=request.user,
+                title="Assignment Declined",
+                message=f"Ranger {profile.display_name} declined Incident #{sighting.pk}. Reassignment required.",
+                notification_type=Notification.TYPE_WARNING,
+                link=reverse('reports:detail', kwargs={'pk': sighting.pk})
+            )
+
+        messages.info(request, "You declined this assignment. The Authority has been notified to reassign another responder.")
+
+    elif target == RangerAssignment.STATUS_ON_THE_WAY:
+        assignment.status = target
+        assignment.save(update_fields=['status'])
+
+        sighting.response_status = SightingReport.RESPONSE_IN_PROGRESS
+        sighting.save(update_fields=['response_status'])
+
+        AuditLog.record(
+            actor=request.user,
+            action='PROGRESS_UPDATE',
+            target_type='RangerAssignment',
+            target_id=assignment.pk,
+            target_repr=f"Assignment #{assignment.pk} for Incident #{sighting.pk}",
+            details="Ranger is on the way to incident location."
+        )
+
+        Notification.send(
+            recipient=sighting.user,
+            actor=request.user,
+            title="Ranger En Route",
+            message=f"Ranger {profile.display_name} is currently on the way to your reported sighting location for Incident #{sighting.pk}.",
+            notification_type=Notification.TYPE_INFO,
+            link=reverse('reports:detail', kwargs={'pk': sighting.pk})
+        )
+
+        messages.success(request, "Status updated: On The Way to incident location.")
+
+    elif target == RangerAssignment.STATUS_AT_LOCATION:
+        assignment.status = target
+        assignment.save(update_fields=['status'])
+
+        sighting.response_status = SightingReport.RESPONSE_IN_PROGRESS
+        sighting.save(update_fields=['response_status'])
+
+        AuditLog.record(
+            actor=request.user,
+            action='PROGRESS_UPDATE',
+            target_type='RangerAssignment',
+            target_id=assignment.pk,
+            target_repr=f"Assignment #{assignment.pk} for Incident #{sighting.pk}",
+            details="Ranger has arrived at the incident location."
+        )
+
+        Notification.send(
+            recipient=sighting.user,
+            actor=request.user,
+            title="Ranger At Location",
+            message=f"Ranger {profile.display_name} has arrived at the sighting location for Incident #{sighting.pk} and has initiated search / inspection.",
+            notification_type=Notification.TYPE_INFO,
+            link=reverse('reports:detail', kwargs={'pk': sighting.pk})
+        )
+
+        messages.success(request, "Status updated: At Location. Conduct search and record evidence.")
+
+    elif target == RangerAssignment.STATUS_OUTCOME_SUBMITTED:
+        outcome = request.POST.get('outcome', '').strip()
         outcome_keys = dict(RangerAssignment.OUTCOME_CHOICES)
         if outcome not in outcome_keys:
-            messages.error(request, "Please select a valid outcome before submitting for review.")
+            messages.error(request, "Please select a valid response outcome category before submitting.")
             return redirect('ranger:assignment_detail', pk=assignment.pk)
-        assignment.outcome = outcome
-        assignment.notes = request.POST.get('notes', '').strip() or None
+
+        notes = request.POST.get('notes', '').strip()
+        if not notes:
+            messages.error(request, "Please provide field notes documenting the incident response findings.")
+            return redirect('ranger:assignment_detail', pk=assignment.pk)
+
         img = request.FILES.get('outcome_image')
         if img:
+            # Validate evidence image
+            if img.size > 5 * 1024 * 1024:
+                messages.error(request, "Supporting evidence image must not exceed 5 MB in file size.")
+                return redirect('ranger:assignment_detail', pk=assignment.pk)
+            import os
+            ext = os.path.splitext(img.name)[1].lower()
+            if ext not in ['.jpg', '.jpeg', '.png']:
+                messages.error(request, "Supporting evidence image must be JPEG or PNG format.")
+                return redirect('ranger:assignment_detail', pk=assignment.pk)
             assignment.outcome_image = img
+
+        assignment.outcome = outcome
+        assignment.notes = notes
         assignment.outcome_submitted_at = timezone.now()
         assignment.review_decision = 'PENDING_REVIEW'
         assignment.status = target
-        assignment.save(update_fields=['status', 'outcome_submitted_at', 'review_decision', 'outcome', 'notes', 'outcome_image'])
-        messages.success(request, f"Outcome report for Incident #{assignment.sighting_id} submitted. Awaiting Authority review & verification.")
-        return redirect('ranger:assignment_detail', pk=assignment.pk)
-    elif target == RangerAssignment.STATUS_COMPLETED:
-        outcome = request.POST.get('outcome', '')
-        outcome_keys = dict(RangerAssignment.OUTCOME_CHOICES)
-        if outcome not in outcome_keys:
-            messages.error(request, "Please select a valid outcome before completing the assignment.")
-            return redirect('ranger:assignment_detail', pk=assignment.pk)
-        assignment.outcome = outcome
-        assignment.notes = request.POST.get('notes', '').strip() or None
-        img = request.FILES.get('outcome_image')
-        if img:
-            assignment.outcome_image = img
-        assignment.completed_at = timezone.now()
-        assignment.review_decision = 'APPROVED'
-        # Free the ranger back to AVAILABLE once work is done
-        if profile.availability == UserProfile.AVAILABILITY_BUSY:
-            profile.availability = UserProfile.AVAILABILITY_AVAILABLE
-            profile.save(update_fields=['availability'])
-        # Resolve parent report response state
-        rep = assignment.sighting
-        rep.response_status = SightingReport.RESPONSE_RESOLVED
-        rep.status = SightingReport.STATUS_RESOLVED
-        rep.save(update_fields=['response_status', 'status'])
-        messages.success(request, f"Assignment #{assignment.pk} completed — outcome recorded.")
-    elif target == RangerAssignment.STATUS_DECLINED:
-        assignment.responded_at = timezone.now()
-        # Ranger stays AVAILABLE after declining
-        messages.info(request, "You declined this assignment. The Authority has been notified and can reassign.")
-    else:
-        if target == RangerAssignment.STATUS_ACCEPTED:
-            assignment.responded_at = timezone.now()
-            # First active step -> ranger becomes BUSY
-            if profile.availability == UserProfile.AVAILABILITY_AVAILABLE:
-                profile.availability = UserProfile.AVAILABILITY_BUSY
-                profile.save(update_fields=['availability'])
-        messages.success(request, f"Assignment updated: {target.replace('_', ' ').title()}.")
+        assignment.save(update_fields=['status', 'outcome', 'notes', 'outcome_image', 'outcome_submitted_at', 'review_decision'])
 
-    assignment.status = target
-    assignment.save(update_fields=['status', 'responded_at', 'completed_at', 'outcome', 'notes', 'outcome_image'])
+        AuditLog.record(
+            actor=request.user,
+            action='OUTCOME_SUBMITTED',
+            target_type='RangerAssignment',
+            target_id=assignment.pk,
+            target_repr=f"Assignment #{assignment.pk} for Incident #{sighting.pk}",
+            details=f"Outcome: {assignment.get_outcome_display()}. Notes: {notes}"
+        )
+
+        # Notify Authority for verification
+        if assignment.assigned_by:
+            Notification.send(
+                recipient=assignment.assigned_by,
+                actor=request.user,
+                title="Outcome Submitted for Verification",
+                message=f"Ranger {profile.display_name} submitted outcome ({assignment.get_outcome_display()}) for Incident #{sighting.pk}. Authority verification required.",
+                notification_type=Notification.TYPE_WARNING,
+                link=reverse('reports:detail', kwargs={'pk': sighting.pk})
+            )
+
+        # Notify Citizen that response was submitted and awaits authority review
+        Notification.send(
+            recipient=sighting.user,
+            actor=request.user,
+            title="Field Response Submitted",
+            message=f"Ranger {profile.display_name} has concluded the field response for Incident #{sighting.pk}. Awaiting formal Authority verification.",
+            notification_type=Notification.TYPE_INFO,
+            link=reverse('reports:detail', kwargs={'pk': sighting.pk})
+        )
+
+        messages.success(request, f"Outcome report for Incident #{sighting.pk} submitted successfully. Awaiting formal Authority verification.")
+
     return redirect('ranger:assignment_detail', pk=assignment.pk)
 
 

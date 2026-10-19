@@ -10,13 +10,14 @@ from .forms import SightingReportForm
 from .services import DuplicateSpamDetectionService
 from ai.services import SnakeAIPipelineService
 from hotspots.services import DBSCANHotspotService
-from accounts.models import UserProfile
+from accounts.models import UserProfile, Notification, AuditLog
 from accounts.decorators import authority_required
 from .models import RangerAssignment
 from .dispatch import get_candidate_rangers, haversine_km
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.urls import reverse
 
 
 def _refresh_ranger_availability(ranger_user):
@@ -69,8 +70,8 @@ def create_report_view(request):
                 report.species_predicted = species_name
                 report.venom_category = ai_results.get('venom_category') or 'NON_VENOMOUS'
                 report.ai_confidence = report.venom_confidence if report.venom_confidence is not None else report.snake_confidence
-                report.model_1_name = ai_results.get('model_1', 'Snake Detector (MobileNetV2 ImageNet Gate)')
-                report.model_2_name = ai_results.get('model_2', 'venomwatch_cnn2_final (CNN)')
+                report.model_1_name = 'Snake Detector'
+                report.model_2_name = 'Venom Classifier'
                 
                 report.save()
             except Exception as e:
@@ -79,26 +80,39 @@ def create_report_view(request):
             # 2. Trigger Duplicate Proximity & Spam Rate-limit Evaluator
             try:
                 report = DuplicateSpamDetectionService.evaluate_and_flag(report)
-                if report.duplicate_flag:
+                if report.duplicate_flag and report.duplicate_of:
+                    messages.info(request, f"Note: This report has been linked as an update to existing incident {report.duplicate_of.report_reference}.")
+                elif report.duplicate_flag:
                     messages.info(request, "Note: This report has been flagged for authority review as a potential duplicate of a recent sighting.")
                 if report.spam_flag:
                     messages.warning(request, "Note: Submission rate limit flagged for administrative review.")
             except Exception as e:
                 pass
 
+            ref = report.report_reference
+            sub_num = f"#{report.citizen_submission_number}" if report.user else ""
+            status_disp = report.get_status_display()
             if report.snake_detected:
-                messages.success(request, f"Sighting reported successfully! AI Result: {report.species_predicted} ({report.get_venom_category_display()}).")
+                messages.success(request, f"Sighting report {ref} {sub_num} submitted successfully! Current status: {status_disp}. AI Result: {report.species_predicted} ({report.get_venom_category_display()}).")
             else:
-                messages.info(request, "Report logged. Note: AI snake detector did not confirm a snake in the uploaded image.")
+                messages.info(request, f"Sighting report {ref} {sub_num} recorded. Current status: {status_disp}. Note: AI snake detector did not confirm a snake in the uploaded image.")
             return redirect('reports:detail', pk=report.pk)
         else:
             messages.error(request, "Error creating report. Please check the required form fields.")
     else:
-        initial_data = {
-            'latitude': 9.9312,
-            'longitude': 76.2673,
-            'location_name': 'Kochi Sector 4'
-        }
+        initial_data = {}
+        if request.user.is_authenticated and hasattr(request.user, 'profile'):
+            prof = request.user.profile
+            if prof.latitude is not None and prof.longitude is not None:
+                initial_data['latitude'] = prof.latitude
+                initial_data['longitude'] = prof.longitude
+            if prof.registered_location:
+                initial_data['location_name'] = prof.registered_location
+
+        if not initial_data.get('latitude'):
+            initial_data['latitude'] = 9.9312
+            initial_data['longitude'] = 76.2673
+
         form = SightingReportForm(initial=initial_data)
 
     return render(request, 'reports/create.html', {'form': form})
@@ -199,15 +213,12 @@ def report_detail_view(request, pk):
 
     responders = User.objects.filter(profile__role__in=['ranger', 'authority']) if is_authority else []
 
-    # Authority assignment panel data (location-filtered rangers — never the whole DB)
-    active_assignment = None
-    candidate_rangers = []
-    assignment_history = []
-    if is_authority:
-        active_assignment = report.ranger_assignments.filter(
-            status__in=RangerAssignment.ACTIVE_STATUSES).first()
-        candidate_rangers = get_candidate_rangers(report, only_available=True)
-        assignment_history = report.ranger_assignments.all()[:10]
+    active_assignment = report.ranger_assignments.filter(
+        status__in=RangerAssignment.ACTIVE_STATUSES).first()
+    verified_assignment = report.ranger_assignments.filter(
+        status=RangerAssignment.STATUS_COMPLETED, review_decision='APPROVED').first()
+    assignment_history = report.ranger_assignments.all()[:10]
+    candidate_rangers = get_candidate_rangers(report, only_available=True) if is_authority else []
 
     return render(request, 'reports/detail.html', {
         'report': report,
@@ -215,6 +226,7 @@ def report_detail_view(request, pk):
         'is_assigned_responder': is_assigned_responder,
         'responders': responders,
         'active_assignment': active_assignment,
+        'verified_assignment': verified_assignment,
         'candidate_rangers': candidate_rangers,
         'assignment_history': assignment_history,
     })
@@ -236,6 +248,16 @@ def verify_report_view(request, pk):
             report.verified_by = request.user
             report.authority_notes = notes
             report.save()
+
+            AuditLog.record(
+                actor=request.user,
+                action='VERIFY_INCIDENT',
+                target_type='SightingReport',
+                target_id=report.pk,
+                target_repr=f"Incident #{report.pk}",
+                details=f"Verification status set to '{report.get_status_display()}'. Notes: {notes}"
+            )
+
             messages.success(request, f"Report #{report.id} verified status updated to '{report.get_status_display()}'.")
 
     return redirect('reports:detail', pk=pk)
@@ -270,11 +292,11 @@ def assign_responder_view(request, pk):
             if prof is None or prof.effective_role != UserProfile.ROLE_RANGER:
                 return _fail("Selected user is not a registered Ranger.")
 
-            # Location guard: the chosen ranger must be relevant to THIS report
+            # Location guard: the chosen ranger must be eligible and relevant to THIS report
             candidates = get_candidate_rangers(report, only_available=False)
             if not any(c['user'].pk == ranger_user.pk for c in candidates):
                 return _fail(
-                    "Access Denied: That ranger is not registered in or near this report's location.")
+                    "Access Denied: That ranger is not registered in or near this report's location or is ineligible.")
             if prof.availability != UserProfile.AVAILABILITY_AVAILABLE:
                 return _fail(
                     f"{ranger_user.username} is currently {prof.get_availability_display()} and cannot take a new incident.")
@@ -289,7 +311,7 @@ def assign_responder_view(request, pk):
             if prof.latitude is not None and prof.longitude is not None:
                 dist = haversine_km(prof.latitude, prof.longitude, report.latitude, report.longitude)
 
-            RangerAssignment.objects.create(
+            new_assignment = RangerAssignment.objects.create(
                 sighting=report,
                 ranger=ranger_user,
                 assigned_by=request.user,
@@ -299,6 +321,25 @@ def assign_responder_view(request, pk):
             report.assigned_responder = ranger_user
             report.response_status = SightingReport.RESPONSE_ASSIGNED
             report.save(update_fields=['assigned_responder', 'response_status'])
+
+            AuditLog.record(
+                actor=request.user,
+                action='ASSIGN_RANGER',
+                target_type='SightingReport',
+                target_id=report.pk,
+                target_repr=f"Incident #{report.pk}",
+                details=f"Assigned Ranger {ranger_user.username} ({dist} km away)."
+            )
+
+            Notification.send(
+                recipient=ranger_user,
+                actor=request.user,
+                title="New Incident Assignment",
+                message=f"You have been assigned to Incident #{report.pk} at {report.location_name or 'designated area'}. Please accept or decline.",
+                notification_type=Notification.TYPE_WARNING,
+                link=reverse('ranger:assignment_detail', kwargs={'pk': new_assignment.pk})
+            )
+
             messages.success(request,
                 f"Incident #{report.pk} assigned to ranger {prof.display_name}"
                 + (f" ({dist} km away)." if dist is not None else "."))
@@ -337,6 +378,25 @@ def cancel_assignment_view(request, pk):
                 rep.assigned_responder = None
                 rep.response_status = SightingReport.RESPONSE_UNASSIGNED
                 rep.save(update_fields=['assigned_responder', 'response_status'])
+
+            AuditLog.record(
+                actor=request.user,
+                action='CANCEL_ASSIGNMENT',
+                target_type='SightingReport',
+                target_id=rep.pk,
+                target_repr=f"Incident #{rep.pk}",
+                details=f"Cancelled assignment #{assignment.pk} for Ranger {assignment.ranger.username}."
+            )
+
+            Notification.send(
+                recipient=assignment.ranger,
+                actor=request.user,
+                title="Assignment Cancelled",
+                message=f"Your assignment for Incident #{rep.pk} has been cancelled by Authority.",
+                notification_type=Notification.TYPE_INFO,
+                link=reverse('ranger:dashboard')
+            )
+
             messages.success(request, f"Assignment #{assignment.pk} cancelled.")
     return redirect('reports:detail', pk=assignment.sighting_id)
 
@@ -382,16 +442,87 @@ def review_assignment_outcome_view(request, pk):
         rep = assignment.sighting
         rep.status = SightingReport.STATUS_RESOLVED
         rep.response_status = SightingReport.RESPONSE_RESOLVED
-        rep.save(update_fields=['status', 'response_status'])
+        if review_notes:
+            rep.authority_notes = f"Verified: {assignment.get_outcome_display()}. {review_notes}".strip()
+        rep.save(update_fields=['status', 'response_status', 'authority_notes'])
+
+        AuditLog.record(
+            actor=request.user,
+            action='VERIFY_OUTCOME',
+            target_type='SightingReport',
+            target_id=rep.pk,
+            target_repr=f"Incident #{rep.pk}",
+            details=f"Approved outcome '{assignment.get_outcome_display()}'. Notes: {review_notes}"
+        )
+
+        # Notify Citizen that incident is verified as resolved
+        Notification.send(
+            recipient=rep.user,
+            actor=request.user,
+            title="Incident Verified & Resolved",
+            message=f"Your snake sighting #{rep.pk} has been officially verified and resolved by the Authority ({assignment.get_outcome_display()}).",
+            notification_type=Notification.TYPE_SUCCESS,
+            link=reverse('reports:detail', kwargs={'pk': rep.pk})
+        )
+
+        # Notify Ranger that outcome was approved
+        Notification.send(
+            recipient=assignment.ranger,
+            actor=request.user,
+            title="Outcome Verified & Approved",
+            message=f"Your outcome submission for Incident #{rep.pk} was verified and approved by Authority Officer {request.user.profile.display_name}.",
+            notification_type=Notification.TYPE_SUCCESS,
+            link=reverse('ranger:assignment_detail', kwargs={'pk': assignment.pk})
+        )
 
         messages.success(request, f"Outcome for Incident #{rep.pk} approved. Incident marked resolved.")
+
     elif decision == 'REJECTED':
         # Revert to AT_LOCATION so ranger can re-inspect or re-submit
         assignment.status = RangerAssignment.STATUS_AT_LOCATION
         assignment.save(update_fields=['status', 'review_decision', 'review_notes', 'reviewed_by', 'reviewed_at'])
-        messages.warning(request, f"Outcome rejected. Ranger {assignment.ranger.username} has been instructed to remain at location.")
+
+        AuditLog.record(
+            actor=request.user,
+            action='REJECT_OUTCOME',
+            target_type='SightingReport',
+            target_id=assignment.sighting_id,
+            target_repr=f"Incident #{assignment.sighting_id}",
+            details=f"Outcome rejected. Reason: {review_notes}"
+        )
+
+        Notification.send(
+            recipient=assignment.ranger,
+            actor=request.user,
+            title="Outcome Rejected by Authority",
+            message=f"Your outcome submission for Incident #{assignment.sighting_id} was rejected: {review_notes}. Please re-inspect and resubmit.",
+            notification_type=Notification.TYPE_DANGER,
+            link=reverse('ranger:assignment_detail', kwargs={'pk': assignment.pk})
+        )
+
+        messages.warning(request, f"Outcome rejected. Ranger {assignment.ranger.username} has been instructed to re-inspect and follow up.")
+
     elif decision == 'CLARIFICATION_REQUESTED':
         assignment.save(update_fields=['review_decision', 'review_notes', 'reviewed_by', 'reviewed_at'])
+
+        AuditLog.record(
+            actor=request.user,
+            action='CLARIFY_OUTCOME',
+            target_type='SightingReport',
+            target_id=assignment.sighting_id,
+            target_repr=f"Incident #{assignment.sighting_id}",
+            details=f"Clarification requested: {review_notes}"
+        )
+
+        Notification.send(
+            recipient=assignment.ranger,
+            actor=request.user,
+            title="Clarification Requested",
+            message=f"Authority requested clarification on Incident #{assignment.sighting_id}: {review_notes}",
+            notification_type=Notification.TYPE_WARNING,
+            link=reverse('ranger:assignment_detail', kwargs={'pk': assignment.pk})
+        )
+
         messages.info(request, f"Clarification requested from ranger {assignment.ranger.username}.")
 
     return redirect('reports:detail', pk=assignment.sighting_id)
@@ -425,41 +556,104 @@ def update_response_status_view(request, pk):
 def risk_zones_public_view(request):
     """
     Public Community Risk Zones view.
-    Displays aggregated risk level (GREEN / YELLOW / RED) without exposing exact citizen coordinates or individual markers.
-    Rule: 0 in 24h -> GREEN, 1-5 -> YELLOW, >5 -> RED.
+    Displays interactive map with distinct incident clusters categorized into:
+    - RED (High Risk: 3+ distinct active incidents)
+    - ORANGE (Caution: 1-2 distinct active incidents)
+    - YELLOW (Recently Resolved: active cooldown)
+    - GREEN (No Recent Active Incidents: cleared retention)
     """
-    risk_data = DBSCANHotspotService.compute_community_risk_zones(hours=24)
-    return render(request, 'reports/risk_zones.html', {'risk_data': risk_data})
+    risk_data = DBSCANHotspotService.compute_community_risk_zones()
+    user_lat = 9.9312
+    user_lng = 76.2673
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        prof = request.user.profile
+        if prof.latitude is not None and prof.longitude is not None:
+            try:
+                user_lat = float(prof.latitude)
+                user_lng = float(prof.longitude)
+            except (ValueError, TypeError):
+                pass
+    return render(request, 'reports/risk_zones.html', {
+        'risk_data': risk_data,
+        'user_lat': user_lat,
+        'user_lng': user_lng
+    })
+
+
+def risk_zones_api(request):
+    """JSON API endpoint returning geographic community risk zones for dynamic map refresh and polling."""
+    risk_data = DBSCANHotspotService.compute_community_risk_zones()
+    risk_data['status'] = 'SUCCESS'
+    return JsonResponse(risk_data)
+
 
 
 # ---------------------------------------------------------------------------
 # Authority geolocation map APIs (used by the dashboard incident map)
 # ---------------------------------------------------------------------------
 
+def normalize_confidence_percentage(val):
+    """Normalize confidence score to percentage float (0.0 to 100.0) exactly once.
+
+    Semantics:
+    - If val is None: returns None
+    - If val is float in [0.0, 1.0]: scale once (val * 100.0)
+    - If val is float in (1.0, 100.0]: already in percentage scale
+    - If val < 0.0 or val > 100.0: invalid/uncalibrated score, returns None
+    """
+    if val is None:
+        return None
+    try:
+        f = float(val)
+    except (TypeError, ValueError):
+        return None
+    if f < 0.0 or f > 100.0:
+        return None
+    if 0.0 < f <= 1.0:
+        f = f * 100.0
+    return round(f, 1)
+
+
 def _active_assignment_info(report):
-    """Return (assignment, info-dict) for a report's active ranger assignment."""
+    """Return (assignment, info-dict) for a report's active or latest completed ranger assignment."""
     a = getattr(report, '_prefetched_active', None)
     if a is None:
         a = report.ranger_assignments.filter(
             status__in=RangerAssignment.ACTIVE_STATUSES).first()
-    if not a:
-        return None, {
-            'assigned': False,
-            'ranger': None,
-            'status': 'UNASSIGNED',
-            'status_display': 'Unassigned',
-            'distance_km': None,
-            'assigned_at': None,
+    if a:
+        return a, {
+            'assigned': True,
+            'assignment_id': a.pk,
+            'ranger': a.ranger.username,
+            'ranger_name': a.ranger.profile.display_name if hasattr(a.ranger, 'profile') else a.ranger.username,
+            'status': a.status,
+            'status_display': a.get_status_display(),
+            'distance_km': a.distance_km,
+            'assigned_at': a.assigned_at.strftime('%b %d, %Y %H:%M'),
         }
-    return a, {
-        'assigned': True,
-        'assignment_id': a.pk,
-        'ranger': a.ranger.username,
-        'ranger_name': a.ranger.profile.display_name if hasattr(a.ranger, 'profile') else a.ranger.username,
-        'status': a.status,
-        'status_display': a.get_status_display(),
-        'distance_km': a.distance_km,
-        'assigned_at': a.assigned_at.strftime('%b %d, %Y %H:%M'),
+
+    # Check if assignment was completed / resolved
+    completed_a = report.ranger_assignments.filter(status=RangerAssignment.STATUS_COMPLETED).first()
+    if completed_a or report.response_status == SightingReport.RESPONSE_RESOLVED:
+        ranger_u = completed_a.ranger if completed_a else report.assigned_responder
+        return completed_a, {
+            'assigned': False,
+            'assignment_id': completed_a.pk if completed_a else None,
+            'ranger': ranger_u.username if ranger_u else None,
+            'ranger_name': ranger_u.profile.display_name if (ranger_u and hasattr(ranger_u, 'profile')) else (ranger_u.username if ranger_u else None),
+            'status': 'COMPLETED',
+            'status_display': 'Completed',
+            'distance_km': completed_a.distance_km if completed_a else None,
+            'assigned_at': completed_a.assigned_at.strftime('%b %d, %Y %H:%M') if completed_a else None,
+        }
+
+    return None, {
+        'assigned': False,
+        'ranger': None,
+        'status': 'UNASSIGNED',
+        'status_display': 'Unassigned',
+        'distance_km': None,
+        'assigned_at': None,
     }
 
 
@@ -474,18 +668,29 @@ def authority_map_view(request):
     itself loads real DB report markers through the existing
     api/map-reports/ endpoint (no fake/hard-coded data).
     """
-    from django.db.models import Count, Max
-    geo_count = SightingReport.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True).count()
-    unassigned_venomous = SightingReport.objects.filter(
-        venomous=True, ranger_assignments__isnull=True
-    ).exclude(latitude__isnull=True).count()
+    from django.db.models import Count, Max, Q
+    all_reports = SightingReport.objects.all()
+
+    # Geographical validity check
+    geo_reports = all_reports.exclude(latitude__isnull=True).exclude(longitude__isnull=True).exclude(latitude=0, longitude=0)
+    geo_count = geo_reports.count()
+    unplotted_count = all_reports.count() - geo_count
+
+    # Unassigned venomous: either HIGHLY/MODERATE or venomous=True, and response_status=UNASSIGNED, not RESOLVED
+    unassigned_venomous = geo_reports.filter(
+        Q(venom_category__in=[SightingReport.VENOM_HIGHLY, SightingReport.VENOM_MODERATE]) | Q(venomous=True),
+        response_status=SightingReport.RESPONSE_UNASSIGNED
+    ).exclude(status=SightingReport.STATUS_RESOLVED).count()
+
     active = RangerAssignment.objects.filter(status__in=RangerAssignment.ACTIVE_STATUSES).count()
     completed = RangerAssignment.objects.filter(status=RangerAssignment.STATUS_COMPLETED).count()
+
     context = {
         'geo_report_count': geo_count,
         'unassigned_venomous': unassigned_venomous,
         'active_assignments': active,
         'completed_assignments': completed,
+        'unplotted_count': unplotted_count,
         'page_title': 'Authority Operations Map',
     }
     return render(request, 'reports/authority_map.html', context)
@@ -502,9 +707,21 @@ def authority_map_reports_api(request):
     (unassigned / active response / completed). Minimal fields only: no
     private citizen information beyond what Authority legitimately monitors.
     """
-    reports = SightingReport.objects.select_related('user').prefetch_related(
+    def _is_valid_coord(lat, lng):
+        try:
+            if lat is None or lng is None:
+                return False
+            lat = float(lat)
+            lng = float(lng)
+            return -90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0 and not (lat == 0.0 and lng == 0.0)
+        except (ValueError, TypeError):
+            return False
+
+    raw_reports = SightingReport.objects.select_related('user').prefetch_related(
         'ranger_assignments__ranger__profile')
-    reports = [r for r in reports if r.latitude is not None and r.longitude is not None]
+    all_reports_list = list(raw_reports)
+    reports = [r for r in all_reports_list if _is_valid_coord(r.latitude, r.longitude)]
+    unplotted_count = len(all_reports_list) - len(reports)
 
     # Group assignments per report once (avoid N queries)
     active_by_report = {}
@@ -514,13 +731,19 @@ def authority_map_reports_api(request):
     resolved_ids = set(r.id for r in reports if r.ranger_assignments.filter(
         status=RangerAssignment.STATUS_COMPLETED).exists())
 
+    unassigned_venomous_count = 0
+    active_assignments_count = 0
+    completed_assignments_count = 0
+
     data = []
     for r in reports:
         a = active_by_report.get(r.id)
         if a:
             dispatch_state = 'ACTIVE'
+            active_assignments_count += 1
             assign = {
                 'assigned': True,
+                'assignment_id': a.pk,
                 'ranger': a.ranger.username,
                 'ranger_name': a.ranger.profile.display_name if hasattr(a.ranger, 'profile') else a.ranger.username,
                 'status': a.status,
@@ -530,14 +753,27 @@ def authority_map_reports_api(request):
             }
         elif r.id in resolved_ids or r.response_status == SightingReport.RESPONSE_RESOLVED:
             dispatch_state = 'COMPLETED'
+            completed_assignments_count += 1
             assign = {'assigned': False, 'ranger': None, 'status': 'COMPLETED',
                       'status_display': 'Completed'}
         else:
             dispatch_state = 'UNASSIGNED'
             assign = {'assigned': False, 'ranger': None, 'status': 'UNASSIGNED',
                       'status_display': 'Unassigned'}
+            if r.is_venomous and r.status != SightingReport.STATUS_RESOLVED:
+                unassigned_venomous_count += 1
+
+        img_url = None
+        target_img = getattr(r, 'image', None) or getattr(r, 'processed_image', None) or getattr(r, 'original_image', None)
+        if target_img and hasattr(target_img, 'url'):
+            try:
+                img_url = target_img.url
+            except Exception:
+                img_url = None
+
         data.append({
             'id': r.id,
+            'report_reference': r.report_reference,
             'title': r.title,
             'latitude': r.latitude,
             'longitude': r.longitude,
@@ -545,13 +781,24 @@ def authority_map_reports_api(request):
             'venom_status': r.venom_category,
             'is_venomous': r.is_venomous,
             'species': r.species_predicted or '',
-            'confidence': round((r.venom_confidence or 0) * 100),
+            'confidence': normalize_confidence_percentage(r.venom_confidence),
             'created_at': r.created_at.strftime('%b %d, %Y %H:%M'),
             'report_status': r.status,
             'dispatch_state': dispatch_state,
             'assignment': assign,
+            'image_url': img_url,
         })
-    return JsonResponse({'reports': data})
+
+    return JsonResponse({
+        'reports': data,
+        'counts': {
+            'geo_report_count': len(data),
+            'unassigned_venomous': unassigned_venomous_count,
+            'active_assignments': active_assignments_count,
+            'completed_assignments': completed_assignments_count,
+            'unplotted_count': unplotted_count,
+        }
+    })
 
 
 @login_required
@@ -580,15 +827,25 @@ def authority_report_panel_api(request, pk):
             'availability': prof.availability,
         })
 
+    img_url = None
+    target_img = getattr(report, 'image', None) or getattr(report, 'processed_image', None) or getattr(report, 'original_image', None)
+    if target_img and hasattr(target_img, 'url'):
+        try:
+            img_url = target_img.url
+        except Exception:
+            img_url = None
+
     payload = dict(assign)
     payload.update({
         'id': report.id,
+        'report_reference': report.report_reference,
         'title': report.title,
-        'image_url': report.original_image.url if report.original_image else None,
-        'snake_status': report.get_venom_category_display(),
+        'image_url': img_url,
+        'snake_status': report.get_venom_category_display() if report.venom_category else 'Pending Verification',
         'is_venomous': report.is_venomous,
         'species': report.species_predicted or '',
-        'confidence': round((report.venom_confidence or 0) * 100),
+        'confidence': normalize_confidence_percentage(report.venom_confidence),
+        'raw_confidence': report.venom_confidence,
         'reported_at': report.created_at.strftime('%b %d, %Y, %I:%M %p'),
         'location_name': report.location_name,
         'latitude': report.latitude,
@@ -598,3 +855,4 @@ def authority_report_panel_api(request, pk):
         'candidates': candidates,
     })
     return JsonResponse(payload)
+

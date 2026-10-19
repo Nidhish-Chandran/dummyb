@@ -190,6 +190,18 @@
         const navbarCollapse = document.getElementById('venomNavbar');
         if (!toggler || !navbarCollapse) return;
 
+        toggler.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const isOpen = navbarCollapse.classList.contains('show');
+            if (isOpen) {
+                navbarCollapse.classList.remove('show');
+                toggler.setAttribute('aria-expanded', 'false');
+            } else {
+                navbarCollapse.classList.add('show');
+                toggler.setAttribute('aria-expanded', 'true');
+            }
+        });
+
         // Auto close when clicking any navigation link or profile badge on mobile
         const navLinks = navbarCollapse.querySelectorAll('.nav-link, .btn, .user-identity-card');
         navLinks.forEach(link => {

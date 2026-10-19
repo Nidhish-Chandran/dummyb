@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Report #{{ report.id }} — Venom Watch{% endblock %}
+{% block title %}{{ report.report_reference }}: {{ report.title }} — Venom Watch{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -12,9 +12,19 @@
             <i class="fa-solid fa-arrow-left"></i> Back to Sightings
         </a>
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2">
-            <h2 class="fw-bold mb-0" style="font-size: 1.2rem; color: var(--text);">
-                Report #{{ report.id }}: {{ report.title }}
-            </h2>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h2 class="fw-bold mb-0" style="font-size: 1.2rem; color: var(--text);">
+                    {{ report.title }}
+                </h2>
+                <span class="badge bg-light border text-dark" style="font-size: 0.8rem;">
+                    {{ report.report_reference }}
+                </span>
+                {% if request.user == report.user %}
+                    <span class="badge bg-light border text-muted" style="font-size: 0.8rem;">
+                        Submission #{{ report.citizen_submission_number }}
+                    </span>
+                {% endif %}
+            </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 {% if report.venom_category == 'HIGHLY_VENOMOUS' %}
                     <span class="badge-venomous">Highly Venomous</span>
@@ -230,7 +240,7 @@
                     </h5>
                     <p class="text-muted mb-3" style="font-size: 0.78rem;">
                         Only AVAILABLE rangers registered in or near
-                        <strong>{{ report.location_name }}</strong> are listed (Haversine radius 30 km).
+                        <strong>{{ report.location_name }}</strong> are listed (within 30 km radius).
                     </p>
 
                     {% if active_assignment %}
@@ -362,38 +372,182 @@
                 {% endif %}
             {% endif %}
 
-            <!-- Response Status -->
-            {% if is_authority %}
-                <div class="card-clean p-4">
-                    <h5 class="fw-semibold mb-3" style="font-size: 0.9375rem; color: var(--text);">
-                        <i class="fa-solid fa-circle-play me-2" style="color: var(--info);"></i>
-                        Response Task Status
+            <!-- Citizen Incident Response & Outcome Tracking -->
+            {% if not is_authority %}
+                <div class="card-clean p-4 mb-4">
+                    <h5 class="fw-semibold mb-3 d-flex align-items-center justify-content-between" style="font-size: 0.9375rem; color: var(--text);">
+                        <span><i class="fa-solid fa-shield-halved me-2 text-teal"></i> Incident Response &amp; Status</span>
+                        {% if report.status == 'RESOLVED' %}
+                            <span class="badge" style="background: var(--success-light); color: var(--success); font-size: 0.75rem;">
+                                <i class="fa-solid fa-circle-check me-1"></i> RESOLVED
+                            </span>
+                        {% elif active_assignment %}
+                            <span class="badge" style="background: var(--info-light); color: var(--info); font-size: 0.75rem;">
+                                {{ active_assignment.get_status_display }}
+                            </span>
+                        {% else %}
+                            <span class="badge" style="background: var(--warning-light); color: var(--warning); font-size: 0.75rem;">
+                                {{ report.get_status_display }}
+                            </span>
+                        {% endif %}
                     </h5>
-                    <div class="mb-3">
-                        <p class="text-muted mb-1" style="font-size: 0.8rem;">
-                            Assigned responder:
-                            <strong style="color: var(--text);">{{ report.assigned_responder.username|default:"Unassigned" }}</strong>
-                        </p>
-                        <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                            Current status:
-                            <strong style="color: var(--text);">{{ report.get_response_status_display }}</strong>
-                        </p>
-                    </div>
-                    <form method="post" action="{% url 'reports:update_response_status' pk=report.pk %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <select name="response_status" class="form-select form-select-sm">
-                                {% for val, label in report.RESPONSE_STATUS_CHOICES %}
-                                    <option value="{{ val }}" {% if report.response_status == val %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
+
+                    <!-- Verified Resolution Banner & Approved Evidence -->
+                    {% if report.status == 'RESOLVED' or verified_assignment %}
+                        <div class="p-3 rounded border mb-3" style="background: #ecfdf5; border-color: #a7f3d0 !important;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-solid fa-circle-check text-success fs-5"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-success-emphasis" style="font-size: 0.9rem;">
+                                        Verified Incident Resolution
+                                    </h6>
+                                    <small class="text-muted">Authoritatively verified by Wildlife Authority</small>
+                                </div>
+                            </div>
+
+                            {% if verified_assignment %}
+                                <div class="mt-2 pt-2 border-top border-success-subtle" style="font-size: 0.85rem;">
+                                    <p class="mb-1">
+                                        <strong>Final Outcome:</strong>
+                                        <span class="badge bg-success">{{ verified_assignment.get_outcome_display }}</span>
+                                    </p>
+                                    <p class="mb-1 text-muted" style="font-size: 0.8rem;">
+                                        <strong>Responding Ranger:</strong> {{ verified_assignment.ranger.profile.display_name }}
+                                        &middot; Resolved {{ verified_assignment.reviewed_at|date:"M j, Y H:i"|default:report.updated_at|date:"M j, Y H:i" }}
+                                    </p>
+                                    {% if verified_assignment.notes %}
+                                        <p class="mb-2 text-muted" style="font-size: 0.82rem;">
+                                            <strong>Ranger Report:</strong> {{ verified_assignment.notes }}
+                                        </p>
+                                    {% endif %}
+
+                                    {% if verified_assignment.outcome_image %}
+                                        <div class="my-2 p-2 rounded bg-white border">
+                                            <span class="fw-semibold text-muted d-block mb-1" style="font-size: 0.75rem;">
+                                                <i class="fa-solid fa-camera me-1"></i> Approved Response Evidence Photo:
+                                            </span>
+                                            <img src="{{ verified_assignment.outcome_image.url }}" alt="Verified Outcome Evidence"
+                                                 class="img-fluid rounded border w-100" style="max-height: 260px; object-fit: cover;">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            {% if report.authority_notes %}
+                                <div class="mt-2 p-2 rounded bg-white border" style="font-size: 0.8rem;">
+                                    <strong class="text-muted d-block mb-1">Authority Verification Notes:</strong>
+                                    <p class="mb-0 text-dark">{{ report.authority_notes }}</p>
+                                </div>
+                            {% endif %}
                         </div>
-                        <button type="submit" class="btn btn-teal btn-sm w-100">
-                            <i class="fa-solid fa-check-double me-1"></i> Update Status
-                        </button>
-                    </form>
+
+                    <!-- Active Assignment Tracking -->
+                    {% elif active_assignment %}
+                        {% if active_assignment.status == 'ASSIGNED' %}
+                            <!-- Assigned but NOT yet accepted: do not disclose ranger identity yet -->
+                            <div class="p-3 rounded border border-info mb-3" style="background: #f0fdf4;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-spinner fa-spin text-info fs-5"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-info-emphasis" style="font-size: 0.875rem;">
+                                            Ranger Dispatched — Awaiting Acceptance
+                                        </h6>
+                                        <p class="mb-0 text-muted" style="font-size: 0.8rem;">
+                                            A qualified wildlife responder has been assigned and notified. Field status will update once the ranger confirms availability.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% elif active_assignment.status in 'ACCEPTED,ON_THE_WAY,AT_LOCATION' %}
+                            <!-- Accepted: Show assigned Ranger display name and active phase -->
+                            <div class="p-3 rounded border mb-3" style="background: var(--surface-hover); font-size: 0.85rem;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="fw-bold text-dark">
+                                        <i class="fa-solid fa-user-shield me-1 text-teal"></i>
+                                        Responding Ranger: {{ active_assignment.ranger.profile.display_name }}
+                                    </span>
+                                    <span class="badge" style="background: var(--info-light); color: var(--info);">
+                                        {{ active_assignment.get_status_display }}
+                                    </span>
+                                </div>
+
+                                <div class="response-steps mt-3">
+                                    <div class="d-flex align-items-center gap-2 mb-2 {% if active_assignment.status == 'ACCEPTED' %}text-primary fw-semibold{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">
+                                        <i class="fa-solid {% if active_assignment.status == 'ACCEPTED' %}fa-circle-dot text-teal{% else %}fa-check-circle text-success{% endif %}"></i>
+                                        <span>Assignment Accepted by Ranger</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 mb-2 {% if active_assignment.status == 'ON_THE_WAY' %}text-primary fw-semibold{% elif active_assignment.status == 'AT_LOCATION' %}text-success{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">
+                                        <i class="fa-solid {% if active_assignment.status == 'ON_THE_WAY' %}fa-truck-fast text-teal{% elif active_assignment.status == 'AT_LOCATION' %}fa-check-circle text-success{% else %}fa-circle-dot text-secondary{% endif %}"></i>
+                                        <span>Ranger En Route to Sighting Location</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 {% if active_assignment.status == 'AT_LOCATION' %}text-primary fw-semibold{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">
+                                        <i class="fa-solid {% if active_assignment.status == 'AT_LOCATION' %}fa-location-crosshairs text-teal{% else %}fa-circle-dot text-secondary{% endif %}"></i>
+                                        <span>Ranger On-Site &amp; Operating</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% elif active_assignment.status == 'OUTCOME_SUBMITTED' %}
+                            <!-- Outcome Submitted: Awaiting Authority verification -->
+                            <div class="p-3 rounded border border-warning mb-3" style="background: #fffbeb;">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="fa-solid fa-hourglass-half text-warning fs-5"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-warning-emphasis" style="font-size: 0.875rem;">
+                                            Response Submitted — Awaiting Authority Review
+                                        </h6>
+                                        <p class="mb-0 text-muted" style="font-size: 0.8rem;">
+                                            The responder completed field intervention and submitted outcome evidence. Formal verification by Wildlife Authority is in progress.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <!-- No active assignment -->
+                        <div class="p-3 rounded border mb-3" style="background: var(--surface-hover); font-size: 0.82rem;">
+                            <p class="mb-1 text-muted">
+                                <i class="fa-solid fa-clock me-1 text-warning"></i>
+                                <strong>Status:</strong>
+                                {% if report.status == 'PENDING' %}
+                                    Awaiting Authority triage and ranger assignment.
+                                {% elif report.status == 'VERIFIED' %}
+                                    Sighting verified by Authority. Dispatch pending.
+                                {% elif report.status == 'REJECTED' %}
+                                    Sighting closed or rejected by Authority.
+                                {% else %}
+                                    {{ report.get_status_display }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Chronological Response Lifecycle -->
+                    <div class="border-top pt-3 mt-3">
+                        <small class="text-muted fw-semibold d-block mb-2" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            Response Progression
+                        </small>
+                        <ol class="list-unstyled mb-0" style="font-size: 0.78rem;">
+                            <li class="mb-1 text-success d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-check"></i> Sighting Reported ({{ report.created_at|date:"M j, H:i" }})
+                            </li>
+                            <li class="mb-1 {% if report.status != 'PENDING' or active_assignment %}text-success{% else %}text-muted{% endif %} d-flex align-items-center gap-2">
+                                <i class="fa-solid {% if report.status != 'PENDING' or active_assignment %}fa-check{% else %}fa-circle-dot{% endif %}"></i>
+                                Authority Assessment
+                            </li>
+                            <li class="mb-1 {% if active_assignment %}text-success{% else %}text-muted{% endif %} d-flex align-items-center gap-2">
+                                <i class="fa-solid {% if active_assignment %}fa-check{% else %}fa-circle-dot{% endif %}"></i>
+                                Ranger Dispatched
+                            </li>
+                            <li class="mb-1 {% if active_assignment and active_assignment.status != 'ASSIGNED' %}text-success{% else %}text-muted{% endif %} d-flex align-items-center gap-2">
+                                <i class="fa-solid {% if active_assignment and active_assignment.status != 'ASSIGNED' %}fa-check{% else %}fa-circle-dot{% endif %}"></i>
+                                Field Intervention
+                            </li>
+                            <li class="{% if report.status == 'RESOLVED' %}text-success{% else %}text-muted{% endif %} d-flex align-items-center gap-2">
+                                <i class="fa-solid {% if report.status == 'RESOLVED' %}fa-check{% else %}fa-circle-dot{% endif %}"></i>
+                                Verified Resolution
+                            </li>
+                        </ol>
+                    </div>
                 </div>
             {% endif %}
 
@@ -415,8 +569,10 @@
         L.tileLayer(
             'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
             {
+                minZoom: 3,
+                maxNativeZoom: 17,
                 maxZoom: 19,
-                attribution: '© Esri'
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, METI, TomTom'
             }
         ).addTo(map);
 

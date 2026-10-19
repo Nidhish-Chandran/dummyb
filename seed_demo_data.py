@@ -11,7 +11,8 @@ from emergency.models import Hospital
 SNAKE_DATABASE = {}
 
 def seed_data():
-    print("Seeding Venom Watch Demo Data...")
+    print("Warning: seed_demo_data is permanently disabled to enforce real database records only.")
+    return
 
     # 1. Create Superuser / Admin & Authority Officers
     admin_user, created = User.objects.get_or_create(username='admin_demo', defaults={

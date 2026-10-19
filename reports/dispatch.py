@@ -9,7 +9,8 @@ import math
 from django.contrib.auth.models import User
 from django.db.models import Q
 
-from accounts.models import UserProfile
+from accounts.models import UserProfile, AccountApplication
+from reports.models import RangerAssignment
 
 # Search radius (km) used when the report has coordinates. Rangers farther
 # than this are considered unrelated to the incident location.
@@ -32,34 +33,35 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return round(2 * r * math.asin(math.sqrt(a)), 2)
 
 
-def _location_match_q(location_name):
-    """Q object matching rangers whose registered location / region shares a
-    word with the report's location name (case-insensitive, >=4 chars)."""
-    q = Q(profile__registered_location__iexact=location_name) | \
-        Q(profile__assigned_region__iexact=location_name)
-    for word in [w for w in location_name.replace(',', ' ').split() if len(w) >= 4]:
-        q |= Q(profile__registered_location__icontains=word)
-        q |= Q(profile__assigned_region__icontains=word)
-    return q
-
-
 def get_candidate_rangers(sighting, only_available=True, radius_km=NEARBY_RADIUS_KM):
-    """Return rangers relevant to THIS report location, annotated with distance.
+    """Return genuine, active, approved rangers relevant to THIS report location, annotated with distance.
 
-    Selection logic (server-side, never exposes the whole ranger DB):
-      1. Ranger role users with a registered operational location.
-      2. If the report has coordinates -> include rangers within `radius_km`
-         (Haversine) OR whose registered location textually matches the
-         report location (ranger base without coordinates still surfaces;
-         distance shown as "nearby").
-      3. If the report has no usable coordinates -> textual location match.
-      4. Optionally restricted to AVAILABLE rangers (default for new
-         assignments; reassignment view may pass False to also show BUSY).
-    Returns a list of dicts sorted by distance (None-distance last).
+    Eligibility rules (strictly enforced server-side):
+      1. Account is active (is_active=True).
+      2. Profile role is RANGER and account_status is ACTIVE (not SUSPENDED or BANNED).
+      3. AccountApplication, if present, is APPROVED.
+      4. No conflicting active assignments.
+      5. Availability is AVAILABLE (when only_available=True).
+      6. Distance within `radius_km` via Haversine calculation, or textual operational location match.
+    Returns a list of dicts sorted by distance (nearest first, None-distance last).
     """
     rangers = User.objects.filter(
-        profile__role=UserProfile.ROLE_RANGER
+        is_active=True,
+        profile__role=UserProfile.ROLE_RANGER,
+        profile__account_status=UserProfile.ACCOUNT_STATUS_ACTIVE,
     ).select_related('profile')
+
+    # Exclude applicants whose registration is not approved
+    unapproved_app_users = AccountApplication.objects.exclude(
+        status=AccountApplication.STATUS_APPROVED
+    ).values_list('user_id', flat=True)
+    rangers = rangers.exclude(id__in=unapproved_app_users)
+
+    # Exclude rangers with an active conflicting assignment
+    active_busy_rangers = RangerAssignment.objects.filter(
+        status__in=RangerAssignment.ACTIVE_STATUSES
+    ).values_list('ranger_id', flat=True)
+    rangers = rangers.exclude(id__in=active_busy_rangers)
 
     if only_available:
         rangers = rangers.filter(profile__availability=UserProfile.AVAILABILITY_AVAILABLE)

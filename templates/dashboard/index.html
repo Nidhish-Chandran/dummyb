@@ -206,12 +206,15 @@
     // ===== Authority Geolocation Map: report markers + ranger assignment =====
     document.addEventListener("DOMContentLoaded", function () {
         const map = L.map('mainDashboardMap').setView([9.9312, 76.2673], 11);
-        setTimeout(function(){ map.invalidateSize(); }, 150);
+        map.invalidateSize();
+        window.addEventListener('resize', () => map.invalidateSize());
         L.tileLayer(
             'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
             {
+                minZoom: 3,
+                maxNativeZoom: 17,
                 maxZoom: 19,
-                attribution: '© Esri'
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, METI, TomTom'
             }
         ).addTo(map);
 
@@ -219,6 +222,7 @@
         const panelApiUrlBase = "/reports/api/report-panel/";
         let markerLayer = L.layerGroup().addTo(map);
         let selectedReportId = null;
+        let initialBoundsFitted = false;
 
         const COLORS = { red: '#dc2626', amber: '#f59e0b', green: '#16a34a' };
 
@@ -241,6 +245,11 @@
                     markerLayer.clearLayers();
                     const bounds = [];
                     data.reports.forEach(r => {
+                        if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number' ||
+                            isNaN(r.latitude) || isNaN(r.longitude) ||
+                            (r.latitude === 0 && r.longitude === 0)) {
+                            return;
+                        }
                         const latLng = [r.latitude, r.longitude];
                         bounds.push(latLng);
                         const m = L.circleMarker(latLng, {
@@ -275,7 +284,16 @@
                             });
                         }).catch(() => {});
 
-                    if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
+                    if (bounds.length > 0 && !initialBoundsFitted) {
+                        const first = bounds[0];
+                        const allSame = bounds.every(c => Math.abs(c[0] - first[0]) < 0.0001 && Math.abs(c[1] - first[1]) < 0.0001);
+                        if (allSame) {
+                            map.setView(first, 13);
+                        } else {
+                            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+                        }
+                        initialBoundsFitted = true;
+                    }
                 })
                 .catch(err => console.error("Error loading report markers:", err));
         }

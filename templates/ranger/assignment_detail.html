@@ -261,8 +261,10 @@ document.addEventListener("DOMContentLoaded", function() {
     L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
         {
+            minZoom: 3,
+            maxNativeZoom: 17,
             maxZoom: 19,
-            attribution: '© Esri'
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, METI, TomTom'
         }
     ).addTo(map);
 

@@ -3,20 +3,35 @@
 {% block title %}My Profile — Venom Watch{% endblock %}
 
 {% block content %}
-<div class="container py-4" style="max-width: 760px;">
+<div class="container py-4" style="max-width: 800px;">
 
     <!-- Breadcrumb / Header Title -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
         <div>
+            {% if profile.role == 'admin' %}
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <a href="{% url 'accounts:admin_dashboard' %}" class="badge text-decoration-none" style="background: rgba(13, 148, 136, 0.12); color: var(--primary); font-size: 0.78rem;">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Admin Dashboard
+                    </a>
+                </div>
+            {% endif %}
             <h2 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text);">
                 <i class="fa-solid fa-id-card me-2" style="color: var(--primary);"></i>
-                {% if profile.role == 'authority' %}Authority Officer Profile{% else %}Citizen Profile{% endif %}
+                {% if profile.role == 'admin' %}
+                    Platform Administrator Profile
+                {% elif profile.role == 'authority' %}
+                    Authority Officer Profile
+                {% elif profile.role == 'ranger' %}
+                    Forest Ranger Profile
+                {% else %}
+                    Citizen Profile
+                {% endif %}
             </h2>
             <p class="text-muted mb-0" style="font-size: 0.8125rem;">
-                Manage your personal contact details and operational profile settings.
+                Manage your personal contact details, credentials, and account settings.
             </p>
         </div>
-        <!-- Logout Form on Profile Page -->
+        <!-- Logout Form on Profile Page (Cleanly separated) -->
         <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
             {% csrf_token %}
             <button type="submit" class="btn btn-outline-danger btn-sm px-3" title="End your session and log out">
@@ -32,7 +47,7 @@
         <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
             <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
                  style="width: 52px; height: 52px; background: var(--primary-light); color: var(--primary); font-size: 1.3rem;">
-                <i class="fa-solid fa-user"></i>
+                <i class="fa-solid fa-user-shield"></i>
             </div>
             <div>
                 <h3 class="fw-bold mb-1" style="font-size: 1.2rem; color: var(--text);">{{ user.username }}</h3>
@@ -43,6 +58,8 @@
                         <span class="badge-role-citizen"><i class="fa-solid fa-user me-1"></i>Citizen</span>
                     {% elif profile.role == 'admin' %}
                         <span class="badge-role-admin"><i class="fa-solid fa-crown me-1"></i>Platform Admin</span>
+                    {% elif profile.role == 'ranger' %}
+                        <span class="badge-role-ranger"><i class="fa-solid fa-person-hiking me-1"></i>Forest Ranger</span>
                     {% else %}
                         <span class="badge bg-secondary">{{ profile.get_role_display }}</span>
                     {% endif %}
@@ -53,7 +70,7 @@
             </div>
         </div>
 
-        <!-- Account Overview (Read-Only) -->
+        <!-- Account Overview (Read-Only Summary) -->
         <h5 class="fw-semibold mb-3" style="font-size: 0.95rem; color: var(--text);">
             <i class="fa-solid fa-circle-info me-2" style="color: var(--info);"></i> Account Overview
         </h5>
@@ -92,7 +109,7 @@
             <div class="col-sm-6">
                 <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
                     <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
-                        <i class="fa-solid fa-phone me-1"></i> Active Phone
+                        <i class="fa-solid fa-phone me-1"></i> Contact Phone
                     </small>
                     <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
                         {{ profile.phone_number|default:"Not set" }}
@@ -106,17 +123,33 @@
                         <i class="fa-solid fa-building me-1"></i> Department / Agency
                     </small>
                     <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
-                        {{ profile.organization|default:"Kerala Wildlife & Public Safety" }}
+                        {{ profile.organization|default:"Kerala Forest & Wildlife Department" }}
                     </span>
                 </div>
             </div>
             <div class="col-sm-6">
                 <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
                     <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
-                        <i class="fa-solid fa-map-location-dot me-1"></i> Assigned Jurisdiction
+                        <i class="fa-solid fa-map-location-dot me-1"></i> Operational Jurisdiction
                     </small>
                     <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
-                        {{ profile.assigned_region|default:profile.registered_location|default:"Statewide Operations" }}
+                        {{ profile.assigned_region|default:"Not assigned" }}
+                    </span>
+                </div>
+            </div>
+            {% elif profile.role != 'admin' %}
+            <div class="col-sm-6">
+                <div class="p-3 rounded border h-100" style="background: var(--surface-hover);">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-map-location-dot me-1"></i> Residential Location
+                    </small>
+                    <span class="fw-semibold" style="font-size: 0.875rem; color: var(--text);">
+                        {{ profile.registered_location|default:profile.assigned_region|default:"Not specified" }}
+                        {% if profile.latitude and profile.longitude %}
+                            <small class="text-muted d-block fw-normal mt-1" style="font-size: 0.72rem;">
+                                GPS: {{ profile.latitude|floatformat:4 }}, {{ profile.longitude|floatformat:4 }}
+                            </small>
+                        {% endif %}
                     </span>
                 </div>
             </div>
@@ -125,28 +158,56 @@
 
         <!-- Editable Profile Settings Form -->
         <h5 class="fw-semibold mb-3" style="font-size: 0.95rem; color: var(--text);">
-            <i class="fa-solid fa-user-pen me-2" style="color: var(--primary);"></i> Edit Profile Information
+            <i class="fa-solid fa-user-pen me-2" style="color: var(--primary);"></i> Edit Personal Information
         </h5>
 
-        <form method="post" action="{% url 'accounts:profile' %}" class="action-feedback-form">
+        <form method="post" action="{% url 'accounts:profile' %}" novalidate>
             {% csrf_token %}
+            <input type="hidden" name="action" value="update_profile">
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2 px-3 mb-3" style="font-size: 0.8125rem;">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_profile_full_name" style="font-size: 0.8125rem;">
+                        Full Name
+                    </label>
+                    {{ form.full_name }}
+                    {% if form.full_name.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.full_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_profile_email" style="font-size: 0.8125rem;">
+                        Email Address <span class="text-danger">*</span>
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold" for="id_phone_number" style="font-size: 0.8125rem;">
-                    Contact Phone Number <span class="text-muted fw-normal">(used for urgent verification &amp; updates)</span>
+                <label class="form-label fw-semibold" for="id_profile_phone" style="font-size: 0.8125rem;">
+                    Contact Phone Number <span class="text-muted fw-normal">(used for urgent operational alerts)</span>
                 </label>
                 {{ form.phone_number }}
                 {% if form.phone_number.errors %}
-                    <div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.phone_number.errors.0 }}</div>
+                    <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.phone_number.errors.0 }}</div>
                 {% endif %}
             </div>
 
-            {% if profile.role == 'authority' or profile.role == 'admin' %}
+            {% if profile.role == 'authority' %}
             <div class="mb-3">
                 <label class="form-label fw-semibold" for="id_organization" style="font-size: 0.8125rem;">Organization / Department</label>
                 {{ form.organization }}
                 {% if form.organization.errors %}
-                    <div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.organization.errors.0 }}</div>
+                    <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.organization.errors.0 }}</div>
                 {% endif %}
             </div>
 
@@ -154,32 +215,178 @@
                 <label class="form-label fw-semibold" for="id_assigned_region" style="font-size: 0.8125rem;">Assigned Region / District</label>
                 {{ form.assigned_region }}
                 {% if form.assigned_region.errors %}
-                    <div class="text-danger mt-1" style="font-size: 0.78rem;">{{ form.assigned_region.errors.0 }}</div>
+                    <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.assigned_region.errors.0 }}</div>
                 {% endif %}
             </div>
-            {% else %}
-            <div class="mb-4">
-                <label class="form-label fw-semibold" for="id_assigned_region" style="font-size: 0.8125rem;">Residential District / Landmark <span class="text-muted fw-normal">(optional)</span></label>
-                {{ form.assigned_region }}
+            {% elif profile.role != 'admin' %}
+            <div class="mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <label class="form-label fw-semibold mb-0" for="id_registered_location" style="font-size: 0.8125rem;">
+                        Residential District / City / Landmark <span class="text-muted fw-normal">(optional)</span>
+                    </label>
+                    <button type="button" id="btnDetectProfileLoc" class="btn btn-outline-teal btn-sm py-1 px-2" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-location-crosshairs me-1"></i> Detect Location
+                    </button>
+                </div>
+                {{ form.registered_location }}
+                {% if form.registered_location.errors %}
+                    <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.registered_location.errors.0 }}</div>
+                {% endif %}
+                <div id="profileGeoAlert" class="d-none alert py-1 px-2 mt-2 mb-1 d-flex align-items-center gap-2" style="font-size: 0.78rem;">
+                    <span id="profileGeoIcon"></span>
+                    <span id="profileGeoText"></span>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_profile_latitude" style="font-size: 0.8125rem;">
+                        Latitude <span class="text-muted fw-normal">(optional decimal degrees)</span>
+                    </label>
+                    {{ form.latitude }}
+                    {% if form.latitude.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.latitude.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_profile_longitude" style="font-size: 0.8125rem;">
+                        Longitude <span class="text-muted fw-normal">(optional decimal degrees)</span>
+                    </label>
+                    {{ form.longitude }}
+                    {% if form.longitude.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.longitude.errors.0 }}</div>
+                    {% endif %}
+                </div>
             </div>
             {% endif %}
 
-            <!-- Bottom Actions: Save Changes and Logout -->
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 border-top">
+            <div class="pt-3 border-top">
                 <button type="submit" class="btn btn-teal py-2 px-4">
-                    <i class="fa-solid fa-floppy-disk me-2"></i> Save Changes
+                    <i class="fa-solid fa-floppy-disk me-2"></i> Save Profile Details
                 </button>
-
-                <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-danger py-2 px-3" title="Sign out of your account">
-                        <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
-                    </button>
-                </form>
             </div>
         </form>
 
     </div>
 
+    <!-- Dedicated Password Change Card -->
+    <div class="card-clean p-4 p-md-5 mb-4 shadow-sm" id="passwordSection">
+        <h5 class="fw-semibold mb-2" style="font-size: 0.95rem; color: var(--text);">
+            <i class="fa-solid fa-key me-2" style="color: var(--primary);"></i> Change Password
+        </h5>
+        <p class="text-muted mb-4" style="font-size: 0.8125rem;">
+            Ensure your account uses a strong, unique password. Password changes are hashed securely using Django PBKDF2.
+        </p>
+
+        <form method="post" action="{% url 'accounts:profile' %}#passwordSection" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="change_password">
+
+            {% if password_form.non_field_errors %}
+                <div class="alert alert-danger py-2 px-3 mb-3" style="font-size: 0.8125rem;">
+                    {% for error in password_form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="id_old_password" style="font-size: 0.8125rem;">
+                    Current Password <span class="text-danger">*</span>
+                </label>
+                <input type="password" name="old_password" id="id_old_password" class="form-control" autocomplete="current-password" required placeholder="Enter current password">
+                {% if password_form.old_password.errors %}
+                    <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ password_form.old_password.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_new_password1" style="font-size: 0.8125rem;">
+                        New Password <span class="text-danger">*</span>
+                    </label>
+                    <input type="password" name="new_password1" id="id_new_password1" class="form-control" autocomplete="new-password" required placeholder="Enter new password">
+                    {% if password_form.new_password1.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ password_form.new_password1.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold" for="id_new_password2" style="font-size: 0.8125rem;">
+                        Confirm New Password <span class="text-danger">*</span>
+                    </label>
+                    <input type="password" name="new_password2" id="id_new_password2" class="form-control" autocomplete="new-password" required placeholder="Confirm new password">
+                    {% if password_form.new_password2.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ password_form.new_password2.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="pt-3 border-top">
+                <button type="submit" class="btn btn-outline-teal py-2 px-4">
+                    <i class="fa-solid fa-lock me-2"></i> Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+
 </div>
+
+<!-- Geolocation detection script for Citizen Profile -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const btn = document.getElementById("btnDetectProfileLoc");
+        const locInput = document.getElementById("id_registered_location");
+        const latInput = document.getElementById("id_profile_latitude");
+        const lngInput = document.getElementById("id_profile_longitude");
+        const alertBox = document.getElementById("profileGeoAlert");
+        const iconSpan = document.getElementById("profileGeoIcon");
+        const textSpan = document.getElementById("profileGeoText");
+
+        function setAlert(type, msg, iconClass) {
+            if (!alertBox) return;
+            alertBox.className = `alert alert-${type} py-1 px-2 mt-2 mb-1 d-flex align-items-center gap-2`;
+            if (iconSpan) iconSpan.className = iconClass || "fa-solid fa-circle-info";
+            if (textSpan) textSpan.textContent = msg;
+            alertBox.classList.remove("d-none");
+        }
+
+        if (btn) {
+            btn.addEventListener("click", function () {
+                if (!("geolocation" in navigator)) {
+                    setAlert("warning", "Geolocation is not supported by your browser.", "fa-solid fa-triangle-exclamation");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Detecting…';
+                setAlert("info", "Detecting current coordinates…", "fa-solid fa-spinner fa-spin");
+
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        if (latInput) latInput.value = lat.toFixed(6);
+                        if (lngInput) lngInput.value = lng.toFixed(6);
+
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Detected';
+                        setAlert("success", `GPS coordinates captured (${lat.toFixed(4)}, ${lng.toFixed(4)})`, "fa-solid fa-circle-check text-success");
+
+                        if (locInput && !locInput.value.trim()) {
+                            locInput.placeholder = `GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                        }
+                    },
+                    function (err) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Detect Location';
+                        let msg = "Could not retrieve location. Please enter manually.";
+                        if (err.code === err.PERMISSION_DENIED) {
+                            msg = "Location permission denied by browser.";
+                        }
+                        setAlert("warning", msg, "fa-solid fa-triangle-exclamation text-warning");
+                    },
+                    { timeout: 10000 }
+                );
+            });
+        }
+    });
+</script>
 {% endblock %}

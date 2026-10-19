@@ -413,27 +413,71 @@ p {
     box-shadow: inset 0 0 0 1px rgba(5, 150, 105, 0.25);
 }
 
-/* Styled Emergency SOS Nav Item with Pulse */
-.nav-link-emergency {
-    color: #e11d48 !important;
-    background: rgba(225, 29, 72, 0.08) !important;
-    border: 1px solid rgba(225, 29, 72, 0.25) !important;
-    box-shadow: 0 2px 10px rgba(225, 29, 72, 0.12) !important;
-    animation: subtle-emergency-pulse 3s infinite;
+/* Styled Emergency SOS Nav Action (Harmonious pill styling matching other navbar options) */
+.nav-emergency-btn,
+#mainNav .nav-emergency-btn,
+.navbar-venom .nav-emergency-btn,
+a.nav-emergency-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    padding: 0.44rem 0.9rem !important;
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    color: #dc2626 !important;
+    background: rgba(220, 38, 38, 0.08) !important;
+    border: 1px solid rgba(220, 38, 38, 0.25) !important;
+    border-radius: var(--radius-full) !important;
+    text-decoration: none !important;
+    transition: all var(--transition) !important;
+    white-space: nowrap !important;
+    line-height: 1.25 !important;
 }
 
-.nav-link-emergency:hover,
-.nav-link-emergency.active {
-    background: var(--danger-gradient) !important;
+.nav-emergency-btn i,
+#mainNav .nav-emergency-btn i,
+.navbar-venom .nav-emergency-btn i,
+a.nav-emergency-btn i {
+    color: #dc2626 !important;
+    font-size: 0.92rem !important;
+    transition: transform var(--transition) !important;
+}
+
+.nav-emergency-btn:hover,
+#mainNav .nav-emergency-btn:hover,
+.navbar-venom .nav-emergency-btn:hover,
+a.nav-emergency-btn:hover {
+    background: #dc2626 !important;
     color: #ffffff !important;
-    border-color: transparent !important;
-    box-shadow: var(--glow-danger) !important;
-    transform: translateY(-2px);
+    border-color: #dc2626 !important;
+    box-shadow: 0 3px 10px rgba(220, 38, 38, 0.25) !important;
+    transform: translateY(-1px) !important;
+    text-decoration: none !important;
 }
 
-@keyframes subtle-emergency-pulse {
-    0%, 100% { box-shadow: 0 2px 10px rgba(225, 29, 72, 0.12); }
-    50% { box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35); }
+.nav-emergency-btn:hover i,
+#mainNav .nav-emergency-btn:hover i,
+.navbar-venom .nav-emergency-btn:hover i,
+a.nav-emergency-btn:hover i {
+    color: #ffffff !important;
+    transform: scale(1.15) !important;
+}
+
+.nav-emergency-btn.active,
+#mainNav .nav-emergency-btn.active,
+.navbar-venom .nav-emergency-btn.active,
+a.nav-emergency-btn.active {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    border-color: #dc2626 !important;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2) !important;
+}
+
+.nav-emergency-btn.active i,
+#mainNav .nav-emergency-btn.active i,
+.navbar-venom .nav-emergency-btn.active i,
+a.nav-emergency-btn.active i {
+    color: #ffffff !important;
 }
 
 /* User Identity Pill */
@@ -599,13 +643,21 @@ div.user-identity-badge {
         border-radius: var(--radius-md) !important;
     }
 
-    #venomNavbar .d-flex.align-items-center.gap-2 {
+    #venomNavbar .d-flex.align-items-center.gap-2,
+    #venomNavbar .navbar-right {
         flex-direction: column !important;
         align-items: stretch !important;
         width: 100% !important;
         gap: 0.5rem !important;
         padding-top: 0.75rem;
         border-top: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    #venomNavbar .nav-emergency-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 0.6rem 0.9rem !important;
+        border-radius: var(--radius-md) !important;
     }
 
     #venomNavbar .user-identity-card {
@@ -1606,3 +1658,4 @@ div.user-identity-badge {
         transform: none !important;
     }
 }
+

@@ -4,20 +4,19 @@
 
 {% block content %}
 <div class="auth-container">
-    <div class="auth-card auth-card-wide">
+    <div class="auth-card auth-card-wide" style="max-width: 680px;">
 
         <!-- Header -->
         <div class="auth-card-header">
             <div class="auth-icon-wrapper">
                 <i class="fa-solid fa-user-plus"></i>
             </div>
-            <h2 class="auth-title">Create account</h2>
-            <p class="auth-subtitle">Join Venom Watch to report sightings and access community safety tools</p>
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-subtitle">Register for community sighting reports or apply for official responder access</p>
         </div>
 
-        <form method="post" action="{% url 'accounts:register' %}" novalidate autocomplete="off">
+        <form method="post" action="{% url 'accounts:register' %}" enctype="multipart/form-data" novalidate autocomplete="off">
             {% csrf_token %}
-            {{ form.role }}
 
             {% if form.non_field_errors %}
                 <div class="alert alert-danger py-2 mb-3" style="font-size: 0.8125rem;">
@@ -27,18 +26,67 @@
                 </div>
             {% endif %}
 
-            <!-- Informational Registration Notice -->
-            <div class="auth-info-banner">
+            <!-- Role Selection Cards -->
+            <div class="mb-4">
+                <label class="auth-form-label mb-2 d-block fw-semibold text-dark">Select Account Type *</label>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="role-card p-3 rounded border w-100 d-flex flex-column align-items-center text-center h-100"
+                               id="label_role_citizen" style="cursor: pointer; background: #f0fdf4; border-color: #059669 !important; transition: all 0.2s;">
+                            <input type="radio" name="role" value="citizen" id="role_citizen" class="d-none"
+                                   {% if form.role.value == 'citizen' or not form.role.value %}checked{% endif %}>
+                            <i class="fa-solid fa-user fs-4 text-teal mb-2"></i>
+                            <strong class="text-dark" style="font-size: 0.88rem;">Citizen</strong>
+                            <small class="text-muted" style="font-size: 0.72rem;">Public reports &amp; safety alerts</small>
+                            <span class="badge bg-success-subtle text-success mt-2" style="font-size: 0.65rem;">Instant Access</span>
+                        </label>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="role-card p-3 rounded border w-100 d-flex flex-column align-items-center text-center h-100"
+                               id="label_role_ranger" style="cursor: pointer; background: #fff; border-color: #e2e8f0; transition: all 0.2s;">
+                            <input type="radio" name="role" value="ranger" id="role_ranger" class="d-none"
+                                   {% if form.role.value == 'ranger' %}checked{% endif %}>
+                            <i class="fa-solid fa-tree fs-4 text-success mb-2"></i>
+                            <strong class="text-dark" style="font-size: 0.88rem;">Forest Ranger</strong>
+                            <small class="text-muted" style="font-size: 0.72rem;">Field responder &amp; rescue</small>
+                            <span class="badge bg-warning-subtle text-warning mt-2" style="font-size: 0.65rem;">Requires Approval</span>
+                        </label>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="role-card p-3 rounded border w-100 d-flex flex-column align-items-center text-center h-100"
+                               id="label_role_authority" style="cursor: pointer; background: #fff; border-color: #e2e8f0; transition: all 0.2s;">
+                            <input type="radio" name="role" value="authority" id="role_authority" class="d-none"
+                                   {% if form.role.value == 'authority' %}checked{% endif %}>
+                            <i class="fa-solid fa-shield-halved fs-4 text-primary mb-2"></i>
+                            <strong class="text-dark" style="font-size: 0.88rem;">Wildlife Authority</strong>
+                            <small class="text-muted" style="font-size: 0.72rem;">Incident review &amp; dispatch</small>
+                            <span class="badge bg-warning-subtle text-warning mt-2" style="font-size: 0.65rem;">Requires Approval</span>
+                        </label>
+                    </div>
+                </div>
+                {% for error in form.role.errors %}
+                    <div class="auth-form-error mt-1"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <!-- Dynamic Role Info Notice -->
+            <div id="citizenNotice" class="auth-info-banner mb-3">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    You are registering a <strong>Citizen</strong> account. Ranger, Authority, and Administrator accounts are provisioned administratively by the department.
+                    <strong>Citizen Account:</strong> Submissions are active immediately. You can track sightings, access emergency guides, and view community risk zones.
                 </div>
             </div>
 
-            {% for error in form.role.errors %}
-                <div class="auth-form-error mb-2"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-            {% endfor %}
+            <div id="officialNotice" class="alert alert-warning py-2 mb-3 d-none" style="font-size: 0.8125rem;">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="fa-solid fa-shield-halved mt-1 text-warning"></i>
+                    <div>
+                        <strong>Administrative Approval Required:</strong> Official credentials and supporting documents will be reviewed and verified by an Administrator before operational dashboard access is activated.
+                    </div>
+                </div>
+            </div>
 
+            <!-- Row 1: Username & Email -->
             <div class="auth-form-row">
                 <div class="auth-form-group">
                     <label class="auth-form-label" for="{{ form.username.id_for_label }}">Username *</label>
@@ -57,6 +105,7 @@
                 </div>
             </div>
 
+            <!-- Row 2: First Name & Last Name -->
             <div class="auth-form-row">
                 <div class="auth-form-group">
                     <label class="auth-form-label" for="{{ form.first_name.id_for_label }}">First name *</label>
@@ -66,7 +115,7 @@
                     {% endfor %}
                 </div>
                 <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.last_name.id_for_label }}">Last name</label>
+                    <label class="auth-form-label" for="{{ form.last_name.id_for_label }}">Last name <span class="text-muted fw-normal">(optional)</span></label>
                     {{ form.last_name }}
                     {% for error in form.last_name.errors %}
                         <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
@@ -74,23 +123,122 @@
                 </div>
             </div>
 
-            <div class="auth-form-row">
-                <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.phone_number.id_for_label }}">Phone number</label>
-                    {{ form.phone_number }}
-                    {% for error in form.phone_number.errors %}
-                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.organization.id_for_label }}">Organization (optional)</label>
-                    {{ form.organization }}
-                    {% for error in form.organization.errors %}
-                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-                    {% endfor %}
+            <!-- Row 3: Contact Phone Number -->
+            <div class="auth-form-group mb-3">
+                <label class="auth-form-label" for="{{ form.phone_number.id_for_label }}">
+                    Phone number <span class="text-muted fw-normal">(required for official roles, optional for citizens)</span>
+                </label>
+                {{ form.phone_number }}
+                {% for error in form.phone_number.errors %}
+                    <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <!-- Official Fields (Shown for Ranger & Authority) -->
+            <div id="officialFieldsGroup" class="d-none">
+                <div class="p-3 rounded mb-3" style="background: #f8fafc; border: 1.5px dashed #cbd5e1;">
+                    <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.88rem;">
+                        <i class="fa-solid fa-id-card me-1 text-teal"></i> Official Credential Information
+                    </h6>
+                    <p class="text-muted mb-3" style="font-size: 0.77rem;">
+                        Please provide your institutional affiliation and upload your official ID card or appointment letter for administrative review.
+                    </p>
+
+                    <div class="auth-form-row mb-3">
+                        <div class="auth-form-group">
+                            <label class="auth-form-label" for="{{ form.organization.id_for_label }}">Organization / Department *</label>
+                            {{ form.organization }}
+                            {% for error in form.organization.errors %}
+                                <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="auth-form-group">
+                            <label class="auth-form-label" for="{{ form.assigned_region.id_for_label }}">Assigned Region / Jurisdiction *</label>
+                            {{ form.assigned_region }}
+                            {% for error in form.assigned_region.errors %}
+                                <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="auth-form-group mb-2">
+                        <label class="auth-form-label" for="{{ form.supporting_document.id_for_label }}">
+                            Official ID / Authorization Document * <span class="text-muted fw-normal">(PDF, JPG, PNG &le; 5 MB)</span>
+                        </label>
+                        {{ form.supporting_document }}
+                        <small class="text-muted d-block mt-1" style="font-size: 0.73rem;">
+                            <i class="fa-solid fa-lock me-1"></i> Uploaded documents are stored in secure private storage accessible only to platform administrators.
+                        </small>
+                        {% for error in form.supporting_document.errors %}
+                            <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 
+            <!-- Location Section (Base station for Ranger, optional for Citizen) -->
+            <div class="auth-location-section mb-3 p-3 rounded" style="background: rgba(241, 245, 249, 0.7); border: 1px solid #e2e8f0;">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <label class="auth-form-label mb-0" for="{{ form.registered_location.id_for_label }}" style="font-size: 0.84rem;">
+                        <i class="fa-solid fa-map-location-dot me-1" style="color: #059669;"></i>
+                        <span id="locationLabel">Location &amp; District (optional)</span>
+                    </label>
+                    <button type="button" id="btnDetectLocation" class="btn btn-sm"
+                            style="background-color: #ffffff; color: #059669; border: 1.5px solid #059669; font-weight: 600; font-size: 0.78rem; border-radius: 6px;">
+                        <i class="fa-solid fa-location-crosshairs me-1"></i> Detect My Location
+                    </button>
+                </div>
+
+                <p id="locationHelpText" class="text-muted mb-2" style="font-size: 0.77rem; line-height: 1.45;">
+                    Responders use local coordinates to calculate genuine travel distances for snake incident response.
+                </p>
+
+                {{ form.registered_location }}
+                {% for error in form.registered_location.errors %}
+                    <div class="auth-form-error mt-1"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                {% endfor %}
+
+                <!-- Geolocation Live Status Feedback -->
+                <div id="locationStatusAlert" class="d-none alert py-1 px-2 mt-2 mb-1 d-flex align-items-center gap-2" style="font-size: 0.78rem;">
+                    <span id="locationStatusIcon"></span>
+                    <span id="locationStatusText"></span>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mt-2 pt-1 border-top" style="border-color: #e2e8f0 !important;">
+                    <button type="button" id="toggleCoordsBtn" class="btn btn-link p-0 text-decoration-none" style="font-size: 0.76rem; color: #059669; font-weight: 500;">
+                        <i class="fa-solid fa-sliders me-1"></i> <span id="toggleCoordsText">Enter GPS Coordinates Manually (optional)</span>
+                    </button>
+                    <div id="coordPreviewBadge" class="d-none text-muted" style="font-size: 0.72rem;">
+                        <i class="fa-solid fa-satellite me-1" style="color: #059669;"></i> <span id="coordPreviewText" class="fw-semibold text-dark"></span>
+                    </div>
+                </div>
+
+                <!-- GPS Coordinates (can be entered manually or auto-detected) -->
+                <div id="manualCoordsContainer" class="d-none mt-2 pt-2 border-top" style="border-color: #e2e8f0 !important;">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="auth-form-label mb-1" for="id_latitude" style="font-size: 0.74rem;">Latitude (-90 to +90)</label>
+                            {{ form.latitude }}
+                            {% for error in form.latitude.errors %}
+                                <div class="auth-form-error mt-1"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-6">
+                            <label class="auth-form-label mb-1" for="id_longitude" style="font-size: 0.74rem;">Longitude (-180 to +180)</label>
+                            {{ form.longitude }}
+                            {% for error in form.longitude.errors %}
+                                <div class="auth-form-error mt-1"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-size: 0.71rem;">
+                        <i class="fa-solid fa-circle-info me-1"></i> You can enter exact coordinates manually or leave blank if you typed your base outpost/district above.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Row 4: Password & Confirm Password -->
             <div class="auth-form-row">
                 <div class="auth-form-group">
                     <label class="auth-form-label" for="{{ form.password1.id_for_label }}">Password *</label>
@@ -120,33 +268,8 @@
                 </ul>
             </div>
 
-            <!-- Ranger-only fields (hidden for public registration) -->
-            <div id="ranger-fields" style="display:none;" class="auth-form-row">
-                <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.registered_location.id_for_label }}">Registered location *</label>
-                    {{ form.registered_location }}
-                    {% for error in form.registered_location.errors %}
-                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.latitude.id_for_label }}">Base latitude *</label>
-                    {{ form.latitude }}
-                    {% for error in form.latitude.errors %}
-                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="auth-form-group">
-                    <label class="auth-form-label" for="{{ form.longitude.id_for_label }}">Base longitude *</label>
-                    {{ form.longitude }}
-                    {% for error in form.longitude.errors %}
-                        <div class="auth-form-error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <button type="submit" class="auth-btn-primary">
-                <i class="fa-solid fa-user-plus me-2"></i> Create Account
+            <button type="submit" id="submitBtn" class="auth-btn-primary">
+                <i class="fa-solid fa-user-plus me-2"></i> Register Account
             </button>
         </form>
 
@@ -160,4 +283,171 @@
         </div>
     </div>
 </div>
+
+<!-- Interactive Role Selector & Geolocation JavaScript Engine -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const roleRadios = document.querySelectorAll('input[name="role"]');
+        const citizenNotice = document.getElementById("citizenNotice");
+        const officialNotice = document.getElementById("officialNotice");
+        const officialFields = document.getElementById("officialFieldsGroup");
+        const locationLabel = document.getElementById("locationLabel");
+        const locationHelpText = document.getElementById("locationHelpText");
+        const submitBtn = document.getElementById("submitBtn");
+
+        function updateRoleUI() {
+            let selectedRole = "citizen";
+            roleRadios.forEach(radio => {
+                const card = document.getElementById(`label_role_${radio.value}`);
+                if (radio.checked) {
+                    selectedRole = radio.value;
+                    if (card) {
+                        card.style.background = "#f0fdf4";
+                        card.style.borderColor = "#059669";
+                    }
+                } else if (card) {
+                    card.style.background = "#fff";
+                    card.style.borderColor = "#e2e8f0";
+                }
+            });
+
+            if (selectedRole === "citizen") {
+                citizenNotice.classList.remove("d-none");
+                officialNotice.classList.add("d-none");
+                officialFields.classList.add("d-none");
+                locationLabel.innerHTML = 'Location &amp; District <span class="text-muted fw-normal">(optional)</span>';
+                locationHelpText.textContent = "Help local responders map snake sightings in your area. Browser location is optional and requires your permission.";
+                submitBtn.innerHTML = '<i class="fa-solid fa-user-plus me-2"></i> Create Citizen Account';
+            } else {
+                citizenNotice.classList.add("d-none");
+                officialNotice.classList.remove("d-none");
+                officialFields.classList.remove("d-none");
+
+                if (selectedRole === "ranger") {
+                    locationLabel.innerHTML = 'Ranger Base Station / Operating Outpost *';
+                    locationHelpText.textContent = "Specify your operational base station or outpost. Real GPS coordinates are used for nearest-distance incident dispatch.";
+                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i> Submit Ranger Application';
+                } else {
+                    locationLabel.innerHTML = 'Authority Headquarters / Duty Station';
+                    locationHelpText.textContent = "Specify your administrative office or department station.";
+                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i> Submit Authority Application';
+                }
+            }
+        }
+
+        roleRadios.forEach(radio => {
+            radio.addEventListener("change", updateRoleUI);
+        });
+
+        // Initialize UI state
+        updateRoleUI();
+
+        // Browser Geolocation
+        const btn = document.getElementById("btnDetectLocation");
+        const locInput = document.getElementById("id_registered_location");
+        const latInput = document.getElementById("id_latitude");
+        const lngInput = document.getElementById("id_longitude");
+        const statusAlert = document.getElementById("locationStatusAlert");
+        const statusIcon = document.getElementById("locationStatusIcon");
+        const statusText = document.getElementById("locationStatusText");
+        const coordBadge = document.getElementById("coordPreviewBadge");
+        const coordText = document.getElementById("coordPreviewText");
+
+        function setStatus(type, message, iconClass) {
+            if (!statusAlert) return;
+            statusAlert.className = `alert alert-${type} py-1 px-2 mt-2 mb-1 d-flex align-items-center gap-2`;
+            statusIcon.className = iconClass || "fa-solid fa-circle-info";
+            statusText.textContent = message;
+            statusAlert.classList.remove("d-none");
+        }
+
+        if (btn) {
+            btn.addEventListener("click", function () {
+                if (!("geolocation" in navigator)) {
+                    setStatus("warning", "Browser geolocation is not supported on this device. You can enter your location manually.", "fa-solid fa-triangle-exclamation");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Detecting location…';
+                setStatus("info", "Detecting location… please grant location permission if prompted.", "fa-solid fa-spinner fa-spin");
+
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+
+                        if (latInput) latInput.value = lat.toFixed(6);
+                        if (lngInput) lngInput.value = lng.toFixed(6);
+
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Location Detected';
+                        setStatus("success", `Location detected successfully (${lat.toFixed(4)}, ${lng.toFixed(4)})`, "fa-solid fa-circle-check text-success");
+
+                        if (coordBadge && coordText) {
+                            coordText.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                            coordBadge.classList.remove("d-none");
+                        }
+
+                        if (locInput && !locInput.value.trim()) {
+                            locInput.placeholder = `GPS detected (${lat.toFixed(4)}, ${lng.toFixed(4)}) — enter city/district if desired`;
+                        }
+                    },
+                    function (error) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Detect My Location';
+
+                        let msg = "Unable to retrieve location. Please enter your location manually.";
+                        if (error.code === error.PERMISSION_DENIED) {
+                            msg = "Location permission denied. You can enter your district or town manually.";
+                        } else if (error.code === error.TIMEOUT) {
+                            msg = "Location request timed out. Please enter your location manually.";
+                        } else if (error.code === error.POSITION_UNAVAILABLE) {
+                            msg = "Location information is unavailable. Please enter your location manually.";
+                        }
+                        setStatus("warning", msg, "fa-solid fa-triangle-exclamation text-warning");
+                    },
+                    { timeout: 10000, enableHighAccuracy: false }
+                );
+            });
+        }
+
+        // Manual Coordinates Container Toggle
+        const toggleCoordsBtn = document.getElementById("toggleCoordsBtn");
+        const toggleCoordsText = document.getElementById("toggleCoordsText");
+        const manualCoordsContainer = document.getElementById("manualCoordsContainer");
+
+        if (toggleCoordsBtn && manualCoordsContainer) {
+            // Auto open if coordinates already present or error present
+            if ((latInput && latInput.value) || (lngInput && lngInput.value) || manualCoordsContainer.querySelector('.auth-form-error')) {
+                manualCoordsContainer.classList.remove("d-none");
+                if (toggleCoordsText) toggleCoordsText.textContent = "Hide GPS Coordinates";
+            }
+
+            toggleCoordsBtn.addEventListener("click", function () {
+                const isHidden = manualCoordsContainer.classList.contains("d-none");
+                if (isHidden) {
+                    manualCoordsContainer.classList.remove("d-none");
+                    if (toggleCoordsText) toggleCoordsText.textContent = "Hide GPS Coordinates";
+                } else {
+                    manualCoordsContainer.classList.add("d-none");
+                    if (toggleCoordsText) toggleCoordsText.textContent = "Enter GPS Coordinates Manually (optional)";
+                }
+            });
+
+            function updateCoordBadgeFromInputs() {
+                const latVal = latInput ? latInput.value.trim() : '';
+                const lngVal = lngInput ? lngInput.value.trim() : '';
+                if (latVal && lngVal && coordBadge && coordText) {
+                    coordText.textContent = `${parseFloat(latVal) || latVal}, ${parseFloat(lngVal) || lngVal}`;
+                    coordBadge.classList.remove("d-none");
+                }
+            }
+
+            if (latInput) latInput.addEventListener("input", updateCoordBadgeFromInputs);
+            if (lngInput) lngInput.addEventListener("input", updateCoordBadgeFromInputs);
+            updateCoordBadgeFromInputs();
+        }
+    });
+</script>
 {% endblock %}

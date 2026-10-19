@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Platform Administration — VenomWatch{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 1140px;">
+
+    <!-- Admin Welcome Header -->
+    <div class="card-clean p-4 mb-4 border-start border-4 shadow-sm" style="border-left-color: var(--primary) !important;">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge" style="background: var(--primary); color: #fff; font-size: 0.72rem; letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-shield-halved me-1"></i> PLATFORM ADMINISTRATION
+                    </span>
+                    <span class="text-muted" style="font-size: 0.78rem;">Administrative &amp; Registry Console</span>
+                </div>
+                <h2 class="fw-bold mb-1" style="font-size: 1.4rem; color: var(--text);">
+                    Welcome, {{ request.user.get_full_name|default:request.user.username }}
+                </h2>
+                <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                    Platform oversight: Review official registration applications, maintain operational account statuses, and update hospital emergency records.
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary btn-sm px-3" title="View &amp; edit personal administrator profile">
+                    <i class="fa-solid fa-user-gear me-1"></i> My Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Platform Statistics (Real Database Counts) -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Pending Authority Applications -->
+        <div class="col-6 col-lg-3">
+            <div class="card-clean p-3 h-100 shadow-sm border-start border-4 border-warning">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">Pending Authority Apps</span>
+                    <i class="fa-solid fa-user-clock text-warning" style="font-size: 1.15rem;"></i>
+                </div>
+                <div class="fw-bold fs-3 text-warning">{{ stats.pending_authority }}</div>
+                <small class="text-muted" style="font-size: 0.75rem;">Awaiting official verification</small>
+            </div>
+        </div>
+
+        <!-- 2. Pending Ranger Applications -->
+        <div class="col-6 col-lg-3">
+            <div class="card-clean p-3 h-100 shadow-sm border-start border-4" style="border-left-color: #d97706 !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">Pending Ranger Apps</span>
+                    <i class="fa-solid fa-clipboard-check" style="color: #d97706; font-size: 1.15rem;"></i>
+                </div>
+                <div class="fw-bold fs-3" style="color: #d97706;">{{ stats.pending_ranger }}</div>
+                <small class="text-muted" style="font-size: 0.75rem;">Field personnel submissions</small>
+            </div>
+        </div>
+
+        <!-- 3. Active Authority Accounts -->
+        <div class="col-6 col-lg-3">
+            <div class="card-clean p-3 h-100 shadow-sm border-start border-4" style="border-left-color: var(--primary) !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">Active Authority</span>
+                    <i class="fa-solid fa-shield" style="color: var(--primary); font-size: 1.15rem;"></i>
+                </div>
+                <div class="fw-bold fs-3" style="color: var(--primary);">{{ stats.active_authority }}</div>
+                <small class="text-muted" style="font-size: 0.75rem;">Approved surveillance officers</small>
+            </div>
+        </div>
+
+        <!-- 4. Active Ranger Accounts -->
+        <div class="col-6 col-lg-3">
+            <div class="card-clean p-3 h-100 shadow-sm border-start border-4 border-success">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">Active Rangers</span>
+                    <i class="fa-solid fa-tree text-success" style="font-size: 1.15rem;"></i>
+                </div>
+                <div class="fw-bold fs-3 text-success">{{ stats.active_ranger }}</div>
+                <small class="text-muted" style="font-size: 0.75rem;">
+                    Operational rescue responders
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact Status Notice (Suspended / Banned) -->
+    {% if stats.suspended_banned_count > 0 %}
+    <div class="alert alert-light border py-2 px-3 mb-4 d-flex align-items-center justify-content-between" style="font-size: 0.8125rem;">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation text-danger"></i>
+            <span><strong>{{ stats.suspended_banned_count }}</strong> account{{ stats.suspended_banned_count|pluralize }} currently placed on administrative suspension or ban.</span>
+        </div>
+        <a href="{% url 'accounts:admin_provision' %}?status=suspended" class="btn btn-outline-danger btn-xs py-1 px-2" style="font-size: 0.75rem;">
+            View Restricted Accounts
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Three Primary Action Cards -->
+    <div class="row g-4 mb-4">
+
+        <!-- 1. Review Applications -->
+        <div class="col-lg-4">
+            <div class="card-clean h-100 p-4 shadow-sm d-flex flex-column justify-content-between border-top border-4 border-warning">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.12); color: #d97706; font-size: 1.3rem;">
+                            <i class="fa-solid fa-file-signature"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0" style="font-size: 1.05rem; color: var(--text);">Review Applications</h5>
+                            <small class="text-muted">Authority &amp; Ranger Submissions</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-3" style="font-size: 0.8125rem; line-height: 1.5;">
+                        Review registration applications from prospective Authority Officers and Forest Rangers. Inspect uploaded verification credentials, approve accounts, or reject ineligible requests.
+                    </p>
+                    <div class="p-3 rounded mb-3" style="background: var(--surface-hover); font-size: 0.78rem;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Pending Applications:</span>
+                            <strong class="{% if stats.total_pending > 0 %}text-warning{% else %}text-muted{% endif %}">{{ stats.total_pending }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Verification Gate:</span>
+                            <span class="text-success fw-semibold"><i class="fa-solid fa-lock me-1"></i>Protected Documents</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-top">
+                    <a href="{% url 'accounts:admin_provision' %}#pane-applications" class="btn btn-warning w-100 text-dark fw-semibold" style="font-size: 0.875rem;">
+                        <i class="fa-solid fa-clipboard-check me-2"></i> Review Applications
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Manage Accounts -->
+        <div class="col-lg-4">
+            <div class="card-clean h-100 p-4 shadow-sm d-flex flex-column justify-content-between border-top border-4" style="border-top-color: var(--primary) !important;">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(13, 148, 136, 0.12); color: var(--primary); font-size: 1.3rem;">
+                            <i class="fa-solid fa-users-gear"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0" style="font-size: 1.05rem; color: var(--text);">Manage Accounts</h5>
+                            <small class="text-muted">Operational Roster &amp; Status</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-3" style="font-size: 0.8125rem; line-height: 1.5;">
+                        View approved Authority Officer and Ranger accounts in read-only mode. Maintain platform integrity by placing accounts on administrative suspension, ban, or reinstatement.
+                    </p>
+                    <div class="p-3 rounded mb-3" style="background: var(--surface-hover); font-size: 0.78rem;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Active Responders:</span>
+                            <strong class="text-dark">{{ stats.active_authority|add:stats.active_ranger }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Security Audit Log:</span>
+                            <span class="text-teal fw-semibold"><i class="fa-solid fa-clock-rotate-left me-1"></i>Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-top">
+                    <a href="{% url 'accounts:admin_provision' %}#pane-roster" class="btn btn-teal w-100 fw-semibold" style="font-size: 0.875rem;">
+                        <i class="fa-solid fa-users-gear me-2"></i> Manage Accounts
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Manage Hospital Registry -->
+        <div class="col-lg-4">
+            <div class="card-clean h-100 p-4 shadow-sm d-flex flex-column justify-content-between border-top border-4" style="border-top-color: #0284c7 !important;">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(2, 132, 199, 0.12); color: #0284c7; font-size: 1.3rem;">
+                            <i class="fa-solid fa-hospital"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0" style="font-size: 1.05rem; color: var(--text);">Manage Hospital Registry</h5>
+                            <small class="text-muted">Emergency Healthcare Reference</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-3" style="font-size: 0.8125rem; line-height: 1.5;">
+                        Maintain medical facilities for emergency routing, update anti-venom reference records, register ICU capabilities, and manage emergency contact information.
+                    </p>
+                    <div class="p-3 rounded mb-3" style="background: var(--surface-hover); font-size: 0.78rem;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Inventory Mode:</span>
+                            <span class="text-muted">Manual Reference Data</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Facility Routing:</span>
+                            <span class="text-success fw-semibold"><i class="fa-solid fa-map-pin me-1"></i>GPS Enabled</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-top">
+                    <a href="{% url 'emergency:hospital_manage' %}" class="btn btn-outline-primary w-100 fw-semibold" style="font-size: 0.875rem;">
+                        <i class="fa-solid fa-hospital me-2"></i> Manage Hospital Registry
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

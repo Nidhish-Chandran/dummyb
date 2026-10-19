@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+
+{% block title %}Hospital & Anti-Venom Management — Venom Watch Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Top Admin Header -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{% url 'accounts:admin_dashboard' %}" class="badge text-decoration-none" style="background: rgba(13, 148, 136, 0.12); color: var(--primary); font-size: 0.78rem;">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Admin Dashboard
+                </a>
+                <span class="text-muted" style="font-size: 0.78rem;">/</span>
+                <span class="text-muted" style="font-size: 0.78rem;">Hospital Management</span>
+            </div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.4rem; color: var(--text);">
+                <i class="fa-solid fa-hospital me-2" style="color: var(--primary);"></i>
+                Hospital &amp; Anti-Venom Supply Registry
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Maintain official treatment facilities, verified anti-venom vial inventories, and critical care emergency capabilities.
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="{% url 'emergency:assistance' %}" target="_blank" class="btn btn-outline-secondary btn-sm px-3">
+                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Public Hospital Locator
+            </a>
+            <a href="{% url 'accounts:admin_provision' %}" class="btn btn-outline-primary btn-sm px-3">
+                <i class="fa-solid fa-users-gear me-1"></i> Account Provisioning
+            </a>
+        </div>
+    </div>
+
+    <!-- Real Database Metric Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: var(--primary) !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">Total Hospitals</span>
+                    <i class="fa-solid fa-hospital" style="color: var(--primary); font-size: 1.1rem;"></i>
+                </div>
+                <div class="fw-bold fs-3" style="color: var(--text);">{{ stats.total_hospitals }}</div>
+                <small class="text-muted" style="font-size: 0.75rem;">Verified healthcare facilities</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: #10b981 !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">Anti-Venom Stock</span>
+                    <i class="fa-solid fa-vial-virus" style="color: #10b981; font-size: 1.1rem;"></i>
+                </div>
+                <div class="fw-bold fs-3" style="color: #10b981;">{{ stats.total_vials }} <span class="fs-6 fw-normal text-muted">vials</span></div>
+                <small class="text-muted" style="font-size: 0.75rem;">Across {{ stats.hospitals_with_av }} equipped hospitals</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: #0284c7 !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">ICU &amp; Ventilator</span>
+                    <i class="fa-solid fa-heart-pulse" style="color: #0284c7; font-size: 1.1rem;"></i>
+                </div>
+                <div class="fw-bold fs-3" style="color: #0284c7;">{{ stats.hospitals_with_icu }}</div>
+                <small class="text-muted" style="font-size: 0.75rem;">Advanced toxicology support</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: #f59e0b !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">24/7 Emergency Dept</span>
+                    <i class="fa-solid fa-truck-medical" style="color: #f59e0b; font-size: 1.1rem;"></i>
+                </div>
+                <div class="fw-bold fs-3" style="color: #f59e0b;">{{ stats.hospitals_with_ed }}</div>
+                <small class="text-muted" style="font-size: 0.75rem;">Round-the-clock emergency care</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Origin & Real-time Integration Notice -->
+    <div class="alert alert-info py-2 px-3 mb-4 d-flex align-items-center gap-2" style="font-size: 0.8125rem; border-radius: 8px;">
+        <i class="fa-solid fa-circle-info flex-shrink-0 text-primary"></i>
+        <div>
+            <strong>Registry Notice:</strong> Anti-venom availability and vial quantities in this registry are <em>manually maintained administrative records</em> based on periodic clinical updates. They do not constitute live IoT telemetry unless connected to a verified hospital stock interface.
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Form Column: Add New Hospital -->
+        <div class="col-lg-5">
+            <div class="card-clean p-4 shadow-sm sticky-top" style="top: 80px; z-index: 10;">
+                <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
+                    <h5 class="fw-bold mb-0" style="font-size: 1.05rem; color: var(--text);">
+                        <i class="fa-solid fa-square-plus me-2" style="color: var(--primary);"></i>
+                        Add Hospital to Registry
+                    </h5>
+                    <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">Admin Only</span>
+                </div>
+
+                <form method="post" action="{% url 'emergency:hospital_manage' %}" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_hospital">
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 px-3 mb-3" style="font-size: 0.8125rem;">
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Hospital Name -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="id_hospital_name" style="font-size: 0.8125rem;">
+                            Hospital Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- District and Phone -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" for="id_hospital_district" style="font-size: 0.8125rem;">
+                                District / Region <span class="text-danger">*</span>
+                            </label>
+                            {{ form.district }}
+                            {% if form.district.errors %}
+                                <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.district.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" for="id_hospital_phone" style="font-size: 0.8125rem;">
+                                Emergency Contact <span class="text-danger">*</span>
+                            </label>
+                            {{ form.phone_number }}
+                            {% if form.phone_number.errors %}
+                                <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.phone_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Full Address -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="id_hospital_address" style="font-size: 0.8125rem;">
+                            Address &amp; Landmark <span class="text-danger">*</span>
+                        </label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <div class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.address.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Coordinates with GPS Detection -->
+                    <div class="p-3 rounded mb-3" style="background: var(--surface-hover); border: 1px dashed var(--border);">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label fw-semibold mb-0" style="font-size: 0.8125rem;">
+                                <i class="fa-solid fa-location-dot me-1 text-primary"></i> GPS Coordinates <span class="text-danger">*</span>
+                            </label>
+                            <button type="button" class="btn btn-outline-teal btn-xs py-1 px-2" style="font-size: 0.75rem;" onclick="detectHospitalGPS()">
+                                <i class="fa-solid fa-crosshairs me-1"></i> Detect Current GPS
+                            </button>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted d-block mb-1" style="font-size: 0.72rem;">Latitude (-90 to +90)</small>
+                                {{ form.latitude }}
+                                {% if form.latitude.errors %}
+                                    <div class="text-danger mt-1" style="font-size: 0.72rem;">{{ form.latitude.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block mb-1" style="font-size: 0.72rem;">Longitude (-180 to +180)</small>
+                                {{ form.longitude }}
+                                {% if form.longitude.errors %}
+                                    <div class="text-danger mt-1" style="font-size: 0.72rem;">{{ form.longitude.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operating Hours -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="id_operating_hours" style="font-size: 0.8125rem;">Operating Hours</label>
+                        {{ form.operating_hours }}
+                    </div>
+
+                    <!-- Anti-Venom Stock & Availability -->
+                    <div class="p-3 rounded mb-3 border" style="background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.2) !important;">
+                        <h6 class="fw-bold mb-2" style="font-size: 0.85rem; color: #047857;">
+                            <i class="fa-solid fa-shield-virus me-1"></i> Anti-Venom Supply Details
+                        </h6>
+
+                        <div class="form-check form-switch mb-2">
+                            {{ form.anti_venom_available }}
+                            <label class="form-check-label fw-semibold" for="id_anti_venom_available" style="font-size: 0.8125rem;">
+                                Anti-Venom Available in Stock
+                            </label>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold" for="id_anti_venom_stock_vials" style="font-size: 0.8125rem;">
+                                Verified Stock (Vials)
+                            </label>
+                            {{ form.anti_venom_stock_vials }}
+                        </div>
+
+                        <div>
+                            <label class="form-label fw-semibold" for="id_anti_venom_notes" style="font-size: 0.8125rem;">
+                                Stock Notes &amp; Anti-Venom Type
+                            </label>
+                            {{ form.anti_venom_notes }}
+                        </div>
+                    </div>
+
+                    <!-- Critical Care Facilities -->
+                    <div class="row g-2 mb-4">
+                        <div class="col-6">
+                            <div class="form-check">
+                                {{ form.emergency_department }}
+                                <label class="form-check-label fw-semibold" for="id_emergency_department" style="font-size: 0.8125rem;">
+                                    Emergency Dept (24/7)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                {{ form.has_icu }}
+                                <label class="form-check-label fw-semibold" for="id_has_icu" style="font-size: 0.8125rem;">
+                                    ICU &amp; Ventilator
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-teal w-100 py-2">
+                        <i class="fa-solid fa-plus-circle me-1"></i> Register Hospital
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Directory Column: List, Search, and Manage -->
+        <div class="col-lg-7">
+            <div class="card-clean p-4 shadow-sm">
+
+                <!-- Header and Filter Form -->
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
+                    <div>
+                        <h5 class="fw-bold mb-0" style="font-size: 1.05rem; color: var(--text);">
+                            <i class="fa-solid fa-list-check me-2" style="color: var(--primary);"></i>
+                            Registered Hospitals ({{ hospitals|length }})
+                        </h5>
+                        <small class="text-muted" style="font-size: 0.75rem;">Operational facilities available for nearest-hospital emergency routing</small>
+                    </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <form method="get" class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
+                                <input type="text" name="q" value="{{ filters.q }}" class="form-control border-start-0" placeholder="Search name, district, address...">
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <select name="district" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">All Districts</option>
+                                {% for d in districts %}
+                                    <option value="{{ d }}" {% if filters.district == d %}selected{% endif %}>{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <select name="av" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">All Anti-Venom</option>
+                                <option value="available" {% if filters.av == 'available' %}selected{% endif %}>In Stock</option>
+                                <option value="unavailable" {% if filters.av == 'unavailable' %}selected{% endif %}>Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex gap-1">
+                            <button type="submit" class="btn btn-outline-teal btn-sm flex-grow-1">Filter</button>
+                            {% if filters.q or filters.district or filters.av or filters.icu %}
+                                <a href="{% url 'emergency:hospital_manage' %}" class="btn btn-outline-secondary btn-sm" title="Clear Filters">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Hospital Cards List -->
+                {% if hospitals %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for h in hospitals %}
+                            <div class="card border rounded-3 p-3 shadow-none hover-shadow transition" style="background: var(--surface);">
+                                <div class="d-flex flex-column flex-md-row align-items-md-start justify-content-between gap-2 pb-2 border-bottom">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <h6 class="fw-bold mb-0" style="font-size: 0.95rem; color: var(--text);">{{ h.name }}</h6>
+                                            {% if h.district %}
+                                                <span class="badge bg-light text-dark border" style="font-size: 0.72rem;">
+                                                    <i class="fa-solid fa-map-pin me-1 text-primary"></i>{{ h.district }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted d-block mt-1" style="font-size: 0.78rem;">
+                                            <i class="fa-solid fa-location-dot me-1"></i>{{ h.address }}
+                                        </small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap flex-shrink-0">
+                                        {% if h.anti_venom_available %}
+                                            <span class="badge" style="background: #10b981; font-size: 0.75rem;">
+                                                <i class="fa-solid fa-check-circle me-1"></i>{{ h.anti_venom_stock_vials }} Vials
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger" style="font-size: 0.75rem;">
+                                                <i class="fa-solid fa-circle-xmark me-1"></i>Out of Stock
+                                            </span>
+                                        {% endif %}
+
+                                        <a href="{% url 'emergency:hospital_edit' h.pk %}" class="btn btn-outline-primary btn-sm py-1 px-2" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+                                        </a>
+
+                                        <!-- Safe Delete Form with Confirmation -->
+                                        <form method="post" action="{% url 'emergency:hospital_delete' h.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete \'{{ h.name }}\' from the registered hospital database?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" title="Remove facility">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Detail Row -->
+                                <div class="row g-2 pt-2" style="font-size: 0.8rem;">
+                                    <div class="col-sm-6">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-phone text-muted" style="width: 16px;"></i>
+                                            <span class="fw-semibold text-truncate">{{ h.phone_number }}</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 mt-1">
+                                            <i class="fa-solid fa-clock text-muted" style="width: 16px;"></i>
+                                            <span class="text-muted text-truncate">{{ h.operating_hours }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            {% if h.emergency_department %}
+                                                <span class="badge bg-light text-success border border-success" style="font-size: 0.7rem;">
+                                                    <i class="fa-solid fa-truck-medical me-1"></i>24/7 ED
+                                                </span>
+                                            {% endif %}
+                                            {% if h.has_icu %}
+                                                <span class="badge bg-light text-primary border border-primary" style="font-size: 0.7rem;">
+                                                    <i class="fa-solid fa-heart-pulse me-1"></i>ICU / Ventilator
+                                                </span>
+                                            {% endif %}
+                                            <span class="text-muted" style="font-size: 0.72rem;">
+                                                <i class="fa-solid fa-compass me-1"></i>{{ h.latitude|floatformat:4 }}, {{ h.longitude|floatformat:4 }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Anti-venom Notes & Audit Stamp -->
+                                {% if h.anti_venom_notes %}
+                                    <div class="mt-2 p-2 rounded" style="background: rgba(13, 148, 136, 0.05); font-size: 0.76rem; color: var(--text);">
+                                        <i class="fa-solid fa-file-medical text-primary me-1"></i>
+                                        <strong>Notes:</strong> {{ h.anti_venom_notes }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top text-muted" style="font-size: 0.7rem;">
+                                    <span>
+                                        <i class="fa-regular fa-clock me-1"></i> Last updated:
+                                        {% if h.stock_last_updated %}
+                                            {{ h.stock_last_updated|date:"M d, Y H:i" }}
+                                        {% else %}
+                                            {{ h.updated_at|default:"Initial registration" }}
+                                        {% endif %}
+                                    </span>
+                                    <span>
+                                        {% if h.updated_by %}
+                                            <i class="fa-solid fa-user-check me-1"></i> Verified by: <strong>{{ h.updated_by.username }}</strong>
+                                        {% else %}
+                                            <i class="fa-solid fa-database me-1"></i> Seeded record
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="d-inline-flex p-3 rounded-circle mb-3" style="background: var(--surface-hover); color: var(--text-muted); font-size: 2rem;">
+                            <i class="fa-solid fa-hospital"></i>
+                        </div>
+                        <h6 class="fw-semibold text-muted">No hospital records available.</h6>
+                        <p class="text-muted" style="font-size: 0.8125rem;">Use the form on the left to add a hospital or adjust search filters.</p>
+                        <a href="{% url 'emergency:hospital_manage' %}" class="btn btn-outline-teal btn-sm">Clear All Filters</a>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function detectHospitalGPS() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            document.getElementById('id_hospital_lat').value = position.coords.latitude.toFixed(6);
+            document.getElementById('id_hospital_lng').value = position.coords.longitude.toFixed(6);
+        },
+        function(error) {
+            alert("Unable to retrieve GPS coordinates: " + error.message);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+}
+</script>
+{% endblock %}

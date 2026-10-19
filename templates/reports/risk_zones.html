@@ -4,148 +4,330 @@
 
 {% block content %}
 <div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
 
-            <!-- Page Header -->
-            <div class="d-flex flex-column flex-md-row align-items-md-start justify-content-between gap-3 mb-4">
-                <div>
-                    <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
-                        <i class="fa-solid fa-shield-halved me-2" style="color: var(--success);"></i>
-                        Community Risk Zones
-                    </h2>
-                    <p class="text-muted mb-0" style="font-size: 0.8125rem;">
-                        Aggregated public risk assessment based on 24-hour verified sighting reports.
-                    </p>
-                </div>
-                <div class="flex-shrink-0">
-                    <span class="badge {{ risk_data.badge_class }} px-3 py-2" style="font-size: 0.8rem;">
-                        Overall Status: {{ risk_data.status_title }}
-                    </span>
-                </div>
-            </div>
-
-            <!-- Risk Zone Legend -->
-            <div class="card-clean p-4 mb-4">
-                <h5 class="fw-semibold mb-3" style="font-size: 0.875rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
-                    Zone Classification
-                </h5>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="p-3 rounded border"
-                             style="border-color: var(--success-muted) !important; background: var(--success-light);">
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge" style="background: var(--success); color: #fff;">GREEN</span>
-                                <span class="fw-semibold" style="color: var(--success); font-size: 0.875rem;">0 reports</span>
-                            </div>
-                            <small class="text-muted d-block" style="font-size: 0.8rem;">
-                                No active snake sightings in the last 24 hours.
-                            </small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 rounded border"
-                             style="border-color: var(--warning-muted) !important; background: var(--warning-light);">
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge" style="background: var(--warning); color: #fff;">YELLOW</span>
-                                <span class="fw-semibold" style="color: var(--warning); font-size: 0.875rem;">1–5 reports</span>
-                            </div>
-                            <small class="text-muted d-block" style="font-size: 0.8rem;">
-                                Moderate risk. Exercise precaution in affected areas.
-                            </small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 rounded border"
-                             style="border-color: var(--danger-muted) !important; background: var(--danger-light);">
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge" style="background: var(--danger); color: #fff;">RED</span>
-                                <span class="fw-semibold" style="color: var(--danger); font-size: 0.875rem;">&gt;5 reports</span>
-                            </div>
-                            <small class="text-muted d-block" style="font-size: 0.8rem;">
-                                High risk. Avoid unlit areas. Carry torchlight.
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Regional Risk Table -->
-            <div class="card-clean">
-                <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
-                    <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem; color: var(--text);">
-                        <i class="fa-solid fa-map-pin me-2" style="color: var(--primary);"></i>
-                        Regional Risk Overview
-                    </h5>
-                    <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom btn-sm">
-                        <i class="fa-solid fa-kit-medical me-1"></i> Emergency SOS
-                    </a>
-                </div>
-
-                {% if risk_data.location_summary %}
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Locality / District</th>
-                                    <th>24h Sightings</th>
-                                    <th>Risk Status</th>
-                                    <th>Recommendation</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for loc in risk_data.location_summary %}
-                                    <tr>
-                                        <td class="fw-semibold" style="font-size: 0.875rem;">{{ loc.location_name }}</td>
-                                        <td>
-                                            <span class="badge bg-light text-dark border px-2">
-                                                {{ loc.sighting_count }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="fw-semibold {{ loc.class_name }}" style="font-size: 0.875rem;">
-                                                {% if loc.risk_level == 'GREEN' %}
-                                                    <i class="fa-solid fa-circle-check me-1"></i> Green Zone
-                                                {% elif loc.risk_level == 'YELLOW' %}
-                                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Yellow Zone
-                                                {% else %}
-                                                    <i class="fa-solid fa-circle-exclamation me-1"></i> Red Zone
-                                                {% endif %}
-                                            </span>
-                                        </td>
-                                        <td class="text-muted" style="font-size: 0.8125rem;">
-                                            {% if loc.risk_level == 'GREEN' %}
-                                                Normal community activity.
-                                            {% elif loc.risk_level == 'YELLOW' %}
-                                                Exercise precaution in overgrown gardens and near water bodies.
-                                            {% else %}
-                                                Avoid walking in unlit areas at night. Carry torchlight.
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-5 text-muted">
-                        <i class="fa-solid fa-shield-check fa-2x mb-2 d-block" style="color: var(--success);"></i>
-                        <p class="mb-0" style="font-size: 0.875rem;">
-                            No active sightings in the last 24 hours.
-                            All zones are currently <strong>GREEN (Safe)</strong>.
-                        </p>
-                    </div>
-                {% endif %}
-
-                <div class="p-3 border-top">
-                    <small class="text-muted" style="font-size: 0.75rem;">
-                        <i class="fa-solid fa-user-shield me-1"></i>
-                        Exact GPS coordinates are aggregated into regional zones to protect citizen privacy.
-                    </small>
-                </div>
-            </div>
-
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--text);">
+                <i class="fa-solid fa-shield-halved me-2" style="color: var(--primary);"></i>
+                Community Risk Zones
+            </h2>
+            <p class="text-muted mb-0" style="font-size: 0.8125rem;">
+                Geographic awareness based on distinct active snake encounters and verified response outcomes
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" id="btnCenterUserLoc" class="btn btn-outline-teal btn-sm">
+                <i class="fa-solid fa-location-crosshairs me-1"></i> Center on My Location
+            </button>
+            <a href="{% url 'emergency:assistance' %}" class="btn btn-danger-venom btn-sm text-nowrap">
+                <i class="fa-solid fa-kit-medical me-1"></i> Emergency SOS
+            </a>
         </div>
     </div>
+
+    <!-- Color Guide & Legend Banner -->
+    <div class="card-clean p-3 mb-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-6 col-md-3">
+                <div class="d-flex align-items-center gap-2 p-2 rounded" style="background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.2);">
+                    <span class="rounded-circle d-inline-block" style="width: 14px; height: 14px; background: #dc2626; flex-shrink: 0;"></span>
+                    <div>
+                        <strong class="d-block text-danger" style="font-size: 0.8rem; line-height: 1.1;">Red — High Risk</strong>
+                        <small class="text-muted" style="font-size: 0.72rem;">3+ active incidents</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="d-flex align-items-center gap-2 p-2 rounded" style="background: rgba(249, 115, 22, 0.08); border: 1px solid rgba(249, 115, 22, 0.2);">
+                    <span class="rounded-circle d-inline-block" style="width: 14px; height: 14px; background: #f97316; flex-shrink: 0;"></span>
+                    <div>
+                        <strong class="d-block" style="color: #ea580c; font-size: 0.8rem; line-height: 1.1;">Orange — Caution</strong>
+                        <small class="text-muted" style="font-size: 0.72rem;">1–2 active incidents</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="d-flex align-items-center gap-2 p-2 rounded" style="background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.25);">
+                    <span class="rounded-circle d-inline-block" style="width: 14px; height: 14px; background: #eab308; flex-shrink: 0;"></span>
+                    <div>
+                        <strong class="d-block" style="color: #ca8a04; font-size: 0.8rem; line-height: 1.1;">Yellow — Resolved</strong>
+                        <small class="text-muted" style="font-size: 0.72rem;">Captured (cooldown)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="d-flex align-items-center gap-2 p-2 rounded" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2);">
+                    <span class="rounded-circle d-inline-block" style="width: 14px; height: 14px; background: #10b981; flex-shrink: 0;"></span>
+                    <div>
+                        <strong class="d-block text-success" style="font-size: 0.8rem; line-height: 1.1;">Green — Safe</strong>
+                        <small class="text-muted" style="font-size: 0.72rem;">No recent active</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Primary Interactive Map Container -->
+    <div class="card-clean-solid mb-4 overflow-hidden shadow-sm" style="position: relative; border: 1px solid var(--border); border-radius: var(--radius-lg); transform: none !important;">
+        <div id="riskMap" style="height: 520px; width: 100%; z-index: 1;"></div>
+
+        <!-- Selected Area Detail Floating Card -->
+        <div id="selectedZoneCard" class="card shadow-sm p-3 d-none"
+             style="position: absolute; bottom: 18px; left: 18px; max-width: 380px; z-index: 1000; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 10px; border-left: 4px solid var(--primary);">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span id="selectedZoneBadge" class="badge bg-danger" style="font-size: 0.75rem;">High Risk</span>
+                <button type="button" class="btn-close" aria-label="Close" onclick="document.getElementById('selectedZoneCard').classList.add('d-none');"></button>
+            </div>
+            <h6 id="selectedZoneTitle" class="fw-bold mb-1" style="font-size: 0.95rem; color: var(--text);">Kochi Sector 4</h6>
+            <p id="selectedZoneSummary" class="text-muted mb-2" style="font-size: 0.8rem; line-height: 1.4;"></p>
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top" style="font-size: 0.75rem;">
+                <span class="text-muted">Active Encounters: <strong id="selectedZoneActiveCount" class="text-dark">3</strong></span>
+                <span class="text-muted">Estimated Radius: <strong id="selectedZoneRadius" class="text-dark">600m</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitored Risk Zones Summary List -->
+    <div class="card-clean">
+        <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+            <h5 class="fw-semibold mb-0" style="font-size: 0.9375rem; color: var(--text);">
+                <i class="fa-solid fa-map-pin me-2" style="color: var(--primary);"></i>
+                Monitored Community Sectors
+            </h5>
+            <span class="text-muted" style="font-size: 0.8rem;">
+                {{ risk_data.zones|length }} active sector(s) tracked
+            </span>
+        </div>
+
+        {% if risk_data.zones %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Zone Location</th>
+                            <th>Status Level</th>
+                            <th>Distinct Incidents</th>
+                            <th>Safety Guidance</th>
+                            <th class="text-end">Map Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for z in risk_data.zones %}
+                            <tr>
+                                <td class="fw-semibold" style="font-size: 0.875rem;">
+                                    <i class="fa-solid fa-location-dot me-1" style="color: {{ z.color }};"></i>
+                                    {{ z.location_name }}
+                                </td>
+                                <td>
+                                    <span class="badge {{ z.badge_class }}" style="font-size: 0.75rem;">
+                                        {{ z.state_title }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ z.active_count }} active</strong>
+                                    {% if z.resolved_count %}
+                                        <small class="text-muted">({{ z.resolved_count }} resolved)</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ z.summary }}
+                                </td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-outline-teal btn-sm"
+                                            onclick="focusZone({{ z.center_lat }}, {{ z.center_lng }}, {{ z.radius_meters }}, '{{ z.location_name|escapejs }}', '{{ z.state_title|escapejs }}', '{{ z.badge_class }}', '{{ z.summary|escapejs }}', {{ z.active_count }});">
+                                        <i class="fa-solid fa-crosshairs me-1"></i> View on Map
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-shield-heart fa-2x mb-2 d-block" style="color: var(--success);"></i>
+                <p class="mb-1 fw-semibold" style="color: var(--text);">No hotspots have been identified</p>
+                <small>No snake incidents reported across monitored areas in the past 24 hours.</small>
+            </div>
+        {% endif %}
+    </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let riskMap = null;
+    let zoneLayers = [];
+    let userMarker = null;
+    let initialBoundsFitted = false;
+
+    const initialLat = {{ user_lat|default:9.9312 }};
+    const initialLng = {{ user_lng|default:76.2673 }};
+
+    function initRiskMap() {
+        if (riskMap) return;
+
+        // Initialize Leaflet map with explicit min/max zoom and smooth interactions
+        riskMap = L.map('riskMap', {
+            center: [initialLat, initialLng],
+            zoom: 12,
+            minZoom: 3,
+            maxZoom: 18,
+            zoomControl: true,
+            scrollWheelZoom: true,
+            doubleClickZoom: true,
+            touchZoom: true,
+            boxZoom: true,
+            keyboard: true,
+            dragging: true
+        });
+
+        // Expose globally for console testing & programmatic inspection
+        window.riskMap = riskMap;
+
+        // Permitted High-Reliability Map Tile Layer (Esri World Street Map - No API key watermark, verified HTTP 200)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            minZoom: 3,
+            maxNativeZoom: 17,
+            maxZoom: 18,
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, METI, TomTom'
+        }).addTo(riskMap);
+
+        setTimeout(function() {
+            if (riskMap) {
+                riskMap.invalidateSize();
+            }
+        }, 200);
+
+        loadRiskZones();
+
+        // Refresh periodically every 10 seconds to keep map data live in real-time without resetting user zoom
+        setInterval(loadRiskZones, 10000);
+    }
+
+    function loadRiskZones() {
+        fetch("{% url 'reports:risk_zones_api' %}")
+            .then(res => res.json())
+            .then(data => {
+                // Clear existing zone circles
+                zoneLayers.forEach(l => riskMap.removeLayer(l));
+                zoneLayers = [];
+
+                if (!data.zones || data.zones.length === 0) return;
+
+                const bounds = [];
+
+                data.zones.forEach(z => {
+                    const latLng = [z.center_lat, z.center_lng];
+                    bounds.push(latLng);
+
+                    const circle = L.circle(latLng, {
+                        color: z.color,
+                        fillColor: z.color,
+                        fillOpacity: 0.28,
+                        radius: z.radius_meters,
+                        weight: 2
+                    }).addTo(riskMap);
+
+                    circle.on('click', function() {
+                        showZoneDetails(z);
+                    });
+
+                    circle.bindTooltip(`<strong>${z.location_name}</strong><br>${z.state_title} (${z.active_count} active)`, {
+                        direction: 'top',
+                        sticky: true
+                    });
+
+                    zoneLayers.push(circle);
+                });
+
+                // Only fit bounds automatically on the initial data load, never override user zoom/pan during polling
+                if (bounds.length > 0 && !userMarker && !initialBoundsFitted) {
+                    riskMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+                    initialBoundsFitted = true;
+                }
+            })
+            .catch(err => console.error("Error updating risk zones:", err));
+    }
+
+    function showZoneDetails(z) {
+        const card = document.getElementById("selectedZoneCard");
+        const title = document.getElementById("selectedZoneTitle");
+        const badge = document.getElementById("selectedZoneBadge");
+        const summary = document.getElementById("selectedZoneSummary");
+        const activeCount = document.getElementById("selectedZoneActiveCount");
+        const radius = document.getElementById("selectedZoneRadius");
+
+        title.textContent = z.location_name;
+        badge.className = `badge ${z.badge_class}`;
+        badge.textContent = z.state_title;
+        summary.textContent = z.summary;
+        activeCount.textContent = z.active_count;
+        radius.textContent = `${z.radius_meters}m`;
+
+        card.style.borderLeftColor = z.color;
+        card.classList.remove("d-none");
+    }
+
+    function focusZone(lat, lng, radius, name, stateTitle, badgeClass, summary, activeCount) {
+        if (!riskMap) return;
+        riskMap.setView([lat, lng], 14, { animate: true });
+        showZoneDetails({
+            location_name: name,
+            state_title: stateTitle,
+            badge_class: badgeClass,
+            summary: summary,
+            active_count: activeCount,
+            radius_meters: radius,
+            color: (badgeClass.includes('danger') ? '#dc2626' : (badgeClass.includes('warning') ? '#f97316' : '#10b981'))
+        });
+        document.getElementById('riskMap').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initRiskMap();
+
+        const btnCenter = document.getElementById("btnCenterUserLoc");
+        if (btnCenter) {
+            btnCenter.addEventListener("click", function() {
+                if (!("geolocation" in navigator)) {
+                    alert("Browser geolocation is not supported on this device.");
+                    return;
+                }
+
+                btnCenter.disabled = true;
+                btnCenter.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Locating…';
+
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+
+                    btnCenter.disabled = false;
+                    btnCenter.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Centered on You';
+
+                    if (userMarker) {
+                        riskMap.removeLayer(userMarker);
+                    }
+
+                    userMarker = L.circleMarker([lat, lng], {
+                        radius: 8,
+                        fillColor: '#059669',
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(riskMap).bindPopup("<strong>Your Location</strong>").openPopup();
+
+                    riskMap.setView([lat, lng], 13, { animate: true });
+                }, function(err) {
+                    btnCenter.disabled = false;
+                    btnCenter.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Center on My Location';
+                    alert("Could not detect your location. Please check browser permissions.");
+                }, { timeout: 10000 });
+            });
+        }
+    });
+</script>
 {% endblock %}
