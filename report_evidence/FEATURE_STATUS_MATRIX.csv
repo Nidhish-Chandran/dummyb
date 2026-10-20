@@ -1,0 +1,34 @@
+Feature,Status,Evidence File,Relevant Function/Class,External Dependency,Limitation
+Citizen Registration,Implemented,accounts/views.py,register_view,None,Immediate activation for citizen role only
+Official Role Application,Implemented,accounts/views.py,register_view,None,Requires supporting document upload; user initially inactive
+Application Review Queue,Implemented,accounts/views.py,admin_provision_account_view,None,Admin role required to view or act
+Verification Document Inspection,Implemented,accounts/views.py,admin_application_document_view,None,Direct public HTTP access blocked; admin session required
+Application Approval,Implemented,accounts/views.py,admin_application_approve_view,None,Atomic transaction; updates user profile and coordinates
+Application Rejection,Implemented,accounts/views.py,admin_application_reject_view,None,Mandatory explanation remarks required
+Account Suspension and Ban,Implemented,accounts/views.py,admin_provision_account_view,None,Cannot suspend last active platform administrator
+Immutable Audit Logging,Implemented,accounts/models.py,AuditLog.record,None,Audit records cannot be edited or deleted via web UI
+In-App Notifications,Implemented,accounts/models.py,Notification.send,None,2-minute deduplication window; no external push notification
+Citizen Sighting Submission,Implemented,reports/views.py,create_report_view,None,Requires image upload and valid GPS coordinates
+Stage 1 Snake Detection Gate,Implemented,ai/services.py,SnakeAIPipelineService.analyze_image,TensorFlow/Keras,MobileNetV2 ImageNet Synsets 52-68 check; rejects non-snakes
+Stage 2 Binary Venom Classification,Implemented,ai/services.py,SnakeAIPipelineService.analyze_image,TensorFlow/Keras,Binary classifier (p>=0.5); does not output granular species name
+Wound Image Screening,Implemented,ai/services.py,SnakebiteScreeningService.analyze_wound_image,TensorFlow/Keras,EfficientNetB0 binary model; non-diagnostic screening only
+Wound Screening Uncertainty Interval,Implemented,ai/services.py,SnakebiteScreeningService.analyze_wound_image,None,Uncertainty range [0.40; 0.60] forces inconclusive classification
+Multi-Signal Duplicate Detection,Implemented,reports/services.py,DuplicateSpamDetectionService.calculate_duplicate_score,None,Evaluates reports <=500m and <=6h; auto-links if score >= 75
+Spam Rate Limiting,Implemented,reports/services.py,DuplicateSpamDetectionService.evaluate_and_flag,None,Flags users submitting >3 reports in 5 minutes
+Authority Incident Verification,Implemented,reports/views.py,verify_report_view,None,Authority role required; marks status VERIFIED or REJECTED
+Location-Based Ranger Dispatch,Implemented,reports/dispatch.py,get_candidate_rangers,None,Haversine distance <=30km; only available and approved rangers
+Ranger Isolated Console,Implemented,ranger/views.py,ranger_dashboard_view,None,Object-level security; ranger sees only assigned incidents
+Ranger Accept/Decline Assignment,Implemented,ranger/views.py,assignment_update_view,None,Ranger marked BUSY on acceptance
+Ranger Milestone Advancement,Implemented,ranger/views.py,assignment_update_view,None,Strict state machine: ACCEPTED -> ON_THE_WAY -> AT_LOCATION
+Ranger Outcome and Evidence Submission,Implemented,ranger/views.py,assignment_update_view,None,Ranger cannot complete incident; outcome submitted for review
+Authority Outcome Verification,Implemented,reports/views.py,review_assignment_outcome_view,None,Authority approves/rejects outcome; approval marks incident RESOLVED
+Authority Operations Map,Implemented,reports/views.py,authority_map_view,Leaflet.js / CartoDB / Esri,Displays real sighting markers with color-coded dispatch states
+Live Map Report Polling,Implemented,reports/views.py,authority_map_reports_api,None,JSON endpoint polled every 30s by Leaflet client
+Public Community Risk Zones,Implemented,hotspots/services.py,DBSCANHotspotService.compute_community_risk_zones,Scikit-Learn,Haversine DBSCAN (eps=1.5km); 4-state lifecycle (Red/Orange/Yellow/Green)
+Authority Hotspot Radar,Implemented,hotspots/services.py,DBSCANHotspotService.compute_hotspots,Scikit-Learn,Haversine DBSCAN (eps=1.0km; min_samples=2)
+Hospital Directory Distance Search,Implemented,emergency/views.py,assistance_view,None,Sorts hospitals nearest-first using geodesic Haversine distance
+Hospital and Anti-Venom Admin CRUD,Implemented,emergency/views.py,admin_hospital_manage_view,None,Admin role required; manages vial stocks and ICU capacity
+Emergency SOS Distress Broadcast,Implemented,emergency/views.py,sos_trigger_api,None,Persists distress signal; throttles duplicates within 2 minutes
+Emergency SOS Authority Feed,Implemented,emergency/views.py,sos_feed_api,None,Live polling feed for Authority officers to acknowledge distress
+External Cellular SMS Dispatch,Not Implemented,reports/dispatch.py,None,External SMS Gateway (Twilio/carrier),Relies on in-app notifications and web console
+YOLOv8 Multi-Class Species Classification,Inactive / Replaced,ai/models/best.pt,None,Ultralytics YOLO,Checkpoint exists on disk from Colab run but inactive in runtime

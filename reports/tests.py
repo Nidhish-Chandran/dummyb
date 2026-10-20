@@ -799,4 +799,362 @@ class AuthorityMapAndImageMappingTestCase(TestCase):
         self.assertEqual(item['assignment']['ranger'], self.ranger.username)
 
 
+class AuthorityRangerLifecycleProtectionTestCase(TestCase):
+    """Rigorous test cases verifying the Authority-Ranger lifecycle, outcome preservation,
+    cancellation guard rails, and resolved incident protection.
+    """
+
+    def setUp(self):
+        # 1. Authority user
+        self.authority = User.objects.create_user(username='test_authority_lead', password='password123')
+        self.authority.profile.role = UserProfile.ROLE_AUTHORITY
+        self.authority.profile.save()
+
+        # 2. Responding Ranger 1
+        self.ranger1 = User.objects.create_user(username='test_ranger_alpha', password='password123')
+        self.ranger1.profile.role = UserProfile.ROLE_RANGER
+        self.ranger1.profile.registered_location = 'Asramam, Kollam'
+        self.ranger1.profile.latitude = 8.8926
+        self.ranger1.profile.longitude = 76.5922
+        self.ranger1.profile.availability = UserProfile.AVAILABILITY_AVAILABLE
+        self.ranger1.profile.save()
+
+        # 3. Alternate Ranger 2
+        self.ranger2 = User.objects.create_user(username='test_ranger_beta', password='password123')
+        self.ranger2.profile.role = UserProfile.ROLE_RANGER
+        self.ranger2.profile.registered_location = 'Asramam, Kollam'
+        self.ranger2.profile.latitude = 8.8926
+        self.ranger2.profile.longitude = 76.5922
+        self.ranger2.profile.availability = UserProfile.AVAILABILITY_AVAILABLE
+        self.ranger2.profile.save()
+
+        # 4. Citizen user
+        self.citizen = User.objects.create_user(username='test_citizen_kollam', password='password123')
+        self.citizen.profile.role = UserProfile.ROLE_CITIZEN
+        self.citizen.profile.save()
+
+        # 5. Sighting Report
+        self.report = SightingReport.objects.create(
+            user=self.citizen,
+            title='Venomous Cobra Near Hospital Gate',
+            latitude=8.8930,
+            longitude=76.5925,
+            location_name='Asramam, Kollam',
+            species_predicted='Indian Cobra',
+            venom_category=SightingReport.VENOM_HIGHLY,
+            toxicity_level='CRITICAL',
+            danger_score=90,
+            venomous=True,
+            status=SightingReport.STATUS_PENDING,
+            response_status=SightingReport.RESPONSE_UNASSIGNED
+        )
+
+    def test_ranger_submits_outcome_pending_review(self):
+        """Ranger responds through lifecycle and submits outcome; incident remains pending review until verified."""
+        # Assign ranger1
+        assignment = RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_ASSIGNED
+        )
+        self.report.assigned_responder = self.ranger1
+        self.report.response_status = SightingReport.RESPONSE_ASSIGNED
+        self.report.save()
+
+        self.client.login(username='test_ranger_alpha', password='password123')
+
+        # Ranger accepts
+        self.client.post(f'/ranger/assignments/{assignment.pk}/update/', {'action': 'ACCEPT'})
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_ACCEPTED)
+
+        # Ranger on the way
+        self.client.post(f'/ranger/assignments/{assignment.pk}/update/', {'action': 'ON_THE_WAY'})
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_ON_THE_WAY)
+
+        # Ranger at location
+        self.client.post(f'/ranger/assignments/{assignment.pk}/update/', {'action': 'AT_LOCATION'})
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_AT_LOCATION)
+
+        # Ranger submits outcome
+        resp = self.client.post(f'/ranger/assignments/{assignment.pk}/update/', {
+            'action': 'SUBMIT_OUTCOME',
+            'outcome': RangerAssignment.OUTCOME_RELOCATED,
+            'notes': 'Snake safely captured and relocated to reserve forest.'
+        })
+        self.assertEqual(resp.status_code, 302)
+        assignment.refresh_from_db()
+        self.report.refresh_from_db()
+
+        # Outcome is submitted and awaiting review
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_OUTCOME_SUBMITTED)
+        self.assertEqual(assignment.outcome, RangerAssignment.OUTCOME_RELOCATED)
+        self.assertEqual(assignment.review_decision, 'PENDING_REVIEW')
+        # Sighting must NOT be marked resolved merely because Ranger claimed it
+        self.assertNotEqual(self.report.status, SightingReport.STATUS_RESOLVED)
+
+    def test_authority_approves_outcome_resolves_incident(self):
+        """Authority approves submitted outcome; assignment completes and incident becomes resolved."""
+        assignment = RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_OUTCOME_SUBMITTED,
+            outcome=RangerAssignment.OUTCOME_RELOCATED,
+            notes='Captured with tong.'
+        )
+        self.report.assigned_responder = self.ranger1
+        self.report.response_status = SightingReport.RESPONSE_IN_PROGRESS
+        self.report.save()
+
+        self.client.login(username='test_authority_lead', password='password123')
+        resp = self.client.post(f'/reports/assignments/{assignment.pk}/review/', {
+            'decision': 'APPROVED',
+            'review_notes': 'Verified capture by forest station personnel.'
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        assignment.refresh_from_db()
+        self.report.refresh_from_db()
+
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_COMPLETED)
+        self.assertEqual(assignment.review_decision, 'APPROVED')
+        self.assertEqual(self.report.status, SightingReport.STATUS_RESOLVED)
+        self.assertEqual(self.report.response_status, SightingReport.RESPONSE_RESOLVED)
+
+    def test_verified_incident_cannot_be_reopened_by_cancel_or_reassign(self):
+        """A verified resolved incident cannot accidentally be reopened by Cancel & Reassign."""
+        assignment = RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_COMPLETED,
+            review_decision='APPROVED',
+            outcome=RangerAssignment.OUTCOME_RELOCATED
+        )
+        self.report.status = SightingReport.STATUS_RESOLVED
+        self.report.response_status = SightingReport.RESPONSE_RESOLVED
+        self.report.assigned_responder = self.ranger1
+        self.report.save()
+
+        self.client.login(username='test_authority_lead', password='password123')
+
+        # Attempt to cancel completed assignment on resolved report
+        resp_cancel = self.client.post(f'/reports/assignments/{assignment.pk}/cancel/')
+        self.assertEqual(resp_cancel.status_code, 302)
+        assignment.refresh_from_db()
+        self.report.refresh_from_db()
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_COMPLETED)
+        self.assertEqual(self.report.status, SightingReport.STATUS_RESOLVED)
+        self.assertEqual(self.report.response_status, SightingReport.RESPONSE_RESOLVED)
+
+        # Attempt to assign a new responder to resolved report
+        resp_assign = self.client.post(f'/reports/{self.report.pk}/assign/', {
+            'ranger_id': self.ranger2.id
+        })
+        self.assertEqual(resp_assign.status_code, 302)
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.status, SightingReport.STATUS_RESOLVED)
+        self.assertEqual(self.report.response_status, SightingReport.RESPONSE_RESOLVED)
+
+    def test_outcome_submitted_requires_reason_to_cancel_and_preserves_evidence(self):
+        """Cancelling an assignment with an outcome submitted requires a reason and preserves history."""
+        assignment = RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_OUTCOME_SUBMITTED,
+            outcome=RangerAssignment.OUTCOME_RELOCATED,
+            notes='Captured near boundary wall.'
+        )
+        self.report.assigned_responder = self.ranger1
+        self.report.response_status = SightingReport.RESPONSE_IN_PROGRESS
+        self.report.save()
+
+        self.client.login(username='test_authority_lead', password='password123')
+
+        # 1. Posting without cancellation reason should fail
+        resp_fail = self.client.post(f'/reports/assignments/{assignment.pk}/cancel/')
+        self.assertEqual(resp_fail.status_code, 302)
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_OUTCOME_SUBMITTED)
+
+        # 2. Posting with explicit cancellation reason succeeds and preserves outcome
+        resp_ok = self.client.post(f'/reports/assignments/{assignment.pk}/cancel/', {
+            'cancellation_reason': 'Specimen escaped during handover; reassignment required.'
+        })
+        self.assertEqual(resp_ok.status_code, 302)
+        assignment.refresh_from_db()
+        self.report.refresh_from_db()
+
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_CANCELLED)
+        # Outcome and notes must survive cancellation!
+        self.assertEqual(assignment.outcome, RangerAssignment.OUTCOME_RELOCATED)
+        self.assertEqual(assignment.notes, 'Captured near boundary wall.')
+        self.assertIn('Specimen escaped', assignment.review_notes)
+        self.assertEqual(self.report.response_status, SightingReport.RESPONSE_UNASSIGNED)
+
+    def test_unresolved_map_api_excludes_verified_resolved_incidents(self):
+        """Map reports API serializes resolved incidents as COMPLETED and excludes them from unassigned venomous."""
+        assignment = RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_COMPLETED,
+            review_decision='APPROVED',
+            outcome=RangerAssignment.OUTCOME_RELOCATED
+        )
+        self.report.status = SightingReport.STATUS_RESOLVED
+        self.report.response_status = SightingReport.RESPONSE_RESOLVED
+        self.report.save()
+
+        self.client.login(username='test_authority_lead', password='password123')
+        resp = self.client.get('/reports/api/map-reports/')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+
+        item = next(r for r in data['reports'] if r['id'] == self.report.id)
+        self.assertEqual(item['dispatch_state'], 'COMPLETED')
+        self.assertEqual(item['assignment']['status'], 'COMPLETED')
+        self.assertEqual(data['counts']['unassigned_venomous'], 0)
+
+    def test_ranger_security_cannot_verify_or_access_other_ranger_assignment(self):
+        """Ranger cannot verify their own outcome and cannot access another ranger's assignment."""
+        assignment = RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_OUTCOME_SUBMITTED,
+            outcome=RangerAssignment.OUTCOME_RELOCATED
+        )
+
+        # Ranger 1 tries to call review endpoint (Authority only)
+        self.client.login(username='test_ranger_alpha', password='password123')
+        resp_verify = self.client.post(f'/reports/assignments/{assignment.pk}/review/', {
+            'decision': 'APPROVED'
+        })
+        # Should be forbidden / redirected because Ranger is not Authority
+        self.assertIn(resp_verify.status_code, [302, 403])
+        assignment.refresh_from_db()
+        self.assertNotEqual(assignment.status, RangerAssignment.STATUS_COMPLETED)
+
+        # Ranger 2 tries to access Ranger 1's assignment detail
+        self.client.login(username='test_ranger_beta', password='password123')
+        resp_detail = self.client.get(f'/ranger/assignments/{assignment.pk}/')
+        self.assertEqual(resp_detail.status_code, 404)
+
+    def test_invalid_state_transitions_rejected_safely(self):
+        """Illegal status transitions are rejected safely."""
+        assignment = RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_ASSIGNED
+        )
+        self.client.login(username='test_ranger_alpha', password='password123')
+
+        # Cannot jump straight from ASSIGNED to AT_LOCATION without accepting
+        resp = self.client.post(f'/ranger/assignments/{assignment.pk}/update/', {'action': 'AT_LOCATION'})
+        self.assertEqual(resp.status_code, 302)
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.status, RangerAssignment.STATUS_ASSIGNED)
+
+    def test_authority_review_section_hidden_when_resolved_and_shows_outcome_label(self):
+        """When an incident is verified and resolved, the review form is hidden
+        and replaced by an outcome status label with the actual recorded outcome.
+        """
+        self.client.login(username='test_authority_lead', password='password123')
+
+        # 1. When report is still pending/unresolved: review form is visible
+        resp_pending = self.client.get(f'/reports/{self.report.pk}/')
+        self.assertEqual(resp_pending.status_code, 200)
+        self.assertContains(resp_pending, 'Authority Review &amp; Verification')
+        self.assertContains(resp_pending, 'name="status"')
+        self.assertContains(resp_pending, 'Save Verification')
+
+        # 2. When report is verified and resolved with a relocated snake outcome:
+        RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_COMPLETED,
+            outcome=RangerAssignment.OUTCOME_RELOCATED,
+            review_decision='APPROVED',
+            review_notes='Relocated to deep forest safely.'
+        )
+        self.report.status = SightingReport.STATUS_RESOLVED
+        self.report.response_status = SightingReport.RESPONSE_RESOLVED
+        self.report.save()
+
+        resp_resolved = self.client.get(f'/reports/{self.report.pk}/')
+        self.assertEqual(resp_resolved.status_code, 200)
+        content_resolved = resp_resolved.content.decode('utf-8')
+
+        # Form elements are hidden
+        self.assertNotIn('Save Verification', content_resolved)
+        self.assertNotIn('name="status"', content_resolved)
+
+        # Replaced with recorded outcome status label
+        self.assertIn('Snake Safely Relocated', content_resolved)
+        self.assertIn('Recorded Outcome:', content_resolved)
+
+        # 3. Direct POST to verify endpoint is safely rejected
+        resp_post = self.client.post(f'/reports/{self.report.pk}/verify/', {
+            'status': SightingReport.STATUS_VERIFIED
+        })
+        self.assertEqual(resp_post.status_code, 302)
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.status, SightingReport.STATUS_RESOLVED)
+
+    def test_citizen_detail_hides_response_progression_when_resolved_preserves_evidence_and_outcome(self):
+        """In the Citizen's report details page, Response Progression is hidden on resolved incidents,
+        while preserving approved evidence photo, recorded outcome, and resolved status.
+        For unresolved incidents, Response Progression is displayed normally.
+        """
+        self.client.login(username='test_citizen_kollam', password='password123')
+
+        # 1. Unresolved incident: Citizen sees Response Progression
+        resp_unresolved = self.client.get(f'/reports/{self.report.pk}/')
+        self.assertEqual(resp_unresolved.status_code, 200)
+        self.assertContains(resp_unresolved, 'Response Progression')
+        self.assertContains(resp_unresolved, 'Sighting Reported')
+
+        # 2. Resolved incident with ranger outcome evidence
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        test_img = SimpleUploadedFile("evidence.jpg", b"\x47\x49\x46\x38\x39\x61", content_type="image/jpeg")
+
+        RangerAssignment.objects.create(
+            sighting=self.report,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_COMPLETED,
+            outcome=RangerAssignment.OUTCOME_RELOCATED,
+            outcome_image=test_img,
+            notes='Snake captured and relocated to sanctuary.',
+            review_decision='APPROVED',
+            review_notes='Verified successfully.'
+        )
+        self.report.status = SightingReport.STATUS_RESOLVED
+        self.report.response_status = SightingReport.RESPONSE_RESOLVED
+        self.report.save()
+
+        resp_resolved = self.client.get(f'/reports/{self.report.pk}/')
+        self.assertEqual(resp_resolved.status_code, 200)
+        content_resolved = resp_resolved.content.decode('utf-8')
+
+        # Response progression is removed
+        self.assertNotIn('Response Progression', content_resolved)
+
+        # Outcome and evidence remain visible
+        self.assertIn('Snake Safely Relocated', content_resolved)
+        self.assertIn('Verified Incident Resolution', content_resolved)
+        self.assertIn('Approved Response Evidence Photo:', content_resolved)
+        self.assertIn('evidence', content_resolved)
+
+
+
+
 

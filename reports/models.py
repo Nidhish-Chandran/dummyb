@@ -134,6 +134,23 @@ class SightingReport(models.Model):
         """The completed assignment whose outcome was approved by Authority."""
         return self.ranger_assignments.filter(status=RangerAssignment.STATUS_COMPLETED, review_decision='APPROVED').first()
 
+    @property
+    def is_resolved(self):
+        """Returns True if the incident is verified and resolved."""
+        return self.status == self.STATUS_RESOLVED or self.response_status == self.RESPONSE_RESOLVED
+
+    @property
+    def resolved_outcome_display(self):
+        """Human-readable display of the actual recorded resolution outcome."""
+        completed_assignment = self.ranger_assignments.filter(
+            status=RangerAssignment.STATUS_COMPLETED
+        ).first()
+        if completed_assignment and completed_assignment.outcome:
+            return completed_assignment.get_outcome_display()
+        if self.status == self.STATUS_RESOLVED:
+            return self.get_status_display()
+        return "Captured / Area Cleared"
+
 
 class RangerAssignment(models.Model):
     """Formal incident assignment linking a SightingReport to a Ranger.

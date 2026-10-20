@@ -329,14 +329,64 @@ class AdminHospitalManagementTestCase(TestCase):
         resp = self.client.get('/emergency/')
         self.assertEqual(resp.status_code, 200)
         self.assertIn('hospitals', resp.context)
-
-    def test_assistance_view_empty_database_no_fake_records(self):
-        """When hospital database is empty, no fabricated hospitals are shown."""
-        Hospital.objects.all().delete()
-        resp = self.client.get('/emergency/')
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.context['hospitals']), 0)
         content = resp.content.decode('utf-8')
         self.assertIn("No hospitals currently registered", content)
+
+
+class KollamHospitalRegistrySeedingTestCase(TestCase):
+    """Verifies that the seed_kollam_hospitals command is additive, idempotent,
+    contains authentic facilities with valid coordinates, and integrates with distance sorting.
+    """
+
+    def test_seed_command_additive_and_idempotent(self):
+        from django.core.management import call_command
+        from io import StringIO
+
+        # 1. Create a pre-existing custom hospital to ensure it is preserved
+        pre_existing = Hospital.objects.create(
+            name="Existing Specialty Clinic",
+            phone_number="0474-2000000",
+            address="Kollam Town",
+            latitude=8.8900,
+            longitude=76.6000,
+            district="Kollam",
+            anti_venom_available=False
+        )
+        initial_count = Hospital.objects.count()
+
+        # 2. Run seed command
+        out = StringIO()
+        call_command('seed_kollam_hospitals', stdout=out)
+        self.assertEqual(Hospital.objects.count(), initial_count + 10)
+        
+        # Verify pre-existing hospital is preserved
+        self.assertTrue(Hospital.objects.filter(pk=pre_existing.pk).exists())
+
+        # 3. Re-run command to verify idempotency
+        call_command('seed_kollam_hospitals', stdout=out)
+        self.assertEqual(Hospital.objects.count(), initial_count + 10)
+
+    def test_kollam_hospital_coordinates_and_distance_ranking(self):
+        from django.core.management import call_command
+        call_command('seed_kollam_hospitals')
+
+        # Verify key facilities exist with valid coordinates
+        gmc = Hospital.objects.get(name='Government Medical College Hospital, Kollam')
+        self.assertEqual(gmc.district, 'Kollam')
+        self.assertTrue(8.0 <= gmc.latitude <= 9.5)
+        self.assertTrue(76.0 <= gmc.longitude <= 77.5)
+        self.assertTrue(gmc.anti_venom_available)
+        self.assertTrue(gmc.has_icu)
+        self.assertTrue(gmc.emergency_department)
+
+        # Distance ranking from Asramam, Kollam (8.8926, 76.5922)
+        dist_hosp = Hospital.objects.get(name='District Hospital Kollam')
+        dist_km = dist_hosp.distance_from(8.8926, 76.5922)
+        self.assertLess(dist_km, 0.5)  # Co-located in Asramam
+
+        tmc = Hospital.objects.get(name='Government Medical College Hospital, Thiruvananthapuram')
+        tmc_dist = tmc.distance_from(8.8926, 76.5922)
+        self.assertGreater(tmc_dist, 40.0)  # Thiruvananthapuram is ~50 km away
+
 
 

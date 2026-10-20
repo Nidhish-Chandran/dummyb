@@ -33,46 +33,54 @@
         </div>
     </div>
 
-    <!-- Real Database Metric Cards -->
+    <!-- Database Metric Cards (Clean, Minimalist Panels) -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: var(--primary) !important;">
+            <div class="admin-stat-card">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">Total Hospitals</span>
-                    <i class="fa-solid fa-hospital" style="color: var(--primary); font-size: 1.1rem;"></i>
+                    <span class="admin-stat-label">Total Hospitals</span>
+                    <div class="admin-stat-icon-wrap" style="background: rgba(13, 148, 136, 0.12); color: #0d9488;">
+                        <i class="fa-solid fa-hospital"></i>
+                    </div>
                 </div>
-                <div class="fw-bold fs-3" style="color: var(--text);">{{ stats.total_hospitals }}</div>
-                <small class="text-muted" style="font-size: 0.75rem;">Verified healthcare facilities</small>
+                <div class="admin-stat-value" style="color: #0d9488;">{{ stats.total_hospitals }}</div>
+                <div class="admin-stat-desc">Verified medical facilities</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: #10b981 !important;">
+            <div class="admin-stat-card">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">Anti-Venom Stock</span>
-                    <i class="fa-solid fa-vial-virus" style="color: #10b981; font-size: 1.1rem;"></i>
+                    <span class="admin-stat-label">Anti-Venom Stock</span>
+                    <div class="admin-stat-icon-wrap" style="background: rgba(5, 150, 105, 0.12); color: #059669;">
+                        <i class="fa-solid fa-vial-virus"></i>
+                    </div>
                 </div>
-                <div class="fw-bold fs-3" style="color: #10b981;">{{ stats.total_vials }} <span class="fs-6 fw-normal text-muted">vials</span></div>
-                <small class="text-muted" style="font-size: 0.75rem;">Across {{ stats.hospitals_with_av }} equipped hospitals</small>
+                <div class="admin-stat-value text-success">{{ stats.total_vials }} <span class="fs-6 fw-normal text-muted">vials</span></div>
+                <div class="admin-stat-desc">Across {{ stats.hospitals_with_av }} equipped hospitals</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: #0284c7 !important;">
+            <div class="admin-stat-card">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">ICU &amp; Ventilator</span>
-                    <i class="fa-solid fa-heart-pulse" style="color: #0284c7; font-size: 1.1rem;"></i>
+                    <span class="admin-stat-label">ICU &amp; Ventilator</span>
+                    <div class="admin-stat-icon-wrap" style="background: rgba(2, 132, 199, 0.12); color: #0284c7;">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
                 </div>
-                <div class="fw-bold fs-3" style="color: #0284c7;">{{ stats.hospitals_with_icu }}</div>
-                <small class="text-muted" style="font-size: 0.75rem;">Advanced toxicology support</small>
+                <div class="admin-stat-value" style="color: #0284c7;">{{ stats.hospitals_with_icu }}</div>
+                <div class="admin-stat-desc">Toxicology critical care</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-clean p-3 h-100 border-start border-4 shadow-sm" style="border-left-color: #f59e0b !important;">
+            <div class="admin-stat-card">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase;">24/7 Emergency Dept</span>
-                    <i class="fa-solid fa-truck-medical" style="color: #f59e0b; font-size: 1.1rem;"></i>
+                    <span class="admin-stat-label">24/7 Emergency</span>
+                    <div class="admin-stat-icon-wrap" style="background: rgba(245, 158, 11, 0.12); color: #d97706;">
+                        <i class="fa-solid fa-truck-medical"></i>
+                    </div>
                 </div>
-                <div class="fw-bold fs-3" style="color: #f59e0b;">{{ stats.hospitals_with_ed }}</div>
-                <small class="text-muted" style="font-size: 0.75rem;">Round-the-clock emergency care</small>
+                <div class="admin-stat-value text-warning">{{ stats.hospitals_with_ed }}</div>
+                <div class="admin-stat-desc">Round-the-clock emergency</div>
             </div>
         </div>
     </div>

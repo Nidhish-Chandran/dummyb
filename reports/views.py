@@ -240,6 +240,10 @@ def verify_report_view(request, pk):
     report = get_object_or_404(SightingReport, pk=pk)
 
     if request.method == 'POST':
+        if report.is_resolved:
+            messages.warning(request, f"Report #{report.id} is already verified and resolved. The verification record is closed.")
+            return redirect('reports:detail', pk=pk)
+
         new_status = request.POST.get('status')
         notes = request.POST.get('authority_notes', '')
 
@@ -284,6 +288,9 @@ def assign_responder_view(request, pk):
         messages.error(request, msg)
         return redirect('reports:detail', pk=pk)
 
+    if report.status == SightingReport.STATUS_RESOLVED or report.response_status == SightingReport.RESPONSE_RESOLVED:
+        return _fail("Cannot assign or reassign a responder to an incident that has already been verified and resolved.")
+
     if request.method == 'POST':
         ranger_id = request.POST.get('ranger_id') or request.POST.get('responder_id')
         if ranger_id:
@@ -301,10 +308,14 @@ def assign_responder_view(request, pk):
                 return _fail(
                     f"{ranger_user.username} is currently {prof.get_availability_display()} and cannot take a new incident.")
 
-            # Cancel any existing active assignment for this report
+            # Reassignment: Cancel any existing active assignment while preserving outcome evidence if submitted
             for prev in report.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES):
                 prev.status = RangerAssignment.STATUS_CANCELLED
-                prev.save(update_fields=['status'])
+                update_fields = ['status']
+                if prev.outcome:
+                    prev.review_notes = (prev.review_notes or '') + f" [Reassigned to Ranger {ranger_user.username} by Authority]"
+                    update_fields.append('review_notes')
+                prev.save(update_fields=update_fields)
                 _refresh_ranger_availability(prev.ranger)
 
             dist = None
@@ -365,40 +376,58 @@ def assign_responder_view(request, pk):
 def cancel_assignment_view(request, pk):
     """Authority cancels the active assignment on a report (reassign control)."""
     assignment = get_object_or_404(RangerAssignment, pk=pk)
+    rep = assignment.sighting
+
     if request.method == 'POST':
+        # Guard 1: Resolved incidents cannot be cancelled or reopened
+        if rep.status == SightingReport.STATUS_RESOLVED or rep.response_status == SightingReport.RESPONSE_RESOLVED or assignment.status == RangerAssignment.STATUS_COMPLETED:
+            messages.error(request, "Cannot cancel or reassign an incident that has already been verified and resolved.")
+            return redirect('reports:detail', pk=rep.pk)
+
         if not assignment.is_active:
             messages.info(request, "This assignment is already closed.")
-        else:
-            assignment.status = RangerAssignment.STATUS_CANCELLED
-            assignment.save(update_fields=['status'])
-            _refresh_ranger_availability(assignment.ranger)
-            rep = assignment.sighting
-            still_active = rep.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES).first()
-            if still_active is None:
-                rep.assigned_responder = None
-                rep.response_status = SightingReport.RESPONSE_UNASSIGNED
-                rep.save(update_fields=['assigned_responder', 'response_status'])
+            return redirect('reports:detail', pk=rep.pk)
 
-            AuditLog.record(
-                actor=request.user,
-                action='CANCEL_ASSIGNMENT',
-                target_type='SightingReport',
-                target_id=rep.pk,
-                target_repr=f"Incident #{rep.pk}",
-                details=f"Cancelled assignment #{assignment.pk} for Ranger {assignment.ranger.username}."
-            )
+        # Guard 2: If an outcome has already been submitted by the ranger, require explicit cancellation rationale
+        cancellation_reason = request.POST.get('cancellation_reason', '').strip()
+        if assignment.status == RangerAssignment.STATUS_OUTCOME_SUBMITTED and not cancellation_reason:
+            messages.error(request, "An outcome has been submitted by the ranger and is awaiting review. Please review the outcome (Approve or Reject), or specify an explicit cancellation reason to reassign.")
+            return redirect('reports:detail', pk=rep.pk)
 
-            Notification.send(
-                recipient=assignment.ranger,
-                actor=request.user,
-                title="Assignment Cancelled",
-                message=f"Your assignment for Incident #{rep.pk} has been cancelled by Authority.",
-                notification_type=Notification.TYPE_INFO,
-                link=reverse('ranger:dashboard')
-            )
+        assignment.status = RangerAssignment.STATUS_CANCELLED
+        update_fields = ['status']
+        if cancellation_reason:
+            assignment.review_notes = f"Assignment cancelled before verification: {cancellation_reason}"
+            update_fields.append('review_notes')
+        assignment.save(update_fields=update_fields)
 
-            messages.success(request, f"Assignment #{assignment.pk} cancelled.")
-    return redirect('reports:detail', pk=assignment.sighting_id)
+        _refresh_ranger_availability(assignment.ranger)
+        still_active = rep.ranger_assignments.filter(status__in=RangerAssignment.ACTIVE_STATUSES).first()
+        if still_active is None:
+            rep.assigned_responder = None
+            rep.response_status = SightingReport.RESPONSE_UNASSIGNED
+            rep.save(update_fields=['assigned_responder', 'response_status'])
+
+        AuditLog.record(
+            actor=request.user,
+            action='CANCEL_ASSIGNMENT',
+            target_type='SightingReport',
+            target_id=rep.pk,
+            target_repr=f"Incident #{rep.pk}",
+            details=f"Cancelled assignment #{assignment.pk} for Ranger {assignment.ranger.username}. Reason: {cancellation_reason or 'No reason specified'}."
+        )
+
+        Notification.send(
+            recipient=assignment.ranger,
+            actor=request.user,
+            title="Assignment Cancelled",
+            message=f"Your assignment for Incident #{rep.pk} has been cancelled by Authority." + (f" Reason: {cancellation_reason}" if cancellation_reason else ""),
+            notification_type=Notification.TYPE_INFO,
+            link=reverse('ranger:dashboard')
+        )
+
+        messages.success(request, f"Assignment #{assignment.pk} cancelled." + (f" (Reason recorded: {cancellation_reason})" if cancellation_reason else ""))
+    return redirect('reports:detail', pk=rep.pk)
 
 
 @login_required
@@ -616,6 +645,21 @@ def normalize_confidence_percentage(val):
 
 def _active_assignment_info(report):
     """Return (assignment, info-dict) for a report's active or latest completed ranger assignment."""
+    # Priority 1: Check if report was resolved
+    if report.status == SightingReport.STATUS_RESOLVED or report.response_status == SightingReport.RESPONSE_RESOLVED:
+        completed_a = report.ranger_assignments.filter(status=RangerAssignment.STATUS_COMPLETED).first()
+        ranger_u = completed_a.ranger if completed_a else report.assigned_responder
+        return completed_a, {
+            'assigned': False,
+            'assignment_id': completed_a.pk if completed_a else None,
+            'ranger': ranger_u.username if ranger_u else None,
+            'ranger_name': ranger_u.profile.display_name if (ranger_u and hasattr(ranger_u, 'profile')) else (ranger_u.username if ranger_u else None),
+            'status': 'COMPLETED',
+            'status_display': 'Completed',
+            'distance_km': completed_a.distance_km if completed_a else None,
+            'assigned_at': completed_a.assigned_at.strftime('%b %d, %Y %H:%M') if completed_a else None,
+        }
+
     a = getattr(report, '_prefetched_active', None)
     if a is None:
         a = report.ranger_assignments.filter(
@@ -632,19 +676,18 @@ def _active_assignment_info(report):
             'assigned_at': a.assigned_at.strftime('%b %d, %Y %H:%M'),
         }
 
-    # Check if assignment was completed / resolved
     completed_a = report.ranger_assignments.filter(status=RangerAssignment.STATUS_COMPLETED).first()
-    if completed_a or report.response_status == SightingReport.RESPONSE_RESOLVED:
-        ranger_u = completed_a.ranger if completed_a else report.assigned_responder
+    if completed_a:
+        ranger_u = completed_a.ranger
         return completed_a, {
             'assigned': False,
-            'assignment_id': completed_a.pk if completed_a else None,
-            'ranger': ranger_u.username if ranger_u else None,
-            'ranger_name': ranger_u.profile.display_name if (ranger_u and hasattr(ranger_u, 'profile')) else (ranger_u.username if ranger_u else None),
+            'assignment_id': completed_a.pk,
+            'ranger': ranger_u.username,
+            'ranger_name': ranger_u.profile.display_name if hasattr(ranger_u, 'profile') else ranger_u.username,
             'status': 'COMPLETED',
             'status_display': 'Completed',
-            'distance_km': completed_a.distance_km if completed_a else None,
-            'assigned_at': completed_a.assigned_at.strftime('%b %d, %Y %H:%M') if completed_a else None,
+            'distance_km': completed_a.distance_km,
+            'assigned_at': completed_a.assigned_at.strftime('%b %d, %Y %H:%M'),
         }
 
     return None, {
@@ -680,7 +723,7 @@ def authority_map_view(request):
     unassigned_venomous = geo_reports.filter(
         Q(venom_category__in=[SightingReport.VENOM_HIGHLY, SightingReport.VENOM_MODERATE]) | Q(venomous=True),
         response_status=SightingReport.RESPONSE_UNASSIGNED
-    ).exclude(status=SightingReport.STATUS_RESOLVED).count()
+    ).exclude(status=SightingReport.STATUS_RESOLVED).exclude(response_status=SightingReport.RESPONSE_RESOLVED).count()
 
     active = RangerAssignment.objects.filter(status__in=RangerAssignment.ACTIVE_STATUSES).count()
     completed = RangerAssignment.objects.filter(status=RangerAssignment.STATUS_COMPLETED).count()
@@ -728,7 +771,7 @@ def authority_map_reports_api(request):
     for a in RangerAssignment.objects.filter(
             status__in=RangerAssignment.ACTIVE_STATUSES).select_related('ranger__profile'):
         active_by_report.setdefault(a.sighting_id, a)
-    resolved_ids = set(r.id for r in reports if r.ranger_assignments.filter(
+    resolved_ids = set(r.id for r in reports if r.status == SightingReport.STATUS_RESOLVED or r.response_status == SightingReport.RESPONSE_RESOLVED or r.ranger_assignments.filter(
         status=RangerAssignment.STATUS_COMPLETED).exists())
 
     unassigned_venomous_count = 0
@@ -738,7 +781,12 @@ def authority_map_reports_api(request):
     data = []
     for r in reports:
         a = active_by_report.get(r.id)
-        if a:
+        if r.id in resolved_ids or r.response_status == SightingReport.RESPONSE_RESOLVED or r.status == SightingReport.STATUS_RESOLVED:
+            dispatch_state = 'COMPLETED'
+            completed_assignments_count += 1
+            assign = {'assigned': False, 'ranger': None, 'status': 'COMPLETED',
+                      'status_display': 'Completed'}
+        elif a:
             dispatch_state = 'ACTIVE'
             active_assignments_count += 1
             assign = {
@@ -751,16 +799,11 @@ def authority_map_reports_api(request):
                 'distance_km': a.distance_km,
                 'assigned_at': a.assigned_at.strftime('%b %d, %Y %H:%M'),
             }
-        elif r.id in resolved_ids or r.response_status == SightingReport.RESPONSE_RESOLVED:
-            dispatch_state = 'COMPLETED'
-            completed_assignments_count += 1
-            assign = {'assigned': False, 'ranger': None, 'status': 'COMPLETED',
-                      'status_display': 'Completed'}
         else:
             dispatch_state = 'UNASSIGNED'
             assign = {'assigned': False, 'ranger': None, 'status': 'UNASSIGNED',
                       'status_display': 'Unassigned'}
-            if r.is_venomous and r.status != SightingReport.STATUS_RESOLVED:
+            if r.is_venomous and r.status != SightingReport.STATUS_RESOLVED and r.response_status != SightingReport.RESPONSE_RESOLVED:
                 unassigned_venomous_count += 1
 
         orig_img_url = None

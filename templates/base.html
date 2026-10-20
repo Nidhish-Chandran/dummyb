@@ -56,7 +56,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'admin_provision' or request.resolver_match.url_name == 'admin_account_edit' or request.resolver_match.url_name == 'admin_account_detail' %}active{% endif %}"
+                            <a class="nav-link {% if request.resolver_match.url_name == 'admin_provision' or request.resolver_match.url_name == 'admin_account_edit' or request.resolver_match.url_name == 'admin_account_detail' or request.resolver_match.url_name == 'admin_application_detail' %}active{% endif %}"
                                 href="{% url 'accounts:admin_provision' %}">
                                 <i class="fa-solid fa-users-gear"></i> Account Management
                             </a>
@@ -126,25 +126,29 @@
                 </ul>
 
                 <!-- Right: Quick Actions & User Identity -->
+                <div class="navbar-right d-flex align-items-center gap-2 gap-lg-3 ms-lg-auto">
                     {% if not user.is_authenticated or user.profile.is_citizen or user.profile.is_ranger %}
                     <a href="{% url 'emergency:assistance' %}"
                        class="nav-emergency-btn {% if request.resolver_match.app_name == 'emergency' and request.resolver_match.url_name == 'assistance' %}active{% endif %}"
-                       title="Emergency Support & Hospital Locator">
+                       title="Emergency Support & Hospital Locator"
+                       aria-label="Emergency Support and Hospital Locator">
                         <i class="fa-solid fa-truck-medical"></i>
                         <span>Emergency SOS</span>
                     </a>
                     {% endif %}
 
                     {% if user.is_authenticated %}
+                        <div class="nav-utility-divider d-none d-lg-block"></div>
+
                         {% if not user.profile.is_admin %}
                         <!-- In-App Notifications Bell (Non-admin roles) -->
                         <a href="{% url 'accounts:notifications_list' %}"
-                           class="btn btn-glass btn-sm position-relative me-1"
+                           class="nav-bell-btn position-relative"
                            title="In-App Notifications"
-                           aria-label="Notifications">
-                            <i class="fa-solid fa-bell text-teal"></i>
+                           aria-label="View notifications ({% if unread_notifications_count %}{{ unread_notifications_count }} unread{% else %}none{% endif %})">
+                            <i class="fa-solid fa-bell"></i>
                             {% if unread_notifications_count > 0 %}
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger nav-bell-badge">
                                     {{ unread_notifications_count }}
                                     <span class="visually-hidden">unread notifications</span>
                                 </span>
@@ -177,9 +181,9 @@
                         </a>
 
                         {% if user.profile.is_admin %}
-                        <form method="post" action="{% url 'accounts:logout' %}" class="d-inline ms-1">
+                        <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger btn-sm" title="End administrative session and log out">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="End administrative session and log out" aria-label="Logout">
                                 <i class="fa-solid fa-right-from-bracket me-1"></i>
                                 <span>Logout</span>
                             </button>
