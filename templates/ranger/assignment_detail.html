@@ -11,7 +11,7 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 mb-4">
         <h2 class="fw-bold mb-0" style="font-size: 1.2rem; color: var(--text);">
-            Snake Sighting #{{ report.id }}
+            Snake Sighting #{{ assignment.ranger_incident_number }}
         </h2>
         {% if assignment.status == 'ASSIGNED' %}
             <span class="badge" style="background: var(--warning-light); color: var(--warning);">NEW ASSIGNMENT — Awaiting your response</span>
@@ -284,7 +284,7 @@ document.addEventListener("DOMContentLoaded", function() {
         fillOpacity: 0.9,
         radius: 8,
         weight: 2
-    }).addTo(map).bindPopup('<strong>Sighting #{{ report.id }}</strong><br>{{ report.location_name|escapejs }}').openPopup();
+    }).addTo(map).bindPopup('<strong>Snake Sighting #{{ assignment.ranger_incident_number }}</strong><br>{{ report.location_name|escapejs }}').openPopup();
 
     // Attach button loading indicators to action forms
     document.querySelectorAll('form.action-feedback-form').forEach(form => {

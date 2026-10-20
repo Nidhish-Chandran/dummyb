@@ -35,16 +35,30 @@ def ranger_dashboard_view(request):
     user = request.user
     qs = RangerAssignment.objects.filter(ranger=user).select_related('sighting')
 
-    new_assignments = qs.filter(status=RangerAssignment.STATUS_ASSIGNED, is_read=False)
-    active = qs.filter(status__in=RangerAssignment.ACTIVE_STATUSES)
-    completed = qs.filter(status=RangerAssignment.STATUS_COMPLETED)
+    sighting_map = RangerAssignment.get_ranger_sighting_map(user.id)
+
+    new_assignments = list(qs.filter(status=RangerAssignment.STATUS_ASSIGNED, is_read=False))
+    for a in new_assignments:
+        num = sighting_map.get(a.sighting_id, 1)
+        a._ranger_incident_number = num
+        if a.sighting:
+            a.sighting._ranger_incident_number = num
+
+    active = list(qs.filter(status__in=RangerAssignment.ACTIVE_STATUSES))
+    for a in active:
+        num = sighting_map.get(a.sighting_id, 1)
+        a._ranger_incident_number = num
+        if a.sighting:
+            a.sighting._ranger_incident_number = num
+
+    completed_count = qs.filter(status=RangerAssignment.STATUS_COMPLETED).count()
 
     context = {
         'new_assignments': new_assignments,
         'active_assignments': active,
-        'completed_count': completed.count(),
-        'active_count': active.count(),
-        'new_count': new_assignments.count(),
+        'completed_count': completed_count,
+        'active_count': len(active),
+        'new_count': len(new_assignments),
         'unread_count': qs.filter(is_read=False).count(),
         'profile': user.profile,
     }
@@ -56,13 +70,21 @@ def ranger_dashboard_view(request):
 @never_cache
 def assignment_list_view(request):
     """ONLY this ranger's assignments — never the full report repository."""
-    assignments = (
+    assignments = list(
         RangerAssignment.objects.filter(ranger=request.user)
         .select_related('sighting')
     )
+    sighting_map = RangerAssignment.get_ranger_sighting_map(request.user.id)
+    for a in assignments:
+        num = sighting_map.get(a.sighting_id, 1)
+        a._ranger_incident_number = num
+        if a.sighting:
+            a.sighting._ranger_incident_number = num
+
+    unread_count = sum(1 for a in assignments if not a.is_read)
     return render(request, 'ranger/assignments.html', {
         'assignments': assignments,
-        'unread_count': assignments.filter(is_read=False).count(),
+        'unread_count': unread_count,
     })
 
 
@@ -75,6 +97,11 @@ def assignment_detail_view(request, pk):
         RangerAssignment.objects.select_related('sighting', 'assigned_by'),
         pk=pk, ranger=request.user,
     )
+
+    incident_num = assignment.ranger_incident_number
+    assignment._ranger_incident_number = incident_num
+    if assignment.sighting:
+        assignment.sighting._ranger_incident_number = incident_num
 
     # Mark-as-read notification state
     if not assignment.is_read:

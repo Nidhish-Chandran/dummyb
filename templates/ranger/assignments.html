@@ -18,7 +18,7 @@
                     <div>
                         <p class="fw-semibold mb-1" style="font-size: 0.9375rem;">
                             {% if not a.is_read %}<span class="badge bg-danger me-1">NEW</span>{% endif %}
-                            Snake Sighting #{{ a.sighting.id }} — {{ a.sighting.location_name }}
+                            Snake Sighting #{{ a.ranger_incident_number }} — {{ a.sighting.location_name }}
                         </p>
                         <small class="text-muted">
                             {{ a.sighting.species_predicted|default:"Snake" }} ·

@@ -218,3 +218,130 @@ class RangerWorkflowAndSecurityTestCase(TestCase):
         res = self.client.get('/ranger/')
         # Account is suspended -> blocked by middleware or decorator (302 to login or 403)
         self.assertIn(res.status_code, (302, 403))
+
+    def test_ranger_sequential_incident_numbering(self):
+        """
+        Verify Ranger-specific sequential incident numbering:
+        - Numbering starts at #1 independently per Ranger.
+        - Ordered by assignment creation time (oldest to newest).
+        - Repeated assignments of the same sighting preserve distinct number.
+        - Displayed consistently across dashboard, assignments list, and detail views.
+        - Does not change database primary key or relations.
+        """
+        import time
+
+        # Create distinct sightings
+        sighting_alpha = SightingReport.objects.create(
+            user=self.citizen,
+            title="Sighting Alpha",
+            location_name="Location Alpha",
+            latitude=8.8940,
+            longitude=76.6150,
+            status=SightingReport.STATUS_PENDING,
+        )
+        sighting_beta = SightingReport.objects.create(
+            user=self.citizen,
+            title="Sighting Beta",
+            location_name="Location Beta",
+            latitude=8.8950,
+            longitude=76.6160,
+            status=SightingReport.STATUS_PENDING,
+        )
+        sighting_gamma = SightingReport.objects.create(
+            user=self.citizen,
+            title="Sighting Gamma",
+            location_name="Location Gamma",
+            latitude=8.8960,
+            longitude=76.6170,
+            status=SightingReport.STATUS_PENDING,
+        )
+
+        # Assign sighting_beta first to ranger1 -> Ranger 1 Incident #1
+        a1_r1 = RangerAssignment.objects.create(
+            sighting=sighting_beta,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_ASSIGNED
+        )
+
+        # Assign sighting_alpha second to ranger1 -> Ranger 1 Incident #2
+        a2_r1 = RangerAssignment.objects.create(
+            sighting=sighting_alpha,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_ASSIGNED
+        )
+
+        # Reassign sighting_beta again to ranger1 (reassignment does not count as new distinct sighting)
+        a3_r1 = RangerAssignment.objects.create(
+            sighting=sighting_beta,
+            ranger=self.ranger1,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_ASSIGNED
+        )
+
+        # Assign sighting_gamma to ranger2 as their first assignment -> Ranger 2 Incident #1
+        a1_r2 = RangerAssignment.objects.create(
+            sighting=sighting_gamma,
+            ranger=self.ranger2,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_ASSIGNED
+        )
+
+        # Assign sighting_beta to ranger2 as their second assignment -> Ranger 2 Incident #2
+        a2_r2 = RangerAssignment.objects.create(
+            sighting=sighting_beta,
+            ranger=self.ranger2,
+            assigned_by=self.authority,
+            status=RangerAssignment.STATUS_ASSIGNED
+        )
+
+        # Check model properties and mapping directly
+        self.assertEqual(a1_r1.ranger_incident_number, 1)
+        self.assertEqual(a2_r1.ranger_incident_number, 2)
+        # Repeated assignment of sighting_beta for ranger1 is still incident #1
+        self.assertEqual(a3_r1.ranger_incident_number, 1)
+
+        # Check Ranger 2 numbering starts at 1 independently
+        self.assertEqual(a1_r2.ranger_incident_number, 1)
+        self.assertEqual(a2_r2.ranger_incident_number, 2)
+
+        # Check get_ranger_incident_number on SightingReport
+        self.assertEqual(sighting_beta.get_ranger_incident_number(self.ranger1), 1)
+        self.assertEqual(sighting_alpha.get_ranger_incident_number(self.ranger1), 2)
+        self.assertEqual(sighting_gamma.get_ranger_incident_number(self.ranger2), 1)
+        self.assertEqual(sighting_beta.get_ranger_incident_number(self.ranger2), 2)
+
+        # Check UI views for ranger1
+        self.client.login(username='ranger_kollam', password='RangerPass123!')
+
+        # 1. Dashboard
+        res_dash = self.client.get('/ranger/')
+        self.assertEqual(res_dash.status_code, 200)
+        self.assertContains(res_dash, "Snake Sighting #1")
+        self.assertContains(res_dash, "Snake Sighting #2")
+        # Ensure the sighting_beta PK is distinct from #1 and that raw PK display pattern is not used
+        if sighting_beta.pk != 1:
+            self.assertNotContains(res_dash, f"Snake Sighting #{sighting_beta.pk}")
+
+        # 2. Assignment List
+        res_list = self.client.get('/ranger/assignments/')
+        self.assertEqual(res_list.status_code, 200)
+        self.assertContains(res_list, "Snake Sighting #1")
+        self.assertContains(res_list, "Snake Sighting #2")
+
+        # 3. Assignment Detail for Incident #1
+        res_detail_1 = self.client.get(f'/ranger/assignments/{a1_r1.pk}/')
+        self.assertEqual(res_detail_1.status_code, 200)
+        self.assertContains(res_detail_1, "Snake Sighting #1")
+        if sighting_beta.pk != 1:
+            self.assertNotContains(res_detail_1, f"Snake Sighting #{sighting_beta.pk}")
+
+        # 4. Assignment Detail for Incident #2
+        res_detail_2 = self.client.get(f'/ranger/assignments/{a2_r1.pk}/')
+        self.assertEqual(res_detail_2.status_code, 200)
+        self.assertContains(res_detail_2, "Snake Sighting #2")
+        if sighting_alpha.pk != 2:
+            self.assertNotContains(res_detail_2, f"Snake Sighting #{sighting_alpha.pk}")
+
+        self.client.logout()

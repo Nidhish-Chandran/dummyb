@@ -119,6 +119,19 @@ class SightingReport(models.Model):
         # Count reports submitted by this user up to this report ID
         return SightingReport.objects.filter(user_id=self.user_id, id__lte=self.id).count()
 
+    def get_ranger_incident_number(self, ranger):
+        """Return sequential incident number (1-based) for this sighting relative to the specified ranger."""
+        if not ranger or not self.id:
+            return 1
+        ranger_id = ranger.id if hasattr(ranger, 'id') else ranger
+        sighting_map = RangerAssignment.get_ranger_sighting_map(ranger_id)
+        return sighting_map.get(self.id, 1)
+
+    @property
+    def ranger_incident_number(self):
+        """Accessor for pre-annotated ranger incident number, or None."""
+        return getattr(self, '_ranger_incident_number', None)
+
     @property
     def latest_assignment(self):
         """The most recent assignment created for this incident."""
@@ -265,3 +278,34 @@ class RangerAssignment(models.Model):
             self.STATUS_OUTCOME_SUBMITTED: None,
         }
         return nxt.get(self.status)
+
+    @classmethod
+    def get_ranger_sighting_map(cls, ranger_id):
+        """
+        Returns a dict mapping sighting_id -> 1-based sequential incident number
+        for distinct sightings assigned to the given ranger, ordered by earliest assignment creation time.
+        """
+        if not ranger_id:
+            return {}
+        from django.db.models import Min
+        qs = (
+            cls.objects.filter(ranger_id=ranger_id)
+            .values('sighting_id')
+            .annotate(first_assigned=Min('assigned_at'), min_id=Min('id'))
+            .order_by('first_assigned', 'min_id')
+        )
+        return {row['sighting_id']: idx for idx, row in enumerate(qs, start=1)}
+
+    @property
+    def ranger_incident_number(self):
+        """
+        Returns the ranger-specific sequential incident number for the sighting of this assignment.
+        Uses cached `_ranger_incident_number` if available, otherwise queries the ranger sighting map.
+        """
+        if hasattr(self, '_ranger_incident_number') and self._ranger_incident_number is not None:
+            return self._ranger_incident_number
+        if hasattr(self, 'sighting') and hasattr(self.sighting, '_ranger_incident_number') and self.sighting._ranger_incident_number is not None:
+            return self.sighting._ranger_incident_number
+        s_map = self.get_ranger_sighting_map(self.ranger_id)
+        return s_map.get(self.sighting_id, 1)
+
